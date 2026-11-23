@@ -42,6 +42,7 @@ public class JellyStreamController : ControllerBase
     private readonly ITaskManager _taskManager;
     private readonly SeerrClient _seerr;
     private readonly AvailabilityStore _store;
+    private readonly TrendingService _trending;
     private readonly ILogger<JellyStreamController> _logger;
 
     /// <summary>
@@ -52,6 +53,7 @@ public class JellyStreamController : ControllerBase
     /// <param name="taskManager">Task manager.</param>
     /// <param name="seerr">Seerr client.</param>
     /// <param name="store">Availability store.</param>
+    /// <param name="trending">Trending lists.</param>
     /// <param name="logger">Logger.</param>
     public JellyStreamController(
         ILibraryManager libraryManager,
@@ -59,6 +61,7 @@ public class JellyStreamController : ControllerBase
         ITaskManager taskManager,
         SeerrClient seerr,
         AvailabilityStore store,
+        TrendingService trending,
         ILogger<JellyStreamController> logger)
     {
         _libraryManager = libraryManager;
@@ -66,6 +69,7 @@ public class JellyStreamController : ControllerBase
         _taskManager = taskManager;
         _seerr = seerr;
         _store = store;
+        _trending = trending;
         _logger = logger;
     }
 
@@ -149,13 +153,31 @@ public class JellyStreamController : ControllerBase
 
         var config = Config;
         type = NormalizeType(type);
-        var cards = await PopularCardsAsync(service, type, 1, ct).ConfigureAwait(false);
+        var count = Math.Clamp(config.TopCount, 1, 20);
+        var cards = new List<TitleCard>();
+        if (config.TopSource is "day" or "week" && SeerrClient.IsConfigured)
+        {
+            var trending = _trending.GetOnService(type, config.TopSource, service);
+            if (trending is not null)
+            {
+                cards = ToCards(trending, type);
+            }
+        }
+
+        // fill up (or fall back while the trending list builds) with what's popular on the service
+        if (cards.Count < count)
+        {
+            var seen = cards.Select(c => c.TmdbId).ToHashSet();
+            var popular = await PopularCardsAsync(service, type, 1, ct).ConfigureAwait(false);
+            cards.AddRange(popular.Where(c => seen.Add(c.TmdbId)));
+        }
+
         if (!config.ShowMissing)
         {
             cards = cards.Where(c => c.ItemId is not null).ToList();
         }
 
-        return cards.Take(Math.Clamp(config.TopCount, 1, 20)).ToList();
+        return cards.Take(count).ToList();
     }
 
     /// <summary>Popular titles on a service that aren't in the library.</summary>
@@ -178,10 +200,16 @@ public class JellyStreamController : ControllerBase
             return new List<TitleCard>();
         }
 
-        var cards = await PopularCardsAsync(service, NormalizeType(type), 3, ct).ConfigureAwait(false);
+        type = NormalizeType(type);
+        var count = Math.Clamp(Config.TopCount, 1, 20);
+        var cards = await PopularCardsAsync(service, type, 3, ct).ConfigureAwait(false);
+
+        // leave out what the Top row already shows
+        var inTop = Config.TopSource is "day" or "week"
+            ? (_trending.GetOnService(type, Config.TopSource, service) ?? []).Take(count).Select(t => t.Id).ToHashSet()
+            : cards.Take(count).Select(c => c.TmdbId).ToHashSet();
         return cards
-            .Skip(Math.Clamp(Config.TopCount, 1, 20)) // the Top row already shows these
-            .Where(c => c.ItemId is null)
+            .Where(c => c.ItemId is null && !inTop.Contains(c.TmdbId))
             .Take(Math.Clamp(limit, 1, 60))
             .ToList();
     }
@@ -427,6 +455,11 @@ public class JellyStreamController : ControllerBase
             return [];
         }
 
+        return ToCards(titles, type);
+    }
+
+    private List<TitleCard> ToCards(List<SeerrTitle> titles, string type)
+    {
         var user = CurrentUser();
         var index = _store.TmdbIndex();
         var cards = new List<TitleCard>();

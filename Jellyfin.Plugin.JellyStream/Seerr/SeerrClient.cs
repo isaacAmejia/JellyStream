@@ -154,6 +154,25 @@ public class SeerrClient
         });
     }
 
+    /// <summary>Gets one page of TMDB trending titles.</summary>
+    /// <param name="type">"movie" or "tv".</param>
+    /// <param name="window">"day" or "week".</param>
+    /// <param name="page">Page number (1-based).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The page.</returns>
+    public async Task<SeerrPage?> TrendingPageAsync(string type, string window, int page, CancellationToken ct)
+    {
+        using var client = CreateClient();
+        var url = $"api/v1/discover/trending?mediaType={type}&timeWindow={window}&page={page.ToString(CultureInfo.InvariantCulture)}";
+        var result = await client.GetFromJsonAsync<SeerrPage>(url, JsonOptions, ct).ConfigureAwait(false);
+        foreach (var t in result?.Results ?? [])
+        {
+            t.MediaType ??= type;
+        }
+
+        return result;
+    }
+
     /// <summary>Requests a title with Seerr's default settings.</summary>
     /// <param name="type">"movie" or "tv".</param>
     /// <param name="tmdbId">TMDB id.</param>

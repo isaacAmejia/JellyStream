@@ -18,6 +18,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddHttpClient("JellyStream");
         serviceCollection.AddSingleton<SeerrClient>();
         serviceCollection.AddSingleton<AvailabilityStore>();
+        serviceCollection.AddSingleton<TrendingService>();
         serviceCollection.AddHostedService<WebInjector>();
     }
 }

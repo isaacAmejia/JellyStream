@@ -37,6 +37,7 @@ public partial class WebInjector : IHostedService
     private readonly IApplicationPaths _paths;
     private readonly ITaskManager _taskManager;
     private readonly AvailabilityStore _store;
+    private readonly TrendingService _trending;
     private readonly ILogger<WebInjector> _logger;
 
     /// <summary>
@@ -45,12 +46,14 @@ public partial class WebInjector : IHostedService
     /// <param name="paths">Application paths.</param>
     /// <param name="taskManager">Task manager.</param>
     /// <param name="store">Availability store.</param>
+    /// <param name="trending">Trending lists.</param>
     /// <param name="logger">Logger.</param>
-    public WebInjector(IApplicationPaths paths, ITaskManager taskManager, AvailabilityStore store, ILogger<WebInjector> logger)
+    public WebInjector(IApplicationPaths paths, ITaskManager taskManager, AvailabilityStore store, TrendingService trending, ILogger<WebInjector> logger)
     {
         _paths = paths;
         _taskManager = taskManager;
         _store = store;
+        _trending = trending;
         _logger = logger;
     }
 
@@ -80,6 +83,8 @@ public partial class WebInjector : IHostedService
         {
             Inject();
         }
+
+        _trending.Warm();
 
         return Task.CompletedTask;
     }
@@ -194,6 +199,8 @@ public partial class WebInjector : IHostedService
         {
             _taskManager.QueueScheduledTask<SyncAvailabilityTask>();
         }
+
+        _trending.Warm();
     }
 
     [GeneratedRegex("<script plugin=\"JellyStream\"[^>]*></script>", RegexOptions.IgnoreCase)]

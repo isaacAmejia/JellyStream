@@ -70,6 +70,12 @@ public class PluginConfiguration : BasePluginConfiguration
 
     // ---- Content ----
 
+    /// <summary>Gets or sets what the Top lists rank by: "week" (trending this week), "day" (trending today) or "popular".</summary>
+    public string TopSource { get; set; } = "week";
+
+    /// <summary>Gets or sets how many pages (20 titles each) of trending titles are checked per type.</summary>
+    public int TrendingPages { get; set; } = 10;
+
     /// <summary>Gets or sets how many titles the Top lists show.</summary>
     public int TopCount { get; set; } = 10;
 

@@ -176,6 +176,15 @@
                 <!-- 4. Service pages -->
                 <div class="js-card">
                     <h2>4. Service pages</h2>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="jsTopSource">Top lists rank by</label>
+                        <select is="emby-select" id="jsTopSource">
+                            <option value="week">Trending this week</option>
+                            <option value="day">Trending today</option>
+                            <option value="popular">Most popular overall</option>
+                        </select>
+                        <div class="fieldDescription">Trending uses TMDB's daily/weekly trending list, filtered to each service. If a service has fewer trending titles than the list length, popular titles fill the rest.</div>
+                    </div>
                     <div class="js-row">
                         <div class="inputContainer">
                             <label class="inputLabel" for="jsTopCount">Top list length</label>
@@ -204,6 +213,11 @@
                                 <label class="inputLabel" for="jsRefreshDays">Re-check each title every (days)</label>
                                 <input is="emby-input" id="jsRefreshDays" type="number" min="0" max="60" />
                                 <div class="fieldDescription">The daily sync only re-checks titles older than this. 0 checks everything every time.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel" for="jsTrendingPages">Trending titles checked (pages of 20)</label>
+                                <input is="emby-input" id="jsTrendingPages" type="number" min="1" max="25" />
+                                <div class="fieldDescription">More pages find more trending titles for smaller services.</div>
                             </div>
                             <div class="inputContainer">
                                 <label class="inputLabel" for="jsConcurrency">Lookups at once</label>
@@ -445,6 +459,8 @@
             $('jsVisualMode').value = config.VisualMode || 'auto';
             $('jsHideEmpty').checked = config.HideEmptyServices;
             $('jsTopCount').value = config.TopCount;
+            $('jsTopSource').value = config.TopSource || 'week';
+            $('jsTrendingPages').value = config.TrendingPages || 10;
             $('jsGenreRows').value = config.GenreRows;
             $('jsShowContinue').checked = config.ShowContinueWatching;
             $('jsShowRecent').checked = config.ShowRecentlyAdded;
@@ -474,6 +490,8 @@
             config.VisualMode = $('jsVisualMode').value;
             config.HideEmptyServices = $('jsHideEmpty').checked;
             config.TopCount = num('jsTopCount', 10, 1, 20);
+            config.TopSource = $('jsTopSource').value;
+            config.TrendingPages = num('jsTrendingPages', 10, 1, 25);
             config.GenreRows = num('jsGenreRows', 6, 0, 20);
             config.ShowContinueWatching = $('jsShowContinue').checked;
             config.ShowRecentlyAdded = $('jsShowRecent').checked;
