@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Check client scripts
+        run: node --check Jellyfin.Plugin.JellyStream/Web/client.js
+
+      - name: Build
+        run: dotnet build Jellyfin.Plugin.JellyStream/Jellyfin.Plugin.JellyStream.csproj -c Release -o out
+
+      - name: Package
+        run: |
+          VERSION=$(grep -oP '(?<=<AssemblyVersion>)[^<]+' Jellyfin.Plugin.JellyStream/Jellyfin.Plugin.JellyStream.csproj)
+          mkdir -p artifacts/JellyStream
+          cp out/Jellyfin.Plugin.JellyStream.dll artifacts/JellyStream/
+          cd artifacts/JellyStream && zip -q ../jellystream_${VERSION}.zip Jellyfin.Plugin.JellyStream.dll
+          cd .. && md5sum jellystream_${VERSION}.zip | cut -d' ' -f1 > jellystream_${VERSION}.zip.md5
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jellystream
+          path: artifacts/*.zip*
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip*

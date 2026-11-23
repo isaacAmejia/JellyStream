@@ -1,0 +1,497 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Mime;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
+using Jellyfin.Database.Implementations.Entities;
+using Jellyfin.Database.Implementations.Enums;
+using Jellyfin.Plugin.JellyStream.Catalog;
+using Jellyfin.Plugin.JellyStream.Configuration;
+using Jellyfin.Plugin.JellyStream.Seerr;
+using Jellyfin.Plugin.JellyStream.Tasks;
+using MediaBrowser.Common.Api;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+
+namespace Jellyfin.Plugin.JellyStream.Api;
+
+/// <summary>
+/// JellyStream's API, used by the web client script and the settings page.
+/// </summary>
+[ApiController]
+[Route("JellyStream")]
+[Authorize]
+public class JellyStreamController : ControllerBase
+{
+    private const string TmdbImages = "https://image.tmdb.org/t/p/";
+
+    private readonly ILibraryManager _libraryManager;
+    private readonly IUserManager _userManager;
+    private readonly ITaskManager _taskManager;
+    private readonly SeerrClient _seerr;
+    private readonly AvailabilityStore _store;
+    private readonly ILogger<JellyStreamController> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JellyStreamController"/> class.
+    /// </summary>
+    /// <param name="libraryManager">Library manager.</param>
+    /// <param name="userManager">User manager.</param>
+    /// <param name="taskManager">Task manager.</param>
+    /// <param name="seerr">Seerr client.</param>
+    /// <param name="store">Availability store.</param>
+    /// <param name="logger">Logger.</param>
+    public JellyStreamController(
+        ILibraryManager libraryManager,
+        IUserManager userManager,
+        ITaskManager taskManager,
+        SeerrClient seerr,
+        AvailabilityStore store,
+        ILogger<JellyStreamController> logger)
+    {
+        _libraryManager = libraryManager;
+        _userManager = userManager;
+        _taskManager = taskManager;
+        _seerr = seerr;
+        _store = store;
+        _logger = logger;
+    }
+
+    private static PluginConfiguration Config => Plugin.Instance!.Configuration;
+
+    // ------------------------------------------------------------------ client
+
+    /// <summary>The web client script (loaded by JavaScript Injector).</summary>
+    /// <returns>The script.</returns>
+    [HttpGet("client.js")]
+    [AllowAnonymous]
+    public ActionResult GetClientScript()
+    {
+        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Jellyfin.Plugin.JellyStream.Web.client.js");
+        if (stream is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers.CacheControl = "no-cache";
+        return File(stream, "application/javascript; charset=utf-8");
+    }
+
+    /// <summary>Settings the client needs, and the enabled services.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Client settings.</returns>
+    [HttpGet("Config")]
+    public async Task<ActionResult<ClientConfig>> GetClientConfig(CancellationToken ct)
+    {
+        var config = Config;
+        var logos = await ProviderLogosAsync(ct).ConfigureAwait(false);
+        var services = new List<ClientService>();
+        foreach (var s in config.Services.Where(s => s.Enabled && s.ProviderIds.Length > 0))
+        {
+            var entries = _store.All.Where(e => AvailabilityStore.IsOn(e, s, config)).ToList();
+            var movies = entries.Count(e => e.Type == "movie");
+            var shows = entries.Count - movies;
+            if (config.HideEmptyServices && entries.Count == 0)
+            {
+                continue;
+            }
+
+            services.Add(new ClientService(
+                KeyOf(s),
+                s.Name,
+                !string.IsNullOrWhiteSpace(s.LogoUrl) ? s.LogoUrl : s.ProviderIds.Select(id => logos.GetValueOrDefault(id)).FirstOrDefault(l => l is not null),
+                s.Accent,
+                movies,
+                shows));
+        }
+
+        return new ClientConfig(
+            services,
+            config.ShowHomeRow,
+            config.HomeRowTitle,
+            config.HomeRowPosition,
+            config.VisualMode,
+            config.TopCount,
+            config.ShowMissing && SeerrClient.IsConfigured,
+            config.AllowRequests && SeerrClient.IsConfigured,
+            config.ConfirmRequests,
+            config.GenreRows,
+            config.ShowContinueWatching,
+            config.ShowRecentlyAdded,
+            config.ShowPopularMissing && config.ShowMissing && SeerrClient.IsConfigured);
+    }
+
+    /// <summary>The most popular titles on a service, marked with what you have.</summary>
+    /// <param name="key">Service key.</param>
+    /// <param name="type">"movie" or "tv".</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Up to the configured Top count.</returns>
+    [HttpGet("Services/{key}/Top")]
+    public async Task<ActionResult<List<TitleCard>>> GetTop([FromRoute, Required] string key, [FromQuery] string type = "movie", CancellationToken ct = default)
+    {
+        var service = FindService(key);
+        if (service is null)
+        {
+            return NotFound();
+        }
+
+        var config = Config;
+        type = NormalizeType(type);
+        var cards = await PopularCardsAsync(service, type, 1, ct).ConfigureAwait(false);
+        if (!config.ShowMissing)
+        {
+            cards = cards.Where(c => c.ItemId is not null).ToList();
+        }
+
+        return cards.Take(Math.Clamp(config.TopCount, 1, 20)).ToList();
+    }
+
+    /// <summary>Popular titles on a service that aren't in the library.</summary>
+    /// <param name="key">Service key.</param>
+    /// <param name="type">"movie" or "tv".</param>
+    /// <param name="limit">Maximum results.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Titles you don't have.</returns>
+    [HttpGet("Services/{key}/Missing")]
+    public async Task<ActionResult<List<TitleCard>>> GetMissing([FromRoute, Required] string key, [FromQuery] string type = "movie", [FromQuery] int limit = 20, CancellationToken ct = default)
+    {
+        var service = FindService(key);
+        if (service is null)
+        {
+            return NotFound();
+        }
+
+        if (!Config.ShowMissing)
+        {
+            return new List<TitleCard>();
+        }
+
+        var cards = await PopularCardsAsync(service, NormalizeType(type), 3, ct).ConfigureAwait(false);
+        return cards
+            .Skip(Math.Clamp(Config.TopCount, 1, 20)) // the Top row already shows these
+            .Where(c => c.ItemId is null)
+            .Take(Math.Clamp(limit, 1, 60))
+            .ToList();
+    }
+
+    /// <summary>Everything in the library that is on a service (that the user can see).</summary>
+    /// <param name="key">Service key.</param>
+    /// <param name="type">"movie", "tv" or "all".</param>
+    /// <returns>Library titles, newest first.</returns>
+    [HttpGet("Services/{key}/Library")]
+    public ActionResult<List<LibraryCard>> GetLibrary([FromRoute, Required] string key, [FromQuery] string type = "all")
+    {
+        var service = FindService(key);
+        if (service is null)
+        {
+            return NotFound();
+        }
+
+        var user = CurrentUser();
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var config = Config;
+        var ids = _store.All
+            .Where(e => (type == "all" || e.Type == NormalizeType(type)) && AvailabilityStore.IsOn(e, service, config))
+            .Select(e => e.ItemId)
+            .ToArray();
+        if (ids.Length == 0)
+        {
+            return new List<LibraryCard>();
+        }
+
+        var items = _libraryManager.GetItemList(new InternalItemsQuery(user)
+        {
+            ItemIds = ids,
+            IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Series],
+            OrderBy = [(ItemSortBy.DateCreated, SortOrder.Descending)]
+        });
+
+        return items
+            .Where(i => i.IsVisibleStandalone(user))
+            .Select(i => new LibraryCard(
+                i.Id,
+                i.Name,
+                i.ProductionYear,
+                i is MediaBrowser.Controller.Entities.TV.Series ? "tv" : "movie",
+                i.Genres ?? [],
+                i.CommunityRating,
+                i.DateCreated))
+            .ToList();
+    }
+
+    /// <summary>Details for a title you don't have, shaped like a Jellyfin item for the expand panel.</summary>
+    /// <param name="type">"movie" or "tv".</param>
+    /// <param name="tmdbId">TMDB id.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Item-like details.</returns>
+    [HttpGet("Details")]
+    public async Task<ActionResult<MissingDetails>> GetDetails([FromQuery, Required] string type, [FromQuery, Required] int tmdbId, CancellationToken ct)
+    {
+        if (!SeerrClient.IsConfigured)
+        {
+            return NotFound();
+        }
+
+        type = NormalizeType(type);
+        try
+        {
+            var t = await _seerr.GetDetailsCachedAsync(type, tmdbId, ct).ConfigureAwait(false);
+            if (t is null)
+            {
+                return NotFound();
+            }
+
+            var series = type == "tv";
+            return new MissingDetails(
+                t.DisplayName,
+                series ? "Series" : "Movie",
+                t.Overview,
+                t.Year,
+                t.Genres?.Select(g => g.Name ?? string.Empty).Where(g => g.Length > 0).ToArray() ?? [],
+                t.VoteAverage is > 0 ? Math.Round(t.VoteAverage.Value, 1) : null,
+                !series && t.Runtime is > 0 ? TimeSpan.FromMinutes(t.Runtime.Value).Ticks : null,
+                series ? t.NumberOfSeasons : null,
+                series ? (t.Status is "Returning Series" or "In Production" ? "Continuing" : "Ended") : null,
+                series ? t.LastAirDate : null,
+                Image(t.BackdropPath, "w1280"),
+                Image(t.PosterPath, "w342"),
+                StatusOf(t.MediaInfo?.Status ?? 0));
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogDebug(ex, "JellyStream: details lookup failed");
+            return StatusCode(StatusCodes.Status502BadGateway);
+        }
+    }
+
+    /// <summary>Requests a title through Seerr with its default settings.</summary>
+    /// <param name="body">What to request.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The outcome.</returns>
+    [HttpPost("Request")]
+    public async Task<ActionResult<RequestResult>> PostRequest([FromBody, Required] RequestBody body, CancellationToken ct)
+    {
+        if (!Config.AllowRequests || !SeerrClient.IsConfigured)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        var userId = CurrentUserId();
+        if (userId == Guid.Empty)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var result = await _seerr.RequestAsync(NormalizeType(body.Type), body.TmdbId, userId, ct).ConfigureAwait(false);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "JellyStream: request failed");
+            return new RequestResult(false, "error", "Couldn't reach Seerr");
+        }
+    }
+
+    // ------------------------------------------------------------------ admin
+
+    /// <summary>Connection and sync status for the settings page.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Status.</returns>
+    [HttpGet("Admin/Status")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<ActionResult<AdminStatus>> GetStatus(CancellationToken ct)
+    {
+        string? version = null;
+        string? error = null;
+        if (SeerrClient.IsConfigured)
+        {
+            try
+            {
+                version = await _seerr.TestAsync(ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or UriFormatException)
+            {
+                error = ex.Message;
+            }
+        }
+        else
+        {
+            error = "Not set up";
+        }
+
+        var config = Config;
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var s in config.Services)
+        {
+            counts.TryAdd(KeyOf(s), _store.All.Count(e => AvailabilityStore.IsOn(e, s, config)));
+        }
+
+        return new AdminStatus(version is not null, version, error, _store.All.Count, _store.LastSyncUtc, counts);
+    }
+
+    /// <summary>All streaming providers in the region, for picking services.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Providers.</returns>
+    [HttpGet("Admin/Providers")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<ActionResult<List<ProviderInfo>>> GetProviders(CancellationToken ct)
+    {
+        try
+        {
+            var list = await _seerr.GetProvidersAsync(ct).ConfigureAwait(false);
+            return list.Select(p => new ProviderInfo(p.Id, p.Name ?? string.Empty, Image(p.LogoPath, "w92"), p.DisplayPriority)).ToList();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or UriFormatException)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, ex.Message);
+        }
+    }
+
+    /// <summary>Starts a sync now.</summary>
+    /// <param name="full">Re-check every title, not just stale ones.</param>
+    /// <returns>No content.</returns>
+    [HttpPost("Admin/Sync")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public ActionResult StartSync([FromQuery] bool full = false)
+    {
+        if (full)
+        {
+            foreach (var e in _store.All)
+            {
+                e.CheckedUtc = DateTime.MinValue;
+            }
+        }
+
+        _seerr.ClearCache();
+        _taskManager.QueueScheduledTask<SyncAvailabilityTask>();
+        return NoContent();
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private async Task<List<TitleCard>> PopularCardsAsync(ServiceEntry service, string type, int pages, CancellationToken ct)
+    {
+        if (!SeerrClient.IsConfigured)
+        {
+            return [];
+        }
+
+        List<SeerrTitle> titles;
+        try
+        {
+            titles = await _seerr.DiscoverPopularAsync(type, service.ProviderIds, pages, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
+        {
+            _logger.LogDebug(ex, "JellyStream: discover failed");
+            return [];
+        }
+
+        var user = CurrentUser();
+        var index = _store.TmdbIndex();
+        var cards = new List<TitleCard>();
+        foreach (var t in titles)
+        {
+            Guid? itemId = null;
+            if (index.TryGetValue((type, t.Id), out var found))
+            {
+                itemId = found;
+            }
+            else if (Guid.TryParse(t.MediaInfo?.JellyfinMediaId, out var seerrId) && _libraryManager.GetItemById(seerrId) is not null)
+            {
+                itemId = seerrId;
+            }
+
+            if (itemId is not null && user is not null)
+            {
+                var item = _libraryManager.GetItemById(itemId.Value);
+                if (item is null || !item.IsVisibleStandalone(user))
+                {
+                    itemId = null;
+                }
+            }
+
+            var status = itemId is not null ? "available" : StatusOf(t.MediaInfo?.Status ?? 0);
+            if (status == "available" && itemId is null)
+            {
+                // Seerr thinks it's here but this user can't see it (or it isn't synced yet)
+                status = "missing";
+            }
+
+            cards.Add(new TitleCard(t.Id, type, t.DisplayName, t.Year, Image(t.PosterPath, "w342"), Image(t.BackdropPath, "w780"), status, itemId));
+        }
+
+        return cards;
+    }
+
+    private async Task<Dictionary<int, string?>> ProviderLogosAsync(CancellationToken ct)
+    {
+        if (!SeerrClient.IsConfigured)
+        {
+            return [];
+        }
+
+        try
+        {
+            var list = await _seerr.GetProvidersAsync(ct).ConfigureAwait(false);
+            return list.ToDictionary(p => p.Id, p => Image(p.LogoPath, "w300"));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException or UriFormatException)
+        {
+            return [];
+        }
+    }
+
+    private static string StatusOf(int seerrStatus) => seerrStatus switch
+    {
+        5 => "available",
+        4 => "partial",
+        2 or 3 => "requested",
+        _ => "missing"
+    };
+
+    private static string? Image(string? path, string size) =>
+        string.IsNullOrEmpty(path) ? null : TmdbImages + size + path;
+
+    private static string NormalizeType(string? type) =>
+        string.Equals(type, "tv", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(type, "series", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(type, "show", StringComparison.OrdinalIgnoreCase)
+            ? "tv"
+            : "movie";
+
+    private static string KeyOf(ServiceEntry s) =>
+        !string.IsNullOrWhiteSpace(s.Key) ? s.Key : "p" + string.Join('-', s.ProviderIds);
+
+    private static ServiceEntry? FindService(string key) =>
+        Config.Services.FirstOrDefault(s => s.Enabled && string.Equals(KeyOf(s), key, StringComparison.OrdinalIgnoreCase));
+
+    private Guid CurrentUserId()
+    {
+        var value = User.FindFirst("Jellyfin-UserId")?.Value;
+        return Guid.TryParse(value, out var id) ? id : Guid.Empty;
+    }
+
+    private User? CurrentUser()
+    {
+        var id = CurrentUserId();
+        return id == Guid.Empty ? null : _userManager.GetUserById(id);
+    }
+}

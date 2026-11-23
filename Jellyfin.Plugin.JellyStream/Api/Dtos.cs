@@ -1,0 +1,119 @@
+using System;
+using System.Collections.Generic;
+using Jellyfin.Plugin.JellyStream.Seerr;
+
+namespace Jellyfin.Plugin.JellyStream.Api;
+
+/// <summary>A service for the client.</summary>
+/// <param name="Key">URL key.</param>
+/// <param name="Name">Display name.</param>
+/// <param name="Logo">Logo URL.</param>
+/// <param name="Accent">Accent color.</param>
+/// <param name="Movies">Movies in the library on this service.</param>
+/// <param name="Shows">Shows in the library on this service.</param>
+public record ClientService(string Key, string Name, string? Logo, string Accent, int Movies, int Shows);
+
+/// <summary>Client settings.</summary>
+/// <param name="Services">Enabled services, in order.</param>
+/// <param name="ShowHomeRow">Whether to add the services row to the home screen.</param>
+/// <param name="HomeRowTitle">Row title.</param>
+/// <param name="HomeRowPosition">"top" or "bottom".</param>
+/// <param name="VisualMode">"auto", "full" or "lite".</param>
+/// <param name="TopCount">Top list length.</param>
+/// <param name="ShowMissing">Whether titles you don't have are shown.</param>
+/// <param name="AllowRequests">Whether requests are allowed.</param>
+/// <param name="ConfirmRequests">Whether a second press confirms a request.</param>
+/// <param name="GenreRows">Genre rows per type.</param>
+/// <param name="ShowContinueWatching">Show Continue Watching.</param>
+/// <param name="ShowRecentlyAdded">Show Recently Added.</param>
+/// <param name="ShowPopularMissing">Show Popular to request.</param>
+public record ClientConfig(
+    List<ClientService> Services,
+    bool ShowHomeRow,
+    string HomeRowTitle,
+    string HomeRowPosition,
+    string VisualMode,
+    int TopCount,
+    bool ShowMissing,
+    bool AllowRequests,
+    bool ConfirmRequests,
+    int GenreRows,
+    bool ShowContinueWatching,
+    bool ShowRecentlyAdded,
+    bool ShowPopularMissing);
+
+/// <summary>A popular title (in the library or not).</summary>
+/// <param name="TmdbId">TMDB id.</param>
+/// <param name="Type">"movie" or "tv".</param>
+/// <param name="Name">Title.</param>
+/// <param name="Year">Year.</param>
+/// <param name="Poster">Poster URL.</param>
+/// <param name="Backdrop">Backdrop URL.</param>
+/// <param name="Status">"available", "partial", "requested" or "missing".</param>
+/// <param name="ItemId">Jellyfin item id when in the library.</param>
+public record TitleCard(int TmdbId, string Type, string Name, int? Year, string? Poster, string? Backdrop, string Status, Guid? ItemId);
+
+/// <summary>A library title on a service.</summary>
+/// <param name="Id">Jellyfin item id.</param>
+/// <param name="Name">Title.</param>
+/// <param name="Year">Year.</param>
+/// <param name="Type">"movie" or "tv".</param>
+/// <param name="Genres">Genres.</param>
+/// <param name="Rating">Community rating.</param>
+/// <param name="Added">Date added.</param>
+public record LibraryCard(Guid Id, string Name, int? Year, string Type, IReadOnlyList<string> Genres, float? Rating, DateTime Added);
+
+/// <summary>Details for a title you don't have, using Jellyfin's item field names.</summary>
+/// <param name="Name">Title.</param>
+/// <param name="Type">"Movie" or "Series".</param>
+/// <param name="Overview">Overview.</param>
+/// <param name="ProductionYear">Year.</param>
+/// <param name="Genres">Genres.</param>
+/// <param name="CommunityRating">Rating.</param>
+/// <param name="RunTimeTicks">Runtime.</param>
+/// <param name="ChildCount">Seasons.</param>
+/// <param name="Status">"Continuing" or "Ended".</param>
+/// <param name="EndDate">Last air date.</param>
+/// <param name="BackdropUrl">Backdrop URL.</param>
+/// <param name="PosterUrl">Poster URL.</param>
+/// <param name="RequestStatus">"available", "partial", "requested" or "missing".</param>
+public record MissingDetails(
+    string Name,
+    string Type,
+    string? Overview,
+    int? ProductionYear,
+    string[] Genres,
+    double? CommunityRating,
+    long? RunTimeTicks,
+    int? ChildCount,
+    string? Status,
+    string? EndDate,
+    string? BackdropUrl,
+    string? PosterUrl,
+    string RequestStatus);
+
+/// <summary>What to request.</summary>
+public class RequestBody
+{
+    /// <summary>Gets or sets "movie" or "tv".</summary>
+    public string Type { get; set; } = "movie";
+
+    /// <summary>Gets or sets the TMDB id.</summary>
+    public int TmdbId { get; set; }
+}
+
+/// <summary>Status for the settings page.</summary>
+/// <param name="Connected">Whether Seerr answered.</param>
+/// <param name="Version">Seerr version.</param>
+/// <param name="Error">Connection error.</param>
+/// <param name="Titles">Titles checked so far.</param>
+/// <param name="LastSync">Last finished sync (UTC).</param>
+/// <param name="Counts">Titles per service key.</param>
+public record AdminStatus(bool Connected, string? Version, string? Error, int Titles, DateTime? LastSync, Dictionary<string, int> Counts);
+
+/// <summary>A streaming provider for the settings page.</summary>
+/// <param name="Id">TMDB provider id.</param>
+/// <param name="Name">Name.</param>
+/// <param name="Logo">Logo URL.</param>
+/// <param name="Priority">Display priority (lower is more popular).</param>
+public record ProviderInfo(int Id, string Name, string? Logo, int Priority);
