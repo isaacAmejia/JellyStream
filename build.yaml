@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.6.0.0"
+version: "1.6.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Fixes updates not loading: Jellyfin could leave an empty folder from the previous version and
-  then remove the new install on restart. JellyStream now cleans those up and can't be replaced
-  by them. Includes the 1.5 billboards and per-service layouts.
+  Opening a title now fully closes the service page first, so the details page shows. Top 10
+  rows use each service's own style (big rank numerals next to the posters) instead of the
+  glass theme.

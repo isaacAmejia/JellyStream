@@ -204,6 +204,18 @@
     labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Play', info: 'Details', request: 'Request' },
   };
 
+  // Top 10 numerals, the way each service draws them
+  const NUMERALS = {
+    netflix: '--js-num-fill: #141414; --js-num-stroke: 4px #595959;',
+    disney: '--js-num-fill: transparent; --js-num-stroke: 3px rgba(249,249,249,.85);',
+    max: '--js-num-fill: #fff; --js-num-stroke: 0 transparent;',
+    prime: '--js-num-fill: #1a98ff; --js-num-stroke: 0 transparent;',
+    hulu: '--js-num-fill: #0b0c0f; --js-num-stroke: 3px #1ce783;',
+    apple: '--js-num-fill: rgba(255,255,255,.1); --js-num-stroke: 2px rgba(255,255,255,.65);',
+    paramount: '--js-num-fill: #0064ff; --js-num-stroke: 3px #7fb2ff;',
+    peacock: '--js-num-fill: #000; --js-num-stroke: 3px #ffb000;',
+  };
+
   const brandKeyFor = (svc) => {
     const id = `${svc.Key} ${svc.Name}`.toLowerCase();
     return Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
@@ -227,7 +239,7 @@
     el.textContent = Object.entries(BRANDS).map(([k, b]) => {
       const rules = b.css.replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
         `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
-      return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; }`;
+      return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} }`;
     }).join('\n');
     return el;
   })();
@@ -543,6 +555,49 @@
     .js-cap-below .cardText { text-align: left !important; padding-left: .15em; }
     .js-cap-below .cardText-first { font-weight: 600; }
 
+    /* native Top 10 rows */
+    .js-view { --js-poster-w: clamp(118px, 10.5vw, 210px); }
+    .js-rank-card { width: calc(var(--js-poster-w) * 1.62) !important; flex: 0 0 auto; }
+    .js-rank-card .cardBox { margin: 0 .2em !important; }
+    .js-rank-box {
+      position: relative !important;
+      height: calc(var(--js-poster-w) * 1.5) !important;
+      overflow: visible !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    .js-rank-num {
+      position: absolute;
+      left: 0; bottom: -.11em;
+      z-index: 0;
+      font-family: var(--js-num-font, inherit);
+      font-size: calc(var(--js-poster-w) * 1.42);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.09em;
+      color: var(--js-num-fill, #141414);
+      -webkit-text-stroke: var(--js-num-stroke, 4px #595959);
+      paint-order: stroke fill;
+      user-select: none;
+      pointer-events: none;
+    }
+    .js-rank-card:last-child .js-rank-num { letter-spacing: -.16em; }
+    .js-rank-poster {
+      position: absolute !important;
+      top: 0; bottom: 0; right: 0; left: auto !important;
+      width: var(--js-poster-w) !important;
+      height: 100% !important;
+      z-index: 1;
+      background-size: cover;
+      background-position: center;
+      border-radius: 4px;
+      box-shadow: -8px 0 18px rgba(0,0,0,.45);
+    }
+    .js-rank-card .js-badge { z-index: 2; }
+    .js-rank-card .cardFooter { display: none !important; }
+    .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: scale(1.04); }
+    .js-rank-poster { transition: transform .22s cubic-bezier(.2,.9,.25,1), box-shadow .22s ease; }
+
     /* service switcher: Home + every service, reachable with a remote */
     .js-switcher .js-sw-card { width: clamp(84px, 7.5vw, 124px) !important; }
     .js-switcher .cardPadder { padding-bottom: 100% !important; }
@@ -740,6 +795,23 @@
     missing: '<span class="js-badge" title="Not in your library"><span class="material-icons">add</span></span>',
     requested: '<span class="js-badge js-requested" title="Requested"><span class="material-icons">schedule</span></span>',
     partial: '<span class="js-badge" title="Partly available"><span class="material-icons">timelapse</span></span>',
+  };
+
+  // Top 10 card: a big rank numeral with the poster tucked against it, styled per service
+  const rankCard = (t, i) => {
+    const owned = !!t.ItemId;
+    const status = owned ? '' : (t.Status === 'available' ? 'missing' : t.Status);
+    return `
+    <div class="card js-card js-rank-card${owned ? '' : ' js-missing'}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
+      <div class="cardBox">
+        <div class="cardScalable js-rank-box">
+          <span class="js-rank-num" aria-hidden="true">${i + 1}</span>
+          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(owned ? imgUrl(t.ItemId) : (t.Poster || ''))}"></a>
+          ${owned ? (t.Status === 'partial' ? BADGES.partial : '') : (BADGES[status] || BADGES.missing)}
+        </div>
+        <div class="cardFooter"><div class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></div></div>
+      </div>
+    </div>`;
   };
 
   // wide = use the service's card shape (request rows); Top 10 rows stay portrait
@@ -1031,7 +1103,7 @@
     const movies = data.library.filter((i) => i.Type === 'movie');
     const shows = data.library.filter((i) => i.Type === 'tv');
     const when = cfg.TopSource === 'day' ? 'Trending today on' : cfg.TopSource === 'week' ? 'Trending this week on' : 'Popular on';
-    const top = (label) => `data-jst-top10="1" data-jst-label="${label}" data-jst-eyebrow="${esc(when)} ${esc(svc.Name)}"`;
+    const span = cfg.TopSource === 'day' ? 'Today' : cfg.TopSource === 'week' ? 'This Week' : '';
     const rows = [];
 
     // Home + all services, so a remote can switch or leave without a Back key
@@ -1054,8 +1126,8 @@
           x.Key === svc.Key))),
     }));
 
-    rows.push(section({ title: `Top ${cfg.TopCount} Movies on ${svc.Name}`, cards: data.topMovies.map((t) => titleCard(t)), attrs: top('Movies') }));
-    rows.push(section({ title: `Top ${cfg.TopCount} Shows on ${svc.Name}`, cards: data.topShows.map((t) => titleCard(t)), attrs: top('Shows') }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: data.topMovies.map(rankCard), cls: 'js-top' }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: data.topShows.map(rankCard), cls: 'js-top' }));
 
     if (cfg.ShowContinueWatching) {
       const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
@@ -1159,6 +1231,17 @@
     bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
   };
 
+  // remove every trace of a service page (used when leaving the home screen)
+  const teardown = () => {
+    const html = document.documentElement;
+    if (!html.classList.contains('js-service-open') && !document.querySelector('.js-view')) return;
+    html.classList.remove('js-service-open');
+    document.querySelectorAll('.js-view').forEach((v) => v.remove());
+    document.querySelectorAll('.js-hide-native').forEach((el) => el.classList.remove('js-hide-native'));
+    state.brandKey = null;
+    applyBrand(null);
+  };
+
   const closeService = (sections) => {
     sections?.classList.remove('js-hide-native');
     sections?.querySelector(':scope > .js-view')?.remove();
@@ -1211,6 +1294,7 @@
 
   // open a title the way Jellyfin's own cards do (its router), falling back to the link
   const openDetails = (href) => {
+    teardown();
     const before = location.href;
     try {
       if (window.Emby?.Page?.show) window.Emby.Page.show(href);
@@ -1342,7 +1426,7 @@
     if (busy || !window.ApiClient || !userId()) return;
     const h = location.hash || '';
     if (!/^#!?\/home/i.test(h) && h !== '' && h !== '#/') {
-      document.documentElement.classList.remove('js-service-open');
+      teardown();
       return;
     }
     const sections = homeSections();
@@ -1354,7 +1438,6 @@
       if (!state.cfg) return;
       const key = serviceKey();
       document.documentElement.classList.toggle('js-service-open', !!key);
-      loadTheme();
       const svc = key ? state.cfg.Services.find((x) => x.Key === key) : null;
       if ((svc?.Key || null) !== state.brandKey) {
         state.brandKey = svc?.Key || null;
