@@ -81,7 +81,7 @@ public class TrendingService
     private void StartBuild(string type, string window)
     {
         var key = Key(type, window);
-        _building.GetOrAdd(key, _ => Task.Run(async () =>
+        _building.GetOrAdd(key, k => Task.Run(async () =>
         {
             try
             {
