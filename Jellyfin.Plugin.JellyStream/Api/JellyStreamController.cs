@@ -202,6 +202,51 @@ public class JellyStreamController : ControllerBase
         return cards.Take(count).ToList();
     }
 
+    /// <summary>The headline title (backdrop) for each service's home screen tile.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Service key to backdrop/title.</returns>
+    [HttpGet("Services/Featured")]
+    public async Task<ActionResult<Dictionary<string, FeaturedTitle>>> GetFeatured(CancellationToken ct)
+    {
+        var config = Config;
+        var result = new Dictionary<string, FeaturedTitle>(StringComparer.OrdinalIgnoreCase);
+        if (!SeerrClient.IsConfigured)
+        {
+            return result;
+        }
+
+        foreach (var s in config.Services.Where(s => s.Enabled && s.ProviderIds.Length > 0))
+        {
+            SeerrTitle? pick = null;
+            if (config.TopSource is "day" or "week")
+            {
+                pick = (_trending.GetOnService("movie", config.TopSource, s) ?? [])
+                    .Concat(_trending.GetOnService("tv", config.TopSource, s) ?? [])
+                    .FirstOrDefault(t => !string.IsNullOrEmpty(t.BackdropPath));
+            }
+
+            if (pick is null)
+            {
+                try
+                {
+                    var popular = await _seerr.DiscoverPopularAsync("tv", s.ProviderIds, 1, ct).ConfigureAwait(false);
+                    pick = popular.FirstOrDefault(t => !string.IsNullOrEmpty(t.BackdropPath));
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException)
+                {
+                    // no backdrop for this one
+                }
+            }
+
+            if (pick is not null)
+            {
+                result[KeyOf(s)] = new FeaturedTitle(pick.DisplayName, Image(pick.BackdropPath, "w780")!);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Popular titles on a service that aren't in the library.</summary>
     /// <param name="key">Service key.</param>
     /// <param name="type">"movie" or "tv".</param>

@@ -224,38 +224,79 @@
   const css = document.createElement('style');
   css.id = 'jellystream-css';
   css.textContent = `
-    /* service tiles on the home screen: the logo is the tile */
-    .js-services .js-svc-card { width: clamp(112px, 10vw, 172px) !important; }
-    .js-services .js-svc-card .cardPadder { padding-bottom: 100% !important; }
-    .js-services .js-svc-card .cardScalable { border-radius: 22% !important; }
+    /* service tiles: landscape glass cards. The backdrop is what's trending on that service right now,
+       washed in the service's color, with the logo and name on a frosted strip. */
     .js-services .js-svc-card .cardImageContainer {
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
-      border-radius: 22% !important;
+      position: relative;
       overflow: hidden;
-      background: linear-gradient(160deg, color-mix(in srgb, var(--js-accent, #8899aa) 55%, #20232b), #14161c) !important;
-      box-shadow: 0 10px 24px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08) !important;
-      transition: transform .22s cubic-bezier(.2,.9,.25,1), box-shadow .22s ease;
+      border-radius: 16px !important;
+      background: linear-gradient(135deg, var(--js-t1, #3a4150), var(--js-t2, #171a21)) !important;
+      box-shadow: 0 14px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.1) !important;
+      transition: box-shadow .25s ease, transform .25s cubic-bezier(.2,.9,.25,1);
     }
-    .js-services .js-svc-card .js-logo {
+    .js-services .js-tile-bg {
       position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
+      background-size: cover;
+      background-position: center 25%;
+      opacity: 0;
+      transform: scale(1.02);
+      transition: opacity .5s ease, transform .6s cubic-bezier(.2,.9,.25,1);
     }
-    .js-services .js-svc-card .js-logo-text {
-      font: 800 1.15em/1.1 ${FONT};
-      letter-spacing: -.02em;
+    .js-services .js-tile-bg.on { opacity: 1; }
+    .js-services .js-tile-tint {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(8,9,12,.85) 100%),
+        linear-gradient(120deg, color-mix(in srgb, var(--js-t1, #3a4150) 55%, transparent) 0%, transparent 55%);
+    }
+    .js-services .js-tile-sheen {
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 32%);
+      pointer-events: none;
+    }
+    .js-services .js-tile-info {
+      position: absolute;
+      left: .7em; right: .7em; bottom: .7em;
+      display: flex; align-items: center; gap: .65em;
+      padding: .45em .6em .45em .45em;
+      border-radius: 12px;
+      background: rgba(18,20,26,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+      font-family: ${FONT};
       color: #fff;
-      text-align: center;
-      padding: 0 .5em;
+      text-align: left;
+    }
+    html:not(.js-lite) .js-services .js-tile-info {
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
+      backdrop-filter: blur(14px) saturate(160%);
+    }
+    html.js-lite .js-services .js-tile-info { background: rgba(18,20,26,.8); }
+    .js-services .js-tile-logo {
+      width: 2.5em; height: 2.5em; flex: none;
+      border-radius: 22%;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.14);
+    }
+    .js-services .js-tile-text { min-width: 0; line-height: 1.15; }
+    .js-services .js-tile-text b {
+      display: block; font-weight: 800; font-size: 1.02em; letter-spacing: -.01em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .js-services .js-tile-text small {
+      display: block; font-size: .74em; color: rgba(255,255,255,.7);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .js-services .js-tile-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      margin-right: .4em; vertical-align: .1em;
+      background: var(--js-t1, #fff); box-shadow: 0 0 8px var(--js-t1, #fff);
     }
     .js-services .js-svc-card:is(:hover, :focus-within, .show-focus, .focused) .cardImageContainer {
-      transform: translateY(-4px);
-      box-shadow: 0 16px 30px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.9), 0 0 24px color-mix(in srgb, var(--js-accent, #fff) 55%, transparent) !important;
+      box-shadow: 0 18px 36px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.9), 0 0 28px color-mix(in srgb, var(--js-t1, #fff) 50%, transparent) !important;
     }
-    .js-services .cardFooter { padding-top: .5em; }
-    .js-services .cardText { font-family: ${FONT}; }
+    .js-services .js-svc-card:is(:hover, :focus-within, .show-focus, .focused) .js-tile-bg { transform: scale(1.08); }
+    .js-services .cardBox { margin-bottom: .4em !important; }
     .js-services .cardText-secondary { opacity: .6; }
 
     /* service page */
@@ -585,6 +626,13 @@
       </div>
     </div>` : '';
 
+  // Jellyfin pauses/resumes every .itemsContainer on the home screen when you leave or return.
+  // Ours are plain elements, so give them the two methods; without them leaving the page threw an error.
+  const stubRows = (root) => root.querySelectorAll('.js-section .itemsContainer').forEach((el) => {
+    if (!el.pause) el.pause = () => {};
+    if (!el.resume) el.resume = () => Promise.resolve();
+  });
+
   // arrows show only when there's more to see in that direction
   const updateArrows = (sc) => {
     const wrap = sc.parentElement;
@@ -681,18 +729,28 @@
 
     const tiles = cfg.Services.map((s) => {
       const n = s.Movies + s.Shows;
+      const known = brandKeyFor(s);
+      const b = known ? BRANDS[known] : null;
+      const t1 = s.Accent || (b && b.c1 !== '#ffffff' && b.c1 !== '#f9f9f9' && b.c1 !== '#f5f5f7' ? b.c1 : b?.c2) || '';
+      const t2 = b ? b.c2 : '';
+      const style = [t1 && `--js-t1:${t1}`, t2 && `--js-t2:${t2}`].filter(Boolean).join(';');
       return `
-      <div class="card card-hoverable js-svc-card" data-jskey="${esc(s.Key)}">
-        <div class="cardBox cardBox-bottompadded">
+      <div class="card overflowBackdropCard card-hoverable js-svc-card" data-jskey="${esc(s.Key)}" style="${esc(style)}">
+        <div class="cardBox">
           <div class="cardScalable">
-            <div class="cardPadder"></div>
+            <div class="cardPadder cardPadder-overflowBackdrop"></div>
             <a class="cardImageContainer cardContent itemAction" href="#/home?${PARAM}=${encodeURIComponent(s.Key)}" aria-label="${esc(s.Name)}">
-              ${s.Logo ? `<img class="js-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : `<span class="js-logo-text">${esc(s.Name)}</span>`}
+              <span class="js-tile-bg"></span>
+              <span class="js-tile-tint"></span>
+              <span class="js-tile-sheen"></span>
+              <span class="js-tile-info">
+                ${s.Logo ? `<img class="js-tile-logo js-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : ''}
+                <span class="js-tile-text">
+                  <b>${esc(s.Name)}</b>
+                  <small class="js-tile-sub">${n ? `${n} title${n === 1 ? '' : 's'} in your library` : 'Browse'}</small>
+                </span>
+              </span>
             </a>
-          </div>
-          <div class="cardFooter">
-            <div class="cardText cardTextCentered cardText-first"><bdi>${esc(s.Name)}</bdi></div>
-            <div class="cardText cardTextCentered cardText-secondary"><bdi>${n ? `${n} title${n === 1 ? '' : 's'}` : 'Browse'}</bdi></div>
           </div>
         </div>
       </div>`;
@@ -703,11 +761,40 @@
     row = wrap.firstElementChild;
     row.dataset.v = String(state.cfgAt);
     if (cfg.HomeRowPosition === 'bottom') sections.appendChild(row); else sections.prepend(row);
+    stubRows(row);
     requestAnimationFrame(() => updateAllArrows(row));
 
-    cfg.Services.forEach((s) => autoAccent(s).then((col) => {
-      if (col) row.querySelector(`[data-jskey="${CSS.escape(s.Key)}"]`)?.style.setProperty('--js-accent', col);
-    }));
+    cfg.Services.forEach((s) => {
+      if (s.Accent || brandKeyFor(s)) return;
+      autoAccent(s).then((col) => {
+        const tile = row.querySelector(`[data-jskey="${CSS.escape(s.Key)}"]`);
+        if (col && tile) { tile.style.setProperty('--js-t1', col); tile.style.setProperty('--js-t2', '#15171d'); }
+      });
+    });
+    loadFeatured().then((map) => {
+      for (const [key, f] of Object.entries(map || {})) {
+        const tile = row.querySelector(`[data-jskey="${CSS.escape(key)}"]`);
+        const bg = tile?.querySelector('.js-tile-bg');
+        if (!bg || !f?.Backdrop) continue;
+        const img = new Image();
+        img.onload = () => { bg.style.backgroundImage = `url("${f.Backdrop}")`; bg.classList.add('on'); };
+        img.src = f.Backdrop;
+        const sub = tile.querySelector('.js-tile-sub');
+        if (sub && f.Name) sub.innerHTML = `<span class="js-tile-dot"></span>${esc(f.Name)}`;
+      }
+    });
+  };
+
+  // what's trending on each service, for the tile backdrops (cached for half an hour)
+  const loadFeatured = async () => {
+    if (state.featured && Date.now() - state.featuredAt < 30 * 60 * 1000) return state.featured;
+    try {
+      state.featured = await getJSON('Services/Featured');
+      state.featuredAt = Date.now();
+    } catch {
+      state.featured = state.featured || {};
+    }
+    return state.featured;
   };
 
   // ---------------------------------------------------------------- service page
@@ -857,6 +944,7 @@
     const box = view.querySelector('.js-rows');
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
+    stubRows(box);
     requestAnimationFrame(() => updateAllArrows(box));
     setTimeout(() => updateAllArrows(box), 600); // after the Top 10 numbers resize their cards
   };
@@ -911,8 +999,24 @@
     }
   };
 
+  const openDetails = (href) => {
+    const route = href.replace(/^#!?\/?/, '');
+    try {
+      if (window.Dashboard?.navigate) { window.Dashboard.navigate(route); return; }
+    } catch { /* fall through */ }
+    location.hash = href;
+  };
+
   // clicks: service tiles, back button, and titles you don't have
   document.addEventListener('click', (e) => {
+    const link = e.target.closest?.('.js-view a.cardImageContainer[href^="#/details"]');
+    if (link && !e.target.closest('.jst-x') && !e.defaultPrevented) {
+      e.preventDefault();
+      e.stopPropagation();
+      document.documentElement.classList.remove('js-service-open');
+      openDetails(link.getAttribute('href'));
+      return;
+    }
     const missing = e.target.closest?.('.js-missing');
     if (missing && !e.target.closest('.jst-x')) {
       e.preventDefault();

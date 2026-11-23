@@ -120,3 +120,8 @@ public record AdminStatus(bool Connected, string? Version, string? Error, int Ti
 /// <param name="Logo">Logo URL.</param>
 /// <param name="Priority">Display priority (lower is more popular).</param>
 public record ProviderInfo(int Id, string Name, string? Logo, int Priority);
+
+/// <summary>A service's headline title.</summary>
+/// <param name="Name">Title.</param>
+/// <param name="Backdrop">Backdrop URL.</param>
+public record FeaturedTitle(string Name, string Backdrop);
