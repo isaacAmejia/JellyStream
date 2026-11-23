@@ -121,6 +121,20 @@
       cursor: pointer;
     }
     .js-hero .js-back:hover { background: rgba(255,255,255,.14); }
+    /* service switcher: Home + every service, reachable with a remote */
+    .js-switcher .js-sw-card { width: clamp(84px, 7.5vw, 124px) !important; }
+    .js-switcher .cardPadder { padding-bottom: 100% !important; }
+    .js-switcher .cardImageContainer {
+      display: flex !important; align-items: center; justify-content: center;
+      border-radius: 22% !important; overflow: hidden;
+      background: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.03)), rgba(22,24,30,.9) !important;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .js-switcher .cardImageContainer img { width: 100%; height: 100%; object-fit: cover; }
+    .js-switcher .cardImageContainer .material-icons { font-size: 2.4em; color: rgba(255,255,255,.85); }
+    .js-switcher .js-current .cardImageContainer { box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 0 18px rgba(255,255,255,.25); }
+    .js-switcher .js-sw-card:not(.js-current) .cardImageContainer img { opacity: .8; }
+    .js-switcher .cardText { font-size: .85em; }
     .js-empty { margin: 0 3.3% 1.5em; color: rgba(255,255,255,.6); font-family: ${FONT}; }
 
     /* scrolling rows (plain markup, so no Jellyfin scroller upgrade is needed) */
@@ -453,6 +467,26 @@
     const shows = data.library.filter((i) => i.Type === 'tv');
     const top = (label) => `data-mp-top10="1" data-mp-label="${label}" data-mp-eyebrow="Trending on ${esc(svc.Name)}"`;
     const rows = [];
+
+    // Home + all services, so a remote can switch or leave without a Back key
+    const sw = (href, name, inner, current) => `
+      <div class="card js-sw-card${current ? ' js-current' : ''}">
+        <div class="cardBox">
+          <div class="cardScalable">
+            <div class="cardPadder"></div>
+            <a class="cardImageContainer cardContent itemAction" href="${esc(href)}" aria-label="${esc(name)}">${inner}</a>
+          </div>
+          <div class="cardFooter"><div class="cardText cardTextCentered cardText-first"><bdi>${esc(name)}</bdi></div></div>
+        </div>
+      </div>`;
+    rows.push(section({
+      title: 'Services',
+      cls: 'js-switcher',
+      cards: [sw('#/home', 'Home', '<span class="material-icons">home</span>', false)].concat(cfg.Services.map((x) =>
+        sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name,
+          x.Logo ? `<img src="${esc(x.Logo)}" alt="" loading="lazy">` : `<span class="js-logo-text">${esc(x.Name)}</span>`,
+          x.Key === svc.Key))),
+    }));
 
     rows.push(section({ title: `Top ${cfg.TopCount} Movies on ${svc.Name}`, cards: data.topMovies.map(titleCard), attrs: top('Movies') }));
     rows.push(section({ title: `Top ${cfg.TopCount} Shows on ${svc.Name}`, cards: data.topShows.map(titleCard), attrs: top('Shows') }));
