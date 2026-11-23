@@ -158,11 +158,19 @@ public partial class WebInjector : IHostedService
 
     private static string Insert(string html)
     {
-        // only ever touch a real HTML page; anything else is returned exactly as it came
+        // only ever touch a real HTML page (Jellyfin's chunk files are JavaScript and come back untouched)
+        var start = html.TrimStart().TrimStart('\uFEFF').TrimStart();
+        var isPage = start.StartsWith("<!doctype", StringComparison.OrdinalIgnoreCase)
+            || start.StartsWith("<html", StringComparison.OrdinalIgnoreCase);
         var at = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
-        if (at < 0 || html.IndexOf("<html", StringComparison.OrdinalIgnoreCase) < 0)
+        if (!isPage)
         {
             return html;
+        }
+
+        if (at < 0)
+        {
+            return OurTag().Replace(html, string.Empty) + Tag;
         }
 
         html = OurTag().Replace(html, string.Empty);
@@ -212,9 +220,11 @@ public partial class WebInjector : IHostedService
 
             var json = "{"
                 + $"\"id\":\"{TransformId}\","
-                // a regular expression: anchored, so it can't match Jellyfin's chunk files like
-                // "itemDetails-index-html.<hash>.chunk.js" (a bare "index.html" did, which broke them)
-                + "\"fileNamePattern\":\"^(.*[/\\\\\\\\])?index\\\\.html$\","
+                // Must be exactly "index.html": File Transformation runs only the group of registrations whose
+                // pattern text matches the file exactly, and the other plugins on index.html use this text.
+                // The pattern also matches chunk files like "itemDetails-index-html.<hash>.chunk.js";
+                // Insert() leaves anything that isn't an HTML page untouched.
+                + "\"fileNamePattern\":\"index.html\","
                 + $"\"callbackAssembly\":\"{typeof(WebInjector).Assembly.FullName}\","
                 + $"\"callbackClass\":\"{typeof(WebInjector).FullName}\","
                 + $"\"callbackMethod\":\"{nameof(TransformIndex)}\""
