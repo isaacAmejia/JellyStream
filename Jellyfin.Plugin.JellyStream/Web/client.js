@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.13.2';
+  const VERSION = '1.13.3';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -2168,6 +2168,24 @@
     // switching services replaces the entry, so Back still goes home; opening one adds an entry
     if (current) go({ key, from: null, replace: true });
     else navigate({ key });
+  }, true);
+
+  // Jellyfin's own Home (header tab, home button, drawer link, tab bars added by other plugins) goes
+  // back to the normal home screen. The route is already #/home, so without this nothing would change.
+  const isHomeControl = (el) => {
+    if (!el || el.closest('.js-view, .js-services, .jsd-panel')) return false;
+    if (el.matches('.headerHomeButton, .headerHomeButton *')) return true;
+    const href = el.closest('a')?.getAttribute('href') || '';
+    if (/^#!?\/home(\.html)?\/?$/i.test(href)) return true;
+    const ctl = el.closest('.emby-tab-button, .headerTabs button, .skinHeader a, .skinHeader button, .navMenuOption, .mainDrawer a, [role="tab"]');
+    if (!ctl || !ctl.closest('.skinHeader, .headerTabs, .mainDrawer, .navDrawer, header, nav, [role="tablist"]')) return false;
+    const text = (ctl.textContent || ctl.getAttribute('aria-label') || '').trim().toLowerCase();
+    return text === 'home' || (ctl.matches('.headerTabs .emby-tab-button') && ctl.dataset.index === '0');
+  };
+  document.addEventListener('click', (e) => {
+    if (!serviceKey() || !isHomeControl(e.target)) return;
+    diag.add('nav', 'Jellyfin Home pressed: closing the service page');
+    navigate({ key: null });
   }, true);
 
   // ---------------------------------------------------------------- main loop
