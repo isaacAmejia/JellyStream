@@ -4,14 +4,14 @@ Browse your Jellyfin library by streaming service.
 
 JellyStream adds a **Streaming services** row to the home screen. Opening a service (Netflix, Disney+, HBO Max…) gives you a home screen with only what's on that service right now:
 
-- **Top 10 Movies** and **Top 10 Shows** on that service. Titles you don't have show a missing badge, and selecting one requests it in Seerr with your default settings.
+- **Top 10 Movies** and **Top 10 Shows** trending this week (or today) on that service, with glass rank numbers and an expand panel. Titles you don't have show a missing badge, and selecting one requests it in Seerr with your default settings.
 - **Continue Watching** and **Recently Added**, limited to that service.
 - **Your library by genre**, plus everything A–Z.
 - **Popular to request**: popular titles on the service that you don't have yet.
 
-Back returns to your normal home screen.
+Each service page takes on that service's look: its colors, background glow and focus ring. Opening one morphs the logo from its tile into the page header. Back returns to your normal home screen.
 
-It's built with Jellyfin's own card markup, so themes, the top 10 / expand scripts in [`extras/theme`](extras/theme) and JellyNav (remote navigation) work on these pages too.
+It's built with Jellyfin's own card markup, so Jellyfin themes and JellyNav (remote navigation) work on these pages too. The glass Top 10 styling is built in (with a lighter version picked automatically on Raspberry Pi / TV boxes); [`extras/theme`](extras/theme) has the same styling for Jellyfin's own rows.
 
 ## Requirements
 

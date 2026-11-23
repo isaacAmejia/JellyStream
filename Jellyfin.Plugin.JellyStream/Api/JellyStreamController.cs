@@ -93,6 +93,28 @@ public class JellyStreamController : ControllerBase
         return File(stream, "application/javascript; charset=utf-8");
     }
 
+    /// <summary>The Top 10 styling scripts used on service pages.</summary>
+    /// <param name="name">Script name.</param>
+    /// <returns>The script.</returns>
+    [HttpGet("theme/{name}.js")]
+    [AllowAnonymous]
+    public ActionResult GetThemeScript([FromRoute] string name)
+    {
+        if (name is not ("top10" or "header" or "expand" or "expandlite"))
+        {
+            return NotFound();
+        }
+
+        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"Jellyfin.Plugin.JellyStream.Web.theme.{name}.js");
+        if (stream is null)
+        {
+            return NotFound();
+        }
+
+        Response.Headers.CacheControl = "no-cache";
+        return File(stream, "application/javascript; charset=utf-8");
+    }
+
     /// <summary>Settings the client needs, and the enabled services.</summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Client settings.</returns>

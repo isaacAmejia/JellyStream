@@ -22,6 +22,7 @@ jobs:
       - name: Check client scripts
         run: |
           node --check Jellyfin.Plugin.JellyStream/Web/client.js
+          for f in Jellyfin.Plugin.JellyStream/Web/theme/*.js; do node --check "$f"; done
           for f in extras/theme/*.js; do node --check "$f"; done
 
       - name: Build

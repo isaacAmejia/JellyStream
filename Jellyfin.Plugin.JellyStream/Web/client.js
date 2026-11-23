@@ -35,6 +35,67 @@
       || (navigator.hardwareConcurrency || 8) <= 4;
   };
 
+  // brand looks per service; anything else is themed from its accent color (set or taken from the logo)
+  const BRANDS = {
+    netflix: {
+      c1: '#e50914', c2: '#8f0710',
+      bg: 'radial-gradient(110% 70% at 8% -10%, rgba(229,9,20,.30), transparent 60%), radial-gradient(80% 55% at 100% 0%, rgba(110,0,6,.30), transparent 60%), #0a0a0a',
+    },
+    disney: {
+      c1: '#3ec7ff', c2: '#2a4dd6',
+      bg: 'radial-gradient(120% 80% at 50% -25%, rgba(70,140,255,.38), transparent 62%), linear-gradient(180deg, #0c1b4d 0%, #0a1233 45%, #060a1c 100%)',
+    },
+    max: {
+      c1: '#8f6bff', c2: '#0a3cff',
+      bg: 'radial-gradient(110% 70% at 0% -10%, rgba(125,70,255,.36), transparent 60%), radial-gradient(90% 60% at 100% 5%, rgba(10,60,255,.28), transparent 60%), #070519',
+    },
+    prime: {
+      c1: '#1aa7ec', c2: '#0f79af',
+      bg: 'radial-gradient(110% 70% at 15% -10%, rgba(26,167,236,.28), transparent 60%), linear-gradient(180deg, #0f171e, #0a1016)',
+    },
+    hulu: {
+      c1: '#1ce783', c2: '#0f9d5a',
+      bg: 'radial-gradient(110% 70% at 85% -10%, rgba(28,231,131,.20), transparent 60%), #0b0c0f',
+    },
+    apple: {
+      c1: '#f5f5f7', c2: '#8e8e93',
+      bg: 'radial-gradient(110% 70% at 50% -25%, rgba(255,255,255,.13), transparent 60%), #000',
+    },
+    paramount: {
+      c1: '#2f7bff', c2: '#00b4ff',
+      bg: 'radial-gradient(120% 80% at 50% -25%, rgba(0,100,255,.38), transparent 62%), linear-gradient(180deg, #00143d, #000a1f)',
+    },
+    peacock: {
+      c1: '#ffb000', c2: '#e5007e',
+      bg: 'radial-gradient(55% 45% at 0% 0%, rgba(255,176,0,.20), transparent 70%), radial-gradient(55% 45% at 33% 0%, rgba(229,0,126,.18), transparent 70%), radial-gradient(55% 45% at 66% 0%, rgba(0,99,219,.20), transparent 70%), radial-gradient(55% 45% at 100% 0%, rgba(0,177,79,.18), transparent 70%), #050505',
+    },
+  };
+  const brandFor = (svc, accent) => {
+    const id = `${svc.Key} ${svc.Name}`.toLowerCase();
+    const known = Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
+    const b = known ? { ...BRANDS[known] } : {
+      c1: accent || '#8aa0b8',
+      c2: accent || '#5a6b80',
+      bg: `radial-gradient(110% 70% at 10% -10%, color-mix(in srgb, ${accent || '#8aa0b8'} 32%, transparent), transparent 60%), #0b0c10`,
+    };
+    if (svc.Accent) b.c1 = svc.Accent;
+    return b;
+  };
+  const applyBrand = (svc) => {
+    const root = document.documentElement.style;
+    if (!svc) {
+      ['--js-c1', '--js-c2', '--js-bg'].forEach((v) => root.removeProperty(v));
+      return;
+    }
+    autoAccent(svc).then((accent) => {
+      if (serviceKey() !== svc.Key) return;
+      const b = brandFor(svc, accent);
+      root.setProperty('--js-c1', b.c1);
+      root.setProperty('--js-c2', b.c2);
+      root.setProperty('--js-bg', b.bg);
+    });
+  };
+
   const state = {
     cfg: null,
     cfgAt: 0,
@@ -80,9 +141,69 @@
 
     /* service page */
     .js-hide-native > :not(.js-view) { display: none !important; }
-    /* the featured banner (Media Bar etc.) belongs to the normal home screen */
+    /* the featured banner (Media Bar etc.) belongs to the normal home screen, and so does the space it reserves */
     html.js-service-open #slides-container,
     html.js-service-open .js-hide-with-service { display: none !important; }
+    html.js-service-open .homeSectionsContainer,
+    html.js-service-open #homeTab .sections { margin-top: 0 !important; }
+
+    /* the whole page takes the service's look */
+    html.js-service-open .backgroundContainer {
+      background: var(--js-bg, #0b0c10) !important;
+      transition: background .4s ease;
+    }
+    html.js-service-open .backdropContainer { display: none !important; }
+
+    /* brand accents */
+    .js-view .js-section:not(.js-switcher) .sectionTitle::before {
+      content: "";
+      display: inline-block;
+      width: .26em; height: .9em;
+      margin-right: .5em;
+      border-radius: 3px;
+      vertical-align: -.06em;
+      background: linear-gradient(180deg, var(--js-c1, #fff), var(--js-c2, #888));
+      box-shadow: 0 0 10px color-mix(in srgb, var(--js-c1, #fff) 55%, transparent);
+    }
+    .js-view .card:is(:hover, :focus, :focus-within, .show-focus, .focused) .cardImageContainer,
+    .js-view .jst-top10 .card:is(:hover, :focus, :focus-within, .show-focus, .focused) .cardImageContainer {
+      box-shadow:
+        0 16px 36px rgba(0,0,0,.5),
+        0 0 0 2px var(--js-c1, #fff),
+        0 0 26px color-mix(in srgb, var(--js-c1, #fff) 45%, transparent) !important;
+    }
+    html.js-service-open #__jf_library_focus_ring__ {
+      border-color: var(--js-c1, #fff) !important;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 18px color-mix(in srgb, var(--js-c1, #fff) 60%, transparent) !important;
+    }
+    .js-view .jst-eyebrow::before { background: var(--js-c1, #fff) !important; }
+    .js-view .jst-eyebrow::after { background: linear-gradient(90deg, color-mix(in srgb, var(--js-c1, #fff) 60%, transparent), transparent) !important; }
+    .js-view .jst-feature::before {
+      border-color: color-mix(in srgb, var(--js-c1, #fff) 22%, rgba(255,255,255,.06)) !important;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--js-c1, #fff) 9%, rgba(255,255,255,.03)) 0%, rgba(255,255,255,.01) 100%) !important;
+    }
+    .js-view .jst-x { border-color: color-mix(in srgb, var(--js-c1, #fff) 35%, rgba(255,255,255,.14)) !important; }
+    .js-view .jst-x-eb::before { background: var(--js-c1, #fff) !important; }
+    .js-view .js-badge {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--js-c1, #fff) 70%, transparent), color-mix(in srgb, var(--js-c2, #888) 45%, transparent)), rgba(20,22,28,.6);
+    }
+    .js-view .js-badge.js-requested { background: linear-gradient(180deg, rgba(255,196,80,.55), rgba(255,170,40,.3)), rgba(20,22,28,.6); }
+    .js-switcher .js-current .cardImageContainer {
+      box-shadow: 0 0 0 2px var(--js-c1, #fff), 0 0 18px color-mix(in srgb, var(--js-c1, #fff) 45%, transparent) !important;
+    }
+
+    /* motion: service pages slide in (view transitions do the morph where supported) */
+    @keyframes js-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes js-fade { from { opacity: 0; } to { opacity: 1; } }
+    .js-view.js-anim .js-hero { animation: js-in .42s cubic-bezier(.2,.9,.25,1) both; }
+    .js-view.js-anim .js-rows > .js-section { animation: js-in .46s cubic-bezier(.2,.9,.25,1) both; }
+    .js-view.js-anim .js-rows > .js-section:nth-child(2) { animation-delay: .04s; }
+    .js-view.js-anim .js-rows > .js-section:nth-child(3) { animation-delay: .08s; }
+    .js-view.js-anim .js-rows > .js-section:nth-child(n+4) { animation-delay: .12s; }
+    html.js-lite .js-view.js-anim .js-hero,
+    html.js-lite .js-view.js-anim .js-rows > .js-section { animation: js-fade .2s ease-out both; }
+    ::view-transition-group(js-logo) { animation-duration: .45s; animation-timing-function: cubic-bezier(.2,.9,.25,1); }
+    ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .28s; }
     .js-view { padding-bottom: 2em; }
     .js-hero {
       position: relative;
@@ -95,9 +216,10 @@
       overflow: hidden;
       font-family: ${FONT};
       background:
-        radial-gradient(90% 140% at 0% 0%, color-mix(in srgb, var(--js-accent, #8899aa) 45%, transparent) 0%, transparent 65%),
+        radial-gradient(90% 160% at 0% 0%, color-mix(in srgb, var(--js-c1, #8899aa) 38%, transparent) 0%, transparent 62%),
+        radial-gradient(70% 140% at 100% 100%, color-mix(in srgb, var(--js-c2, #556677) 26%, transparent) 0%, transparent 60%),
         linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.015));
-      border: 1px solid rgba(255,255,255,.09);
+      border: 1px solid color-mix(in srgb, var(--js-c1, #fff) 24%, rgba(255,255,255,.08));
       box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 20px 50px rgba(0,0,0,.25);
     }
     .js-hero img {
@@ -105,8 +227,14 @@
       box-shadow: 0 10px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.14);
     }
     .js-hero .js-eyebrow {
+      display: flex; align-items: center; gap: .6em;
       font-size: .72em; font-weight: 700; letter-spacing: .26em; text-transform: uppercase;
-      color: rgba(255,255,255,.55);
+      color: rgba(255,255,255,.6);
+    }
+    .js-hero .js-eyebrow::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--js-c1, #fff);
+      box-shadow: 0 0 10px var(--js-c1, #fff);
     }
     .js-hero h1 { margin: .15em 0 .1em; font-size: 2.1em; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
     .js-hero .js-stats { color: rgba(255,255,255,.65); font-size: .95em; }
@@ -436,7 +564,7 @@
     view?.remove();
 
     view = document.createElement('div');
-    view.className = 'js-view';
+    view.className = state.vt ? 'js-view' : 'js-view js-anim';
     view.dataset.key = key;
     sections.appendChild(view);
 
@@ -465,7 +593,8 @@
     const onService = new Set(data.library.map((i) => i.Id.replace(/-/g, '').toLowerCase()));
     const movies = data.library.filter((i) => i.Type === 'movie');
     const shows = data.library.filter((i) => i.Type === 'tv');
-    const top = (label) => `data-mp-top10="1" data-mp-label="${label}" data-mp-eyebrow="Trending on ${esc(svc.Name)}"`;
+    const when = cfg.TopSource === 'day' ? 'Trending today on' : cfg.TopSource === 'week' ? 'Trending this week on' : 'Popular on';
+    const top = (label) => `data-jst-top10="1" data-jst-label="${label}" data-jst-eyebrow="${esc(when)} ${esc(svc.Name)}"`;
     const rows = [];
 
     // Home + all services, so a remote can switch or leave without a Back key
@@ -591,15 +720,87 @@
   // clicks: service tiles, back button, and titles you don't have
   document.addEventListener('click', (e) => {
     const missing = e.target.closest?.('.js-missing');
-    if (missing && !e.target.closest('.mp-x')) {
+    if (missing && !e.target.closest('.jst-x')) {
       e.preventDefault();
       e.stopPropagation();
       request(missing);
       return;
     }
-    if (e.target.closest?.('.js-back')) {
-      e.preventDefault();
-      if (history.length > 1) history.back(); else location.hash = '#/home';
+  }, true);
+
+  // ---------------------------------------------------------------- top 10 styling (built in)
+  let themeLoaded = false;
+  const loadTheme = () => {
+    if (themeLoaded) return;
+    themeLoaded = true;
+    for (const name of ['top10', 'header', lite() ? 'expandlite' : 'expand']) {
+      const el = document.createElement('script');
+      el.src = api(`theme/${name}.js`);
+      el.defer = true;
+      document.head.appendChild(el);
+    }
+  };
+
+  // ---------------------------------------------------------------- page transitions
+  // Opening a service morphs its logo from the tile into the page header (View Transitions),
+  // everything else cross-fades. Lite mode and older browsers just slide the page in.
+  const canMorph = () => typeof document.startViewTransition === 'function' && !lite();
+  const waitFor = (test, ms = 1200) => new Promise((res) => {
+    const t0 = performance.now();
+    const tick = () => (test() || performance.now() - t0 > ms ? res() : requestAnimationFrame(tick));
+    tick();
+  });
+  const clearNames = () => document.querySelectorAll('.js-logo, .js-hero img').forEach((el) => { el.style.viewTransitionName = ''; });
+
+  const navigate = (to) => {
+    if (to.back) history.back();
+    else if (to.replace) location.replace(to.href);
+    else location.hash = to.href;
+  };
+
+  // to: { href, key (service opening, or null for home), from (element to morph), fromKey (service being left), back, replace }
+  const go = (to) => {
+    if (!canMorph()) { navigate(to); return; }
+    clearNames();
+    if (to.from) to.from.style.viewTransitionName = 'js-logo';
+    state.vt = true;
+    const t = document.startViewTransition(async () => {
+      if (to.from) to.from.style.viewTransitionName = '';
+      navigate(to);
+      await new Promise((r) => setTimeout(r, 0));
+      await sync();
+      await waitFor(() => to.key
+        ? document.querySelector(`.js-view[data-key="${CSS.escape(to.key)}"] .js-hero`)
+        : document.querySelector('.js-services') && !document.querySelector('.js-view'));
+      const target = to.key
+        ? document.querySelector('.js-view .js-hero img')
+        : to.fromKey && document.querySelector(`.js-services [data-jskey="${CSS.escape(to.fromKey)}"] .js-logo`);
+      if (target && to.from) target.style.viewTransitionName = 'js-logo';
+    });
+    t.finished.finally(() => { state.vt = false; clearNames(); });
+  };
+
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('.js-svc-card a, .js-switcher a, .js-back');
+    if (!a) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const current = serviceKey();
+    const heroImg = document.querySelector('.js-view .js-hero img');
+
+    if (a.classList.contains('js-back') || a.getAttribute('href') === '#/home') {
+      go({ href: '#/home', key: null, from: heroImg, fromKey: current, back: state.cameFromHome });
+      state.cameFromHome = false;
+      return;
+    }
+    const key = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get(PARAM);
+    if (!key || key === current) return;
+    if (current) {
+      // switching services: replace, so Back still goes home
+      go({ href: a.getAttribute('href'), key, from: null, replace: true });
+    } else {
+      state.cameFromHome = true;
+      go({ href: a.getAttribute('href'), key, from: a.querySelector('.js-logo') });
     }
   }, true);
 
@@ -621,6 +822,12 @@
       if (!state.cfg) return;
       const key = serviceKey();
       document.documentElement.classList.toggle('js-service-open', !!key);
+      loadTheme();
+      const svc = key ? state.cfg.Services.find((x) => x.Key === key) : null;
+      if ((svc?.Key || null) !== state.brandKey) {
+        state.brandKey = svc?.Key || null;
+        applyBrand(svc);
+      }
       if (key) {
         sections.querySelector(':scope > .js-services')?.remove();
         await renderService(sections, key);
