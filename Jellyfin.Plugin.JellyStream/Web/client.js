@@ -35,64 +35,181 @@
       || (navigator.hardwareConcurrency || 8) <= 4;
   };
 
-  // brand looks per service; anything else is themed from its accent color (set or taken from the logo)
+  // Each service page borrows the look of that service's own app: colors, type, card shape,
+  // focus style, header and Top 10 numbers. Unknown services are themed from their accent color.
+  //   num: Top 10 numbers: 'glass' | 'outline' (dark fill, colored edge) | 'solid' (gradient fill)
   const BRANDS = {
     netflix: {
-      c1: '#e50914', c2: '#8f0710',
-      bg: 'radial-gradient(110% 70% at 8% -10%, rgba(229,9,20,.30), transparent 60%), radial-gradient(80% 55% at 100% 0%, rgba(110,0,6,.30), transparent 60%), #0a0a0a',
+      c1: '#e50914', c2: '#b20710', numA: '#141414', numB: '#5a5a5a', num: 'outline',
+      bg: 'linear-gradient(180deg, #000 0%, #141414 22%, #141414 100%)',
+      font: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 700 !important; font-size: 1.35em !important; color: #e5e5e5 !important; }
+        .js-view .js-section .sectionTitle::before { display: none !important; }
+        .js-view .cardImageContainer { border-radius: 4px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 12px 30px rgba(0,0,0,.7) !important; }
+        .js-hero { background: transparent !important; border: none !important; box-shadow: none !important; padding-left: 0 !important; }
+        .js-hero h1 { color: #e50914; font-size: 2.6em !important; letter-spacing: -.02em; text-transform: uppercase; }
+        .js-hero .js-eyebrow { color: #b3b3b3 !important; }
+        .js-hero .js-back { border-radius: 4px !important; background: rgba(109,109,110,.7) !important; border: none !important; }
+        .js-view .jst-shade { opacity: 0 !important; }
+        .js-view .jst-feature::before { background: transparent !important; border: none !important; box-shadow: none !important; }
+        .js-view .jst-t10 { background: none !important; -webkit-text-fill-color: #e50914 !important; filter: none !important; }`,
     },
     disney: {
-      c1: '#3ec7ff', c2: '#2a4dd6',
-      bg: 'radial-gradient(120% 80% at 50% -25%, rgba(70,140,255,.38), transparent 62%), linear-gradient(180deg, #0c1b4d 0%, #0a1233 45%, #060a1c 100%)',
+      c1: '#f9f9f9', c2: '#3ec7ff', num: 'glass',
+      bg: 'radial-gradient(120% 70% at 50% -10%, #2a3c6b 0%, transparent 60%), linear-gradient(180deg, #1a1d29 0%, #13162a 100%)',
+      font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 600 !important; color: #f9f9f9 !important; }
+        .js-view .js-section .sectionTitle::before { display: none !important; }
+        .js-view .cardImageContainer { border-radius: 10px !important; box-shadow: 0 14px 28px rgba(0,0,0,.6) !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px rgba(249,249,249,.85), 0 24px 40px rgba(0,0,0,.7) !important; }
+        .js-hero { border-radius: 14px !important; background: linear-gradient(120deg, #0e2a66 0%, #1a1d29 70%) !important; border: 1px solid rgba(249,249,249,.12) !important; }
+        .js-hero h1 { font-weight: 700 !important; }
+        .js-hero .js-back { background: rgba(249,249,249,.12) !important; border-color: rgba(249,249,249,.35) !important; letter-spacing: .08em; text-transform: uppercase; }`,
     },
     max: {
-      c1: '#8f6bff', c2: '#0a3cff',
-      bg: 'radial-gradient(110% 70% at 0% -10%, rgba(125,70,255,.36), transparent 60%), radial-gradient(90% 60% at 100% 5%, rgba(10,60,255,.28), transparent 60%), #070519',
+      c1: '#ffffff', c2: '#2f5bff', numA: '#ffffff', numB: '#7d8cff', num: 'solid',
+      bg: 'radial-gradient(90% 60% at 100% 0%, rgba(47,91,255,.28), transparent 60%), radial-gradient(80% 60% at 0% 100%, rgba(120,60,255,.22), transparent 60%), #000',
+      font: '"Inter", "Helvetica Neue", Arial, sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 600 !important; letter-spacing: -.01em; color: #fff !important; }
+        .js-view .js-section .sectionTitle::before { display: none !important; }
+        .js-view .cardImageContainer { border-radius: 6px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 2px #fff, 0 0 30px rgba(47,91,255,.45) !important; }
+        .js-hero { background: transparent !important; border: none !important; box-shadow: none !important; }
+        .js-hero h1 { font-size: 2.8em !important; font-weight: 800 !important; background: linear-gradient(90deg, #fff 0%, #b7c3ff 60%, #7d8cff 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .js-hero .js-back { border-radius: 999px !important; background: #fff !important; color: #000 !important; border: none !important; }`,
     },
     prime: {
-      c1: '#1aa7ec', c2: '#0f79af',
-      bg: 'radial-gradient(110% 70% at 15% -10%, rgba(26,167,236,.28), transparent 60%), linear-gradient(180deg, #0f171e, #0a1016)',
+      c1: '#1aa7ec', c2: '#0f79af', numA: '#1aa7ec', numB: '#8fdcff', num: 'solid',
+      bg: 'linear-gradient(180deg, #0f171e 0%, #0f171e 100%)',
+      font: '"Amazon Ember", Arial, "Helvetica Neue", sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 700 !important; color: #fff !important; }
+        .js-view .js-section .sectionTitle::before {
+          content: "✓" !important; width: 1.15em !important; height: 1.15em !important; border-radius: 50% !important;
+          background: #1aa7ec !important; color: #0f171e; font-size: .62em; line-height: 1.15em; text-align: center;
+          vertical-align: .25em !important; box-shadow: none !important; font-weight: 900;
+        }
+        .js-view .cardImageContainer { border-radius: 8px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 16px 34px rgba(0,0,0,.6) !important; }
+        .js-hero { border-radius: 8px !important; background: #1b2530 !important; border: none !important; }
+        .js-hero h1 { font-weight: 700 !important; }
+        .js-hero .js-back { border-radius: 6px !important; background: #1aa7ec !important; color: #0f171e !important; border: none !important; }`,
     },
     hulu: {
-      c1: '#1ce783', c2: '#0f9d5a',
-      bg: 'radial-gradient(110% 70% at 85% -10%, rgba(28,231,131,.20), transparent 60%), #0b0c0f',
+      c1: '#1ce783', c2: '#0f9d5a', numA: '#0b0c0f', numB: '#1ce783', num: 'outline',
+      bg: 'radial-gradient(70% 50% at 0% 100%, rgba(28,231,131,.12), transparent 60%), #0b0c0f',
+      font: '"Graphik", "Inter", "Helvetica Neue", Arial, sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 700 !important; text-transform: uppercase; letter-spacing: .12em; font-size: 1em !important; color: #fff !important; }
+        .js-view .js-section .sectionTitle::before { width: .5em !important; height: .5em !important; border-radius: 50% !important; vertical-align: .1em !important; background: #1ce783 !important; }
+        .js-view .cardImageContainer { border-radius: 6px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #1ce783, 0 16px 34px rgba(0,0,0,.6) !important; }
+        .js-hero { background: transparent !important; border: none !important; border-bottom: 3px solid #1ce783 !important; border-radius: 0 !important; box-shadow: none !important; }
+        .js-hero h1 { font-weight: 800 !important; }
+        .js-hero .js-back { border-radius: 4px !important; background: #1ce783 !important; color: #0b0c0f !important; border: none !important; text-transform: uppercase; letter-spacing: .08em; }`,
     },
     apple: {
-      c1: '#f5f5f7', c2: '#8e8e93',
-      bg: 'radial-gradient(110% 70% at 50% -25%, rgba(255,255,255,.13), transparent 60%), #000',
+      c1: '#f5f5f7', c2: '#86868b', num: 'glass',
+      bg: 'radial-gradient(100% 60% at 50% -10%, #2a2a2e 0%, transparent 65%), #000',
+      font: '-apple-system, "SF Pro Display", "Inter", "Helvetica Neue", sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 600 !important; letter-spacing: -.015em; color: #f5f5f7 !important; }
+        .js-view .js-section .sectionTitle::before { display: none !important; }
+        .js-view .cardImageContainer { border-radius: 12px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 22px 44px rgba(0,0,0,.8) !important; }
+        .js-hero { border-radius: 20px !important; background: rgba(255,255,255,.06) !important; border: 1px solid rgba(255,255,255,.12) !important; }
+        .js-hero h1 { font-weight: 700 !important; letter-spacing: -.03em; }
+        .js-hero .js-back { background: rgba(255,255,255,.12) !important; border: 1px solid rgba(255,255,255,.2) !important; }`,
     },
     paramount: {
-      c1: '#2f7bff', c2: '#00b4ff',
-      bg: 'radial-gradient(120% 80% at 50% -25%, rgba(0,100,255,.38), transparent 62%), linear-gradient(180deg, #00143d, #000a1f)',
+      c1: '#0064ff', c2: '#7fb2ff', numA: '#0064ff', numB: '#9cc4ff', num: 'solid',
+      bg: 'radial-gradient(120% 70% at 50% -15%, #0b3fae 0%, transparent 60%), linear-gradient(180deg, #001a4d 0%, #000c26 100%)',
+      font: '"Montserrat", "Inter", "Helvetica Neue", Arial, sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 800 !important; color: #fff !important; }
+        .js-view .js-section .sectionTitle::before { background: #0064ff !important; box-shadow: none !important; }
+        .js-view .cardImageContainer { border-radius: 4px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 0 26px rgba(0,100,255,.6) !important; }
+        .js-hero { border-radius: 6px !important; background: linear-gradient(100deg, #0064ff 0%, #0039a6 45%, rgba(0,20,60,.4) 100%) !important; border: none !important; }
+        .js-hero h1 { font-weight: 800 !important; }
+        .js-hero .js-back { border-radius: 4px !important; background: #fff !important; color: #0039a6 !important; border: none !important; }`,
     },
     peacock: {
-      c1: '#ffb000', c2: '#e5007e',
-      bg: 'radial-gradient(55% 45% at 0% 0%, rgba(255,176,0,.20), transparent 70%), radial-gradient(55% 45% at 33% 0%, rgba(229,0,126,.18), transparent 70%), radial-gradient(55% 45% at 66% 0%, rgba(0,99,219,.20), transparent 70%), radial-gradient(55% 45% at 100% 0%, rgba(0,177,79,.18), transparent 70%), #050505',
+      c1: '#ffb000', c2: '#e5007e', numA: '#ffb000', numB: '#e5007e', num: 'solid',
+      bg: '#000',
+      font: '"Peacock Sans", "Inter", "Helvetica Neue", Arial, sans-serif',
+      css: `
+        .js-view .sectionTitle { font-weight: 700 !important; color: #fff !important; }
+        .js-view .js-section .sectionTitle::before { background: linear-gradient(180deg, #ffb000, #ff6d00, #e5007e, #6f2da8, #0063db, #00b14f) !important; box-shadow: none !important; }
+        .js-view .cardImageContainer { border-radius: 8px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, -6px 0 22px rgba(255,176,0,.45), 6px 0 22px rgba(229,0,126,.45), 0 8px 26px rgba(0,99,219,.45) !important; }
+        .js-hero { background: transparent !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+        .js-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #ffb000, #ff6d00, #e5007e, #6f2da8, #0063db, #00b14f); }
+        .js-hero .js-back { border-radius: 999px !important; background: #fff !important; color: #000 !important; border: none !important; }`,
     },
   };
-  const brandFor = (svc, accent) => {
+
+  const brandKeyFor = (svc) => {
     const id = `${svc.Key} ${svc.Name}`.toLowerCase();
-    const known = Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
-    const b = known ? { ...BRANDS[known] } : {
-      c1: accent || '#8aa0b8',
-      c2: accent || '#5a6b80',
-      bg: `radial-gradient(110% 70% at 10% -10%, color-mix(in srgb, ${accent || '#8aa0b8'} 32%, transparent), transparent 60%), #0b0c10`,
-    };
-    if (svc.Accent) b.c1 = svc.Accent;
-    return b;
+    return Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
   };
+
+  // scope every brand rule to html[data-js-brand="..."] (commas inside :is(...) stay put)
+  const splitSel = (sel) => {
+    const out = [];
+    let depth = 0, cur = '';
+    for (const ch of sel) {
+      if (ch === '(') depth++;
+      if (ch === ')') depth--;
+      if (ch === ',' && depth === 0) { out.push(cur); cur = ''; } else cur += ch;
+    }
+    out.push(cur);
+    return out.map((x) => x.trim()).filter(Boolean);
+  };
+  const brandCss = (() => {
+    const el = document.createElement('style');
+    el.id = 'jellystream-brands';
+    el.textContent = Object.entries(BRANDS).map(([k, b]) => {
+      const rules = b.css.replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
+        `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
+      return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; }`;
+    }).join('\n');
+    return el;
+  })();
+
   const applyBrand = (svc) => {
-    const root = document.documentElement.style;
+    const html = document.documentElement;
+    const root = html.style;
     if (!svc) {
-      ['--js-c1', '--js-c2', '--js-bg'].forEach((v) => root.removeProperty(v));
+      ['--js-c1', '--js-c2', '--js-bg', '--jst-num', '--jst-num-a', '--jst-num-b'].forEach((v) => root.removeProperty(v));
+      delete html.dataset.jsBrand;
+      delete html.dataset.jstNum;
       return;
     }
-    autoAccent(svc).then((accent) => {
-      if (serviceKey() !== svc.Key) return;
-      const b = brandFor(svc, accent);
-      root.setProperty('--js-c1', b.c1);
+    const set = (b) => {
+      root.setProperty('--js-c1', svc.Accent || b.c1);
       root.setProperty('--js-c2', b.c2);
       root.setProperty('--js-bg', b.bg);
+      root.setProperty('--jst-num', b.num || 'glass');
+      root.setProperty('--jst-num-a', b.numA || b.c1);
+      root.setProperty('--jst-num-b', b.numB || b.c2);
+      html.dataset.jstNum = b.num || 'glass';
+    };
+    const known = brandKeyFor(svc);
+    if (known) {
+      html.dataset.jsBrand = known;
+      set(BRANDS[known]);
+      return;
+    }
+    delete html.dataset.jsBrand;
+    autoAccent(svc).then((accent) => {
+      if (serviceKey() !== svc.Key) return;
+      const c = svc.Accent || accent || '#8aa0b8';
+      set({ c1: c, c2: c, num: 'glass', bg: `radial-gradient(110% 70% at 10% -10%, color-mix(in srgb, ${c} 32%, transparent), transparent 60%), #0b0c10` });
     });
   };
 
@@ -107,36 +224,38 @@
   const css = document.createElement('style');
   css.id = 'jellystream-css';
   css.textContent = `
-    /* service tiles on the home screen */
+    /* service tiles on the home screen: the logo is the tile */
+    .js-services .js-svc-card { width: clamp(112px, 10vw, 172px) !important; }
+    .js-services .js-svc-card .cardPadder { padding-bottom: 100% !important; }
+    .js-services .js-svc-card .cardScalable { border-radius: 22% !important; }
     .js-services .js-svc-card .cardImageContainer {
-      border-radius: 18px !important;
-      overflow: hidden;
       display: flex !important;
       align-items: center;
       justify-content: center;
-      background:
-        radial-gradient(120% 120% at 20% 0%, color-mix(in srgb, var(--js-accent, #8899aa) 55%, transparent) 0%, transparent 60%),
-        linear-gradient(160deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.03) 45%, rgba(0,0,0,.25) 100%),
-        rgba(22,24,30,.92) !important;
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 12px 28px rgba(0,0,0,.35);
+      border-radius: 22% !important;
+      overflow: hidden;
+      background: linear-gradient(160deg, color-mix(in srgb, var(--js-accent, #8899aa) 55%, #20232b), #14161c) !important;
+      box-shadow: 0 10px 24px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08) !important;
+      transition: transform .22s cubic-bezier(.2,.9,.25,1), box-shadow .22s ease;
     }
     .js-services .js-svc-card .js-logo {
-      width: 34%;
-      aspect-ratio: 1;
-      border-radius: 22%;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
       object-fit: cover;
-      box-shadow: 0 8px 22px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.12);
-      transition: transform .25s ease;
     }
     .js-services .js-svc-card .js-logo-text {
-      font: 800 1.4em/1.1 ${FONT};
+      font: 800 1.15em/1.1 ${FONT};
       letter-spacing: -.02em;
       color: #fff;
       text-align: center;
-      padding: 0 .6em;
+      padding: 0 .5em;
     }
-    .js-services .js-svc-card:is(:hover, :focus-within) .js-logo { transform: scale(1.06); }
+    .js-services .js-svc-card:is(:hover, :focus-within, .show-focus, .focused) .cardImageContainer {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 30px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.9), 0 0 24px color-mix(in srgb, var(--js-accent, #fff) 55%, transparent) !important;
+    }
+    .js-services .cardFooter { padding-top: .5em; }
+    .js-services .cardText { font-family: ${FONT}; }
     .js-services .cardText-secondary { opacity: .6; }
 
     /* service page */
@@ -267,11 +386,45 @@
 
     /* scrolling rows (plain markup, so no Jellyfin scroller upgrade is needed) */
     .js-view .emby-scroller.js-scroller, .js-services .emby-scroller.js-scroller {
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
       scrollbar-width: none;
       scroll-behavior: smooth;
-      padding: 0 3.3%;
+      margin: 0 !important;
+      padding: 14px 3.3% 18px !important;
+      overscroll-behavior-x: contain;
+    }
+    .js-rowwrap { position: relative; margin-top: -8px; }
+    .js-arrow {
+      position: absolute;
+      top: 14px; bottom: 18px;
+      z-index: 8;
+      width: 3.3%;
+      min-width: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .js-arrow .material-icons {
+      font-size: 2.2em;
+      width: 1.5em; height: 1.5em;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(20,22,28,.72);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 6px 18px rgba(0,0,0,.5);
+      transition: transform .15s ease, background .15s ease;
+    }
+    .js-arrow:hover .material-icons { transform: scale(1.1); background: rgba(40,44,54,.9); }
+    .js-prev { left: 0; background: linear-gradient(90deg, rgba(0,0,0,.45), transparent); }
+    .js-next { right: 0; background: linear-gradient(270deg, rgba(0,0,0,.45), transparent); }
+    @media (hover: hover) {
+      .js-rowwrap:hover .js-arrow.on { opacity: 1; pointer-events: auto; }
     }
     .js-scroller::-webkit-scrollbar { display: none; }
     .js-scroller > .itemsContainer { display: flex; flex-wrap: nowrap; }
@@ -334,6 +487,7 @@
     .js-toast.on { opacity: 1; transform: translate(-50%, 0); }
   `;
   document.head.appendChild(css);
+  document.head.appendChild(brandCss);
 
   let toastTimer;
   const toast = (msg) => {
@@ -422,10 +576,47 @@
       <div class="sectionTitleContainer sectionTitleContainer-cards padded-left">
         <h2 class="sectionTitle sectionTitle-cards">${esc(title)}</h2>
       </div>
-      <div class="emby-scroller js-scroller">
-        <div class="itemsContainer scrollSlider focuscontainer-x">${cards.join('')}</div>
+      <div class="js-rowwrap">
+        <button type="button" class="js-arrow js-prev" tabindex="-1" aria-label="Scroll left"><span class="material-icons">chevron_left</span></button>
+        <div class="emby-scroller js-scroller">
+          <div class="itemsContainer scrollSlider focuscontainer-x">${cards.join('')}</div>
+        </div>
+        <button type="button" class="js-arrow js-next" tabindex="-1" aria-label="Scroll right"><span class="material-icons">chevron_right</span></button>
       </div>
     </div>` : '';
+
+  // arrows show only when there's more to see in that direction
+  const updateArrows = (sc) => {
+    const wrap = sc.parentElement;
+    if (!wrap?.classList.contains('js-rowwrap')) return;
+    const max = sc.scrollWidth - sc.clientWidth;
+    wrap.querySelector('.js-prev')?.classList.toggle('on', sc.scrollLeft > 4);
+    wrap.querySelector('.js-next')?.classList.toggle('on', sc.scrollLeft < max - 4);
+  };
+  const updateAllArrows = (root = document) => root.querySelectorAll('.js-scroller').forEach(updateArrows);
+  document.addEventListener('scroll', (e) => {
+    if (e.target.classList?.contains('js-scroller')) updateArrows(e.target);
+  }, { capture: true, passive: true });
+  addEventListener('resize', () => updateAllArrows());
+  document.addEventListener('mouseover', (e) => {
+    const wrap = e.target.closest?.('.js-rowwrap');
+    if (wrap) updateArrows(wrap.querySelector('.js-scroller'));
+  }, { passive: true });
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest?.('.js-arrow');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const sc = btn.parentElement.querySelector('.js-scroller');
+    sc.scrollBy({ left: (btn.classList.contains('js-prev') ? -1 : 1) * sc.clientWidth * 0.85, behavior: 'smooth' });
+  }, true);
+  // Shift + mouse wheel scrolls a row sideways (trackpads scroll sideways on their own)
+  document.addEventListener('wheel', (e) => {
+    const sc = e.target.closest?.('.js-scroller');
+    if (!sc || !e.shiftKey || e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    sc.scrollBy({ left: e.deltaY, behavior: 'auto' });
+    e.preventDefault();
+  }, { passive: false });
 
   // ---------------------------------------------------------------- config
   const loadConfig = async (force) => {
@@ -491,10 +682,10 @@
     const tiles = cfg.Services.map((s) => {
       const n = s.Movies + s.Shows;
       return `
-      <div class="card overflowBackdropCard card-hoverable js-svc-card" data-jskey="${esc(s.Key)}">
+      <div class="card card-hoverable js-svc-card" data-jskey="${esc(s.Key)}">
         <div class="cardBox cardBox-bottompadded">
           <div class="cardScalable">
-            <div class="cardPadder cardPadder-overflowBackdrop"></div>
+            <div class="cardPadder"></div>
             <a class="cardImageContainer cardContent itemAction" href="#/home?${PARAM}=${encodeURIComponent(s.Key)}" aria-label="${esc(s.Name)}">
               ${s.Logo ? `<img class="js-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : `<span class="js-logo-text">${esc(s.Name)}</span>`}
             </a>
@@ -512,6 +703,7 @@
     row = wrap.firstElementChild;
     row.dataset.v = String(state.cfgAt);
     if (cfg.HomeRowPosition === 'bottom') sections.appendChild(row); else sections.prepend(row);
+    requestAnimationFrame(() => updateAllArrows(row));
 
     cfg.Services.forEach((s) => autoAccent(s).then((col) => {
       if (col) row.querySelector(`[data-jskey="${CSS.escape(s.Key)}"]`)?.style.setProperty('--js-accent', col);
@@ -665,6 +857,8 @@
     const box = view.querySelector('.js-rows');
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
+    requestAnimationFrame(() => updateAllArrows(box));
+    setTimeout(() => updateAllArrows(box), 600); // after the Top 10 numbers resize their cards
   };
 
   const closeService = (sections) => {

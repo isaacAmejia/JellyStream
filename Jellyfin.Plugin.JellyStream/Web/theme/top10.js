@@ -90,6 +90,8 @@
       -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
       -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
     }
+    html[data-jst-num="outline"] .jst-top10 .jst-glass,
+    html[data-jst-num="solid"] .jst-top10 .jst-glass { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
     .jst-top10 .jst-glass {
       -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
       -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
@@ -101,8 +103,15 @@
 
   // ---- render each number once: a shape mask + the glass surface ----
   const cache = new Map();
-  const render = (txt) => {
-    if (cache.has(txt)) return cache.get(txt);
+  // the service page sets the number style: glass (default), outline (dark fill, colored edge) or solid (gradient fill)
+  const numStyle = () => {
+    const cs = getComputedStyle(document.documentElement);
+    const v = (n, d) => cs.getPropertyValue(n).trim() || d;
+    return { kind: v('--jst-num', 'glass'), a: v('--jst-num-a', '#ffffff'), b: v('--jst-num-b', '#aaaaaa') };
+  };
+  const render = (txt, st = { kind: 'glass' }) => {
+    const ck = `${st.kind}|${st.a}|${st.b}|${txt}`;
+    if (cache.has(ck)) return cache.get(ck);
     const fs = 400, pad = 28, font = `800 ${fs}px ${FONT}`;
     const spacing = txt.length > 1 ? '-24px' : '0px';
     const m = document.createElement('canvas').getContext('2d');
@@ -127,6 +136,40 @@
     mx.fillText(txt, ox, oy);
 
     const [gc, gx] = mk();
+
+    if (st.kind === 'outline' || st.kind === 'solid') {
+      const out = { mask: null, art: null, w, h, pad, gw: L + R, gh: A + D };
+      if (st.kind === 'outline') {
+        // dark numeral with a thick colored edge (the classic streaming Top 10 look)
+        gx.lineJoin = 'round';
+        gx.lineWidth = 14;
+        gx.strokeStyle = st.b;
+        gx.strokeText(txt, ox, oy);
+        gx.fillStyle = st.a;
+        gx.fillText(txt, ox, oy);
+        mx.lineJoin = 'round';
+        mx.lineWidth = 14;
+        mx.strokeStyle = '#000';
+        mx.strokeText(txt, ox, oy);
+      } else {
+        const g = gx.createLinearGradient(0, pad, 0, h - pad);
+        g.addColorStop(0, st.b);
+        g.addColorStop(1, st.a);
+        gx.fillStyle = g;
+        gx.fillText(txt, ox, oy);
+        gx.globalCompositeOperation = 'source-atop';
+        const sheen = gx.createLinearGradient(0, pad, w, h - pad);
+        sheen.addColorStop(0, 'rgba(255,255,255,0.3)');
+        sheen.addColorStop(0.4, 'rgba(255,255,255,0)');
+        gx.fillStyle = sheen;
+        gx.fillRect(0, 0, w, h);
+      }
+      out.mask = mc.toDataURL();
+      out.art = gc.toDataURL();
+      cache.set(ck, out);
+      return out;
+    }
+
     const tint = gx.createLinearGradient(0, pad, 0, h - pad);
     tint.addColorStop(0, 'rgba(255,255,255,0.34)');
     tint.addColorStop(0.5, 'rgba(255,255,255,0.18)');
@@ -167,7 +210,7 @@
     edge(0, -3, 0.3);
 
     const out = { mask: mc.toDataURL(), art: gc.toDataURL(), w, h, pad, gw: L + R, gh: A + D };
-    cache.set(txt, out);
+    cache.set(ck, out);
     return out;
   };
 
@@ -191,6 +234,7 @@
   const apply = () => {
     const secs = new Set();
     document.querySelectorAll('.verticalSection[data-jst-top10]').forEach(sec => secs.add(sec));
+    const st = numStyle(), sig = `${st.kind}${st.a}${st.b}`;
     secs.forEach(sec => {
       if (!setup(sec)) return;
       const baseGap = +sec.dataset.jstGap, size = +sec.dataset.jstSize, ov = size * OVERLAP;
@@ -202,7 +246,8 @@
 
         const after = i - MAX; // 0 = first card after the top 10
         const key = after < 0 ? String(i + 1) : 'p' + Math.min(after, TAPER + 1);
-        if (card.dataset.jstDone === key) return;
+        const doneKey = after < 0 ? `${key}|${sig}` : key;
+        if (card.dataset.jstDone === doneKey) return;
 
         if (!card.dataset.jstW) {
           const w = card.getBoundingClientRect().width;
@@ -225,11 +270,11 @@
           const ml = baseGap + (mrT - baseGap) * ease;
           cardBox.style.setProperty('margin-left', ml + 'px', 'important');
           setWidth(card, (poster + ml + mrT) + 'px');
-          card.dataset.jstDone = key;
+          card.dataset.jstDone = doneKey;
           return;
         }
 
-        const r = render(key);
+        const r = render(key, st);
         const s = size / r.gh;
         const gap = Math.max(baseGap, r.gw * s - ov + 6);
         cardBox.style.setProperty('margin-left', gap + 'px', 'important');
@@ -250,7 +295,7 @@
         glass.style.backgroundImage = `url(${r.art})`;
         glass.style.webkitMaskImage = glass.style.maskImage = `url(${r.mask})`;
         shade.style.webkitMaskImage = shade.style.maskImage = `url(${r.mask})`;
-        card.dataset.jstDone = key;
+        card.dataset.jstDone = doneKey;
       });
     });
   };
