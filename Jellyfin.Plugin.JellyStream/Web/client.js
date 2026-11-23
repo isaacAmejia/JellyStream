@@ -44,6 +44,7 @@
     netflix: {
       c1: '#e50914', c2: '#b20710', numA: '#141414', numB: '#595959', num: 'outline',
       base: '#141414', bg: '#141414', shape: 'landscape', caption: 'overlay',
+      nav: 'top', tabs: ['Home', 'Shows', 'Movies'],
       font: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif',
       labels: { tagMovie: 'FILM', tagTv: 'SERIES', play: 'Play', info: 'More Info', request: 'Request' },
       css: `
@@ -68,6 +69,7 @@
       c1: '#f9f9f9', c2: '#0063e5', num: 'glass',
       base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #2b3a66 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
       shape: 'landscape', caption: 'none',
+      nav: 'pill', tabs: ['For You', 'Series', 'Movies'],
       font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
       labels: { tagMovie: 'FEATURED', tagTv: 'FEATURED', play: 'PLAY', info: '', request: 'REQUEST' },
       css: `
@@ -84,14 +86,15 @@
         .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px rgba(249,249,249,.8), 0 24px 40px rgba(0,0,0,.7) !important; }`,
     },
     max: {
-      c1: '#ffffff', c2: '#2f5bff', numA: '#ffffff', numB: '#8aa0ff', num: 'solid',
-      base: '#000', bg: 'radial-gradient(90% 50% at 100% 0%, rgba(47,91,255,.25), transparent 60%), #000',
+      c1: '#ffffff', c2: '#2b5cff', numA: '#ffffff', numB: '#8aa0ff', num: 'solid',
+      base: '#020b2e', bg: 'radial-gradient(120% 60% at 50% -10%, #1238c4 0%, transparent 55%), linear-gradient(180deg, #071a63 0%, #020b2e 45%, #01061a 100%)',
       shape: 'portrait', caption: 'none',
+      nav: 'rail', tabs: ['Home', 'Series', 'Movies'],
       font: '"Inter", "Helvetica Neue", Arial, sans-serif',
       labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Play', info: 'More Info', request: 'Request' },
       css: `
         .js-bb { height: min(70vh, 740px) !important; }
-        .js-bb-shade { background: linear-gradient(0deg, #000 0%, rgba(0,0,0,.6) 30%, transparent 60%), linear-gradient(90deg, rgba(0,0,0,.75) 0%, transparent 55%) !important; }
+        .js-bb-shade { background: linear-gradient(0deg, #020b2e 0%, rgba(2,11,46,.6) 30%, transparent 60%), linear-gradient(90deg, rgba(2,11,46,.85) 0%, transparent 55%) !important; }
         .js-bb-tag { color: #fff; letter-spacing: .3em; font-size: .72em; font-weight: 700; opacity: .8; }
         .js-bb-title { font-weight: 800 !important; letter-spacing: -.02em; }
         .js-bb-btn { border-radius: 999px !important; font-weight: 600 !important; padding: .6em 1.8em !important; }
@@ -100,11 +103,12 @@
         .js-view .sectionTitle { font-weight: 600 !important; letter-spacing: -.01em; color: #fff !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
         .js-view .js-lib .cardImageContainer { border-radius: 6px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 2px #fff, 0 0 30px rgba(47,91,255,.45) !important; }`,
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 0 34px rgba(43,92,255,.6) !important; }`,
     },
     prime: {
       c1: '#1a98ff', c2: '#0f79af', numA: '#1a98ff', numB: '#8fdcff', num: 'solid',
       base: '#0f171e', bg: '#0f171e', shape: 'landscape', caption: 'below',
+      nav: 'rail', tabs: ['Home', 'TV Shows', 'Movies'],
       font: '"Amazon Ember", Arial, "Helvetica Neue", sans-serif',
       labels: { tagMovie: '✓ Included with Prime', tagTv: '✓ Included with Prime', play: 'Play', info: 'Details', request: 'Request' },
       css: `
@@ -125,25 +129,30 @@
         .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 16px 34px rgba(0,0,0,.6) !important; }`,
     },
     hulu: {
-      c1: '#1ce783', c2: '#0f9d5a', numA: '#0b0c0f', numB: '#1ce783', num: 'outline',
-      base: '#0b0c0f', bg: '#0b0c0f', shape: 'landscape', caption: 'below',
-      font: '"Graphik", "Inter", "Helvetica Neue", Arial, sans-serif',
-      labels: { tagMovie: 'TRENDING ON HULU', tagTv: 'TRENDING ON HULU', play: 'START WATCHING', info: 'DETAILS', request: 'REQUEST' },
+      c1: '#1ce783', c2: '#0f9d5a', numA: '#1a1d29', numB: '#1ce783', num: 'outline',
+      base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #1d3b37 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
+      shape: 'landscape', caption: 'none',
+      nav: 'pill', tabs: ['For You', 'Series', 'Movies'],
+      font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
+      labels: { tagMovie: 'HULU', tagTv: 'HULU', play: 'PLAY', info: '', request: 'REQUEST' },
       css: `
-        .js-bb { height: min(66vh, 700px) !important; }
-        .js-bb-tag { color: #1ce783; letter-spacing: .14em; font-size: .78em; font-weight: 700; }
-        .js-bb-title { font-weight: 800 !important; text-transform: uppercase; letter-spacing: .01em; }
-        .js-bb-btn { border-radius: 4px !important; letter-spacing: .12em; font-size: .82em !important; font-weight: 700 !important; padding: .8em 1.6em !important; }
-        .js-bb-btn.js-primary { background: #fff !important; color: #0b0c0f !important; }
-        .js-bb-btn.js-secondary { background: transparent !important; border: 2px solid rgba(255,255,255,.9) !important; color: #fff !important; }
-        .js-view .sectionTitle { font-weight: 700 !important; text-transform: uppercase; letter-spacing: .12em; font-size: .95em !important; color: #fff !important; }
+        .js-bb { height: min(50vh, 520px) !important; margin: 1em 3.3% 1.6em !important; border-radius: 10px; box-shadow: 0 26px 40px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(249,249,249,.1); }
+        .js-bb-tag { color: #1ce783; letter-spacing: .08em; font-size: 1.1em; font-weight: 900; text-transform: lowercase; }
+        .js-bb-title { font-weight: 700 !important; }
+        .js-bb-btn { border-radius: 4px !important; letter-spacing: .15em; text-transform: uppercase; font-weight: 700 !important; padding: .7em 2em !important; }
+        .js-bb-btn.js-primary { background: #f9f9f9 !important; color: #0e0b14 !important; }
+        .js-bb-btn.js-secondary { width: 2.9em; padding: 0 !important; border-radius: 50% !important; background: rgba(0,0,0,.6) !important; border: 2px solid #f9f9f9 !important; color: #f9f9f9 !important; }
+        .js-tab.on { background: #1ce783 !important; color: #0b0c0f !important; }
+        .js-view .sectionTitle { font-weight: 600 !important; font-size: 1.2em !important; color: #f9f9f9 !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .js-lib .cardImageContainer { border-radius: 6px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #1ce783, 0 16px 34px rgba(0,0,0,.6) !important; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), 0 16px 10px -10px rgba(0,0,0,.73), inset 0 0 0 3px rgba(249,249,249,.1) !important; transition: transform .25s cubic-bezier(.25,.46,.45,.94), box-shadow .25s ease; }
+        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.05); box-shadow: 0 40px 58px -16px rgba(0,0,0,.8), inset 0 0 0 4px #1ce783 !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px #1ce783, 0 24px 40px rgba(0,0,0,.7) !important; }`,
     },
     apple: {
       c1: '#f5f5f7', c2: '#86868b', num: 'glass',
-      base: '#000', bg: '#000', shape: 'landscape', caption: 'below',
+      base: '#000', bg: '#000', shape: 'portrait', caption: 'none',
+      nav: 'glass', tabs: ['Home', 'TV Shows', 'Movies'],
       font: '-apple-system, "SF Pro Display", "Inter", "Helvetica Neue", sans-serif',
       labels: { tagMovie: 'Movie', tagTv: 'TV Show', play: 'Play', info: 'Details', request: 'Request' },
       css: `
@@ -153,8 +162,10 @@
         .js-bb-title { font-weight: 700 !important; letter-spacing: -.035em; }
         .js-bb-btn { border-radius: 10px !important; font-weight: 600 !important; padding: .65em 1.9em !important; }
         .js-bb-btn.js-primary { background: #fff !important; color: #000 !important; }
-        .js-bb-btn.js-secondary { background: rgba(255,255,255,.16) !important; color: #fff !important; }
-        html:not(.js-lite) .js-bb-btn.js-secondary { -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+        .js-bb-btn.js-primary { box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 8px 24px rgba(0,0,0,.4); }
+        .js-bb-btn.js-secondary { background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.1)) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(0,0,0,.35); }
+        html:not(.js-lite) .js-bb-btn.js-secondary { -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%); }
+        .js-view .js-lib .cardImageContainer { border-radius: 14px !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 26px rgba(0,0,0,.6) !important; }
         .js-view .sectionTitle { font-weight: 600 !important; letter-spacing: -.015em; color: #f5f5f7 !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
         .js-view .js-lib .cardImageContainer { border-radius: 12px !important; }
@@ -165,11 +176,13 @@
       c1: '#0064ff', c2: '#7fb2ff', numA: '#0064ff', numB: '#9cc4ff', num: 'solid',
       base: '#000a1f', bg: 'radial-gradient(120% 60% at 50% -10%, #0b3fae 0%, transparent 55%), linear-gradient(180deg, #001a4d 0%, #000a1f 60%)',
       shape: 'portrait', caption: 'none',
+      nav: 'top', tabs: ['Home', 'Shows', 'Movies'],
       font: '"Montserrat", "Inter", "Helvetica Neue", Arial, sans-serif',
       labels: { tagMovie: 'PARAMOUNT+', tagTv: 'PARAMOUNT+', play: 'WATCH NOW', info: 'MORE INFO', request: 'REQUEST' },
       css: `
         .js-bb { height: min(62vh, 660px) !important; }
         .js-bb-shade { background: linear-gradient(90deg, rgba(0,20,61,.95) 0%, rgba(0,20,61,.6) 35%, transparent 65%), linear-gradient(0deg, #000a1f 0%, transparent 40%) !important; }
+        .js-tab.on { box-shadow: inset 0 -3px 0 #0064ff !important; }
         .js-bb-tag { color: #7fb2ff; letter-spacing: .25em; font-size: .72em; font-weight: 800; }
         .js-bb-title { font-weight: 800 !important; }
         .js-bb-btn { border-radius: 4px !important; letter-spacing: .1em; font-size: .85em !important; font-weight: 800 !important; padding: .8em 1.7em !important; }
@@ -183,6 +196,7 @@
     peacock: {
       c1: '#ffb000', c2: '#e5007e', numA: '#ffb000', numB: '#e5007e', num: 'solid',
       base: '#000', bg: '#000', shape: 'landscape', caption: 'overlay',
+      nav: 'rail', tabs: ['Home', 'TV', 'Movies'],
       font: '"Peacock Sans", "Inter", "Helvetica Neue", Arial, sans-serif',
       labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Watch Now', info: 'Details', request: 'Request' },
       css: `
@@ -200,7 +214,7 @@
     },
   };
   const GENERIC = {
-    shape: 'portrait', caption: 'below', base: '#0b0c10',
+    shape: 'portrait', caption: 'below', base: '#0b0c10', nav: 'top', tabs: ['Home', 'Shows', 'Movies'],
     labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Play', info: 'Details', request: 'Request' },
   };
 
@@ -554,6 +568,40 @@
     .js-cap-overlay .cardFooter, .js-cap-none .cardFooter { display: none !important; }
     .js-cap-below .cardText { text-align: left !important; padding-left: .15em; }
     .js-cap-below .cardText-first { font-weight: 600; }
+
+    /* the app's own navigation: filters the page to shows or movies */
+    .js-view[data-f="movie"] .js-section[data-kind="tv"],
+    .js-view[data-f="tv"] .js-section[data-kind="movie"] { display: none !important; }
+    .js-tabs { position: absolute; z-index: 3; display: flex; gap: .4em; }
+    .js-tab {
+      border: none; cursor: pointer; font: inherit; color: rgba(255,255,255,.72);
+      background: transparent; padding: .45em .9em; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: .5em;
+      transition: color .15s ease, background .15s ease;
+    }
+    .js-tab:hover { color: #fff; }
+    .js-tab.on { color: #fff; font-weight: 700; }
+    /* top: text links across the top (Netflix, Paramount+) */
+    .js-nav-top { top: 1.1em; left: calc(3.3% - .9em); }
+    .js-nav-top .js-tab { font-size: 1.05em; }
+    /* pill: centered tabs (Disney+ with Hulu) */
+    .js-nav-pill { top: 1.1em; left: 50%; transform: translateX(-50%); }
+    .js-nav-pill .js-tab { border-radius: 999px; padding: .5em 1.2em; background: rgba(249,249,249,.08); font-weight: 600; }
+    .js-nav-pill .js-tab.on { background: #f9f9f9; color: #0e0b14; }
+    /* rail: icons down the left edge (HBO Max, Prime Video, Peacock) */
+    .js-nav-rail { left: 0; top: 0; bottom: 0; flex-direction: column; justify-content: center; padding: 0 .6em; gap: .3em;
+      background: linear-gradient(90deg, rgba(0,0,0,.65), transparent); }
+    .js-nav-rail .js-tab { flex-direction: column; gap: .15em; font-size: .72em; padding: .6em .5em; min-width: 4.6em; }
+    .js-nav-rail .js-tab .material-icons { font-size: 1.9em; }
+    .js-nav-rail .js-tab.on { background: rgba(255,255,255,.14); }
+    .js-has-rail .js-bb-content { left: calc(3.3% + 4.5em); }
+    /* glass: a floating Liquid Glass capsule (Apple TV) */
+    .js-nav-glass { top: 1.1em; left: 50%; transform: translateX(-50%); padding: .3em; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(255,255,255,.12), 0 10px 30px rgba(0,0,0,.4); }
+    html:not(.js-lite) .js-nav-glass { -webkit-backdrop-filter: blur(24px) saturate(190%); backdrop-filter: blur(24px) saturate(190%); }
+    .js-nav-glass .js-tab { border-radius: 999px; padding: .5em 1.3em; font-weight: 600; }
+    .js-nav-glass .js-tab.on { background: rgba(255,255,255,.9); color: #000; }
 
     /* native Top 10 rows */
     .js-view { --js-poster-w: clamp(118px, 10.5vw, 210px); }
@@ -1126,8 +1174,8 @@
           x.Key === svc.Key))),
     }));
 
-    rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: data.topMovies.map(rankCard), cls: 'js-top' }));
-    rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: data.topShows.map(rankCard), cls: 'js-top' }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: data.topMovies.map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: data.topShows.map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' }));
 
     if (cfg.ShowContinueWatching) {
       const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
@@ -1150,24 +1198,24 @@
     }
 
     for (const g of groupByGenre(movies, cfg.GenreRows)) {
-      rows.push(section({ title: `${g.genre} Movies`, cards: g.items.map(libraryCard) }));
+      rows.push(section({ title: `${g.genre} Movies`, cards: g.items.map(libraryCard), attrs: 'data-kind="movie"' }));
     }
     if (movies.length) {
       const az = [...movies].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      rows.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard) }));
+      rows.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard), attrs: 'data-kind="movie"' }));
     }
 
     for (const g of groupByGenre(shows, cfg.GenreRows)) {
-      rows.push(section({ title: `${g.genre} Shows`, cards: g.items.map(libraryCard) }));
+      rows.push(section({ title: `${g.genre} Shows`, cards: g.items.map(libraryCard), attrs: 'data-kind="tv"' }));
     }
     if (shows.length) {
       const az = [...shows].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      rows.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard) }));
+      rows.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard), attrs: 'data-kind="tv"' }));
     }
 
     if (cfg.ShowPopularMissing) {
-      rows.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)) }));
-      rows.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)) }));
+      rows.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)), attrs: 'data-kind="movie"' }));
+      rows.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)), attrs: 'data-kind="tv"' }));
     }
 
     const html = rows.join('');
@@ -1227,6 +1275,14 @@
         if (p && d?.Overview) p.textContent = d.Overview;
       }).catch(() => {});
     }
+    const icons = ['home', 'tv', 'movie'];
+    const kinds = ['all', 'tv', 'movie'];
+    const nav = document.createElement('nav');
+    nav.className = `js-tabs js-nav-${l.nav || 'top'}`;
+    nav.innerHTML = (l.tabs || GENERIC.tabs).map((t, i) =>
+      `<button type="button" class="js-tab${i === 0 ? ' on' : ''}" data-f="${kinds[i]}">${l.nav === 'rail' ? `<span class="material-icons">${icons[i]}</span>` : ''}<span>${esc(t)}</span></button>`).join('');
+    bb.appendChild(nav);
+    if (l.nav === 'rail') bb.classList.add('js-has-rail');
     hero.replaceWith(bb);
     bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
   };
@@ -1308,6 +1364,15 @@
 
   // clicks: service tiles, back button, and titles you don't have
   document.addEventListener('click', (e) => {
+    const tab = e.target.closest?.('.js-tab');
+    if (tab) {
+      e.preventDefault();
+      const view = tab.closest('.js-view');
+      view.dataset.f = tab.dataset.f;
+      tab.parentElement.querySelectorAll('.js-tab').forEach((t) => t.classList.toggle('on', t === tab));
+      requestAnimationFrame(() => updateAllArrows(view));
+      return;
+    }
     const bbLink = e.target.closest?.('.js-bb a.js-bb-btn[data-id]');
     if (bbLink) {
       e.preventDefault();
