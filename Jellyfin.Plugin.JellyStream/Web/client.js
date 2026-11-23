@@ -35,122 +35,173 @@
       || (navigator.hardwareConcurrency || 8) <= 4;
   };
 
-  // Each service page borrows the look of that service's own app: colors, type, card shape,
-  // focus style, header and Top 10 numbers. Unknown services are themed from their accent color.
-  //   num: Top 10 numbers: 'glass' | 'outline' (dark fill, colored edge) | 'solid' (gradient fill)
+  // Each service page borrows the look of that service's own app: the billboard at the top, card
+  // shape and captions, buttons, type and focus style. Unknown services get a neutral look in their color.
+  //   shape:   'landscape' | 'portrait' for library rows (Top 10 rows are always portrait)
+  //   caption: 'overlay' (title on the image) | 'below' (left-aligned under it) | 'none' (art only)
+  //   num:     Top 10 numbers: 'glass' | 'outline' | 'solid'
   const BRANDS = {
     netflix: {
-      c1: '#e50914', c2: '#b20710', numA: '#141414', numB: '#5a5a5a', num: 'outline',
-      bg: 'linear-gradient(180deg, #000 0%, #141414 22%, #141414 100%)',
+      c1: '#e50914', c2: '#b20710', numA: '#141414', numB: '#595959', num: 'outline',
+      base: '#141414', bg: '#141414', shape: 'landscape', caption: 'overlay',
       font: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif',
+      labels: { tagMovie: 'FILM', tagTv: 'SERIES', play: 'Play', info: 'More Info', request: 'Request' },
       css: `
-        .js-view .sectionTitle { font-weight: 700 !important; font-size: 1.35em !important; color: #e5e5e5 !important; }
+        .js-bb { height: min(68vh, 720px) !important; }
+        .js-bb-tag { color: #e5e5e5; letter-spacing: .32em; font-weight: 700; font-size: .85em; }
+        .js-bb-tag::before { content: "N"; color: #e50914; font-weight: 900; font-size: 1.9em; letter-spacing: 0; margin-right: .3em; vertical-align: -.22em; }
+        .js-bb-title { font-weight: 900 !important; letter-spacing: -.02em; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,.6); }
+        .js-bb-rank::before { content: "TOP\\A 10"; white-space: pre; display: inline-flex; align-items: center; justify-content: center; text-align: center; width: 2.2em; height: 2.2em; font-size: .62em; line-height: .95; font-weight: 900; background: #e50914; color: #fff; border-radius: 3px; margin-right: .6em; vertical-align: middle; }
+        .js-bb-btn { border-radius: 4px !important; font-weight: 700 !important; padding: .55em 1.6em !important; }
+        .js-bb-btn.js-primary { background: #fff !important; color: #000 !important; }
+        .js-bb-btn.js-secondary { background: rgba(109,109,110,.7) !important; color: #fff !important; }
+        .js-view .sectionTitle { font-weight: 700 !important; font-size: 1.3em !important; color: #e5e5e5 !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .cardImageContainer { border-radius: 4px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 12px 30px rgba(0,0,0,.7) !important; }
-        .js-hero { background: transparent !important; border: none !important; box-shadow: none !important; padding-left: 0 !important; }
-        .js-hero h1 { color: #e50914; font-size: 2.6em !important; letter-spacing: -.02em; text-transform: uppercase; }
-        .js-hero .js-eyebrow { color: #b3b3b3 !important; }
-        .js-hero .js-back { border-radius: 4px !important; background: rgba(109,109,110,.7) !important; border: none !important; }
+        .js-view .js-lib .cardImageContainer { border-radius: 4px !important; }
+        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.06); box-shadow: 0 0 0 2px #fff, 0 14px 30px rgba(0,0,0,.8) !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 2px #fff, 0 12px 30px rgba(0,0,0,.7) !important; }
         .js-view .jst-shade { opacity: 0 !important; }
         .js-view .jst-feature::before { background: transparent !important; border: none !important; box-shadow: none !important; }
         .js-view .jst-t10 { background: none !important; -webkit-text-fill-color: #e50914 !important; filter: none !important; }`,
     },
     disney: {
-      c1: '#f9f9f9', c2: '#3ec7ff', num: 'glass',
-      bg: 'radial-gradient(120% 70% at 50% -10%, #2a3c6b 0%, transparent 60%), linear-gradient(180deg, #1a1d29 0%, #13162a 100%)',
+      c1: '#f9f9f9', c2: '#0063e5', num: 'glass',
+      base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #2b3a66 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
+      shape: 'landscape', caption: 'none',
       font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
+      labels: { tagMovie: 'FEATURED', tagTv: 'FEATURED', play: 'PLAY', info: '', request: 'REQUEST' },
       css: `
-        .js-view .sectionTitle { font-weight: 600 !important; color: #f9f9f9 !important; }
+        .js-bb { height: min(50vh, 520px) !important; margin: 1em 3.3% 1.6em !important; border-radius: 10px; box-shadow: 0 26px 40px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(249,249,249,.1); }
+        .js-bb-tag { color: #cacaca; letter-spacing: .2em; font-size: .75em; font-weight: 700; }
+        .js-bb-title { font-weight: 700 !important; }
+        .js-bb-btn { border-radius: 4px !important; letter-spacing: .15em; text-transform: uppercase; font-weight: 700 !important; padding: .7em 2em !important; }
+        .js-bb-btn.js-primary { background: #f9f9f9 !important; color: #0e0b14 !important; }
+        .js-bb-btn.js-secondary { width: 2.9em; padding: 0 !important; border-radius: 50% !important; background: rgba(0,0,0,.6) !important; border: 2px solid #f9f9f9 !important; color: #f9f9f9 !important; }
+        .js-view .sectionTitle { font-weight: 600 !important; font-size: 1.2em !important; color: #f9f9f9 !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .cardImageContainer { border-radius: 10px !important; box-shadow: 0 14px 28px rgba(0,0,0,.6) !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px rgba(249,249,249,.85), 0 24px 40px rgba(0,0,0,.7) !important; }
-        .js-hero { border-radius: 14px !important; background: linear-gradient(120deg, #0e2a66 0%, #1a1d29 70%) !important; border: 1px solid rgba(249,249,249,.12) !important; }
-        .js-hero h1 { font-weight: 700 !important; }
-        .js-hero .js-back { background: rgba(249,249,249,.12) !important; border-color: rgba(249,249,249,.35) !important; letter-spacing: .08em; text-transform: uppercase; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), 0 16px 10px -10px rgba(0,0,0,.73), inset 0 0 0 3px rgba(249,249,249,.1) !important; transition: transform .25s cubic-bezier(.25,.46,.45,.94), box-shadow .25s ease; }
+        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.05); box-shadow: 0 40px 58px -16px rgba(0,0,0,.8), 0 30px 22px -10px rgba(0,0,0,.72), inset 0 0 0 4px rgba(249,249,249,.8) !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px rgba(249,249,249,.8), 0 24px 40px rgba(0,0,0,.7) !important; }`,
     },
     max: {
-      c1: '#ffffff', c2: '#2f5bff', numA: '#ffffff', numB: '#7d8cff', num: 'solid',
-      bg: 'radial-gradient(90% 60% at 100% 0%, rgba(47,91,255,.28), transparent 60%), radial-gradient(80% 60% at 0% 100%, rgba(120,60,255,.22), transparent 60%), #000',
+      c1: '#ffffff', c2: '#2f5bff', numA: '#ffffff', numB: '#8aa0ff', num: 'solid',
+      base: '#000', bg: 'radial-gradient(90% 50% at 100% 0%, rgba(47,91,255,.25), transparent 60%), #000',
+      shape: 'portrait', caption: 'none',
       font: '"Inter", "Helvetica Neue", Arial, sans-serif',
+      labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Play', info: 'More Info', request: 'Request' },
       css: `
+        .js-bb { height: min(70vh, 740px) !important; }
+        .js-bb-shade { background: linear-gradient(0deg, #000 0%, rgba(0,0,0,.6) 30%, transparent 60%), linear-gradient(90deg, rgba(0,0,0,.75) 0%, transparent 55%) !important; }
+        .js-bb-tag { color: #fff; letter-spacing: .3em; font-size: .72em; font-weight: 700; opacity: .8; }
+        .js-bb-title { font-weight: 800 !important; letter-spacing: -.02em; }
+        .js-bb-btn { border-radius: 999px !important; font-weight: 600 !important; padding: .6em 1.8em !important; }
+        .js-bb-btn.js-primary { background: #fff !important; color: #000 !important; }
+        .js-bb-btn.js-secondary { background: transparent !important; border: 1.5px solid rgba(255,255,255,.8) !important; color: #fff !important; }
         .js-view .sectionTitle { font-weight: 600 !important; letter-spacing: -.01em; color: #fff !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .cardImageContainer { border-radius: 6px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 2px #fff, 0 0 30px rgba(47,91,255,.45) !important; }
-        .js-hero { background: transparent !important; border: none !important; box-shadow: none !important; }
-        .js-hero h1 { font-size: 2.8em !important; font-weight: 800 !important; background: linear-gradient(90deg, #fff 0%, #b7c3ff 60%, #7d8cff 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .js-hero .js-back { border-radius: 999px !important; background: #fff !important; color: #000 !important; border: none !important; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 6px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 2px #fff, 0 0 30px rgba(47,91,255,.45) !important; }`,
     },
     prime: {
-      c1: '#1aa7ec', c2: '#0f79af', numA: '#1aa7ec', numB: '#8fdcff', num: 'solid',
-      bg: 'linear-gradient(180deg, #0f171e 0%, #0f171e 100%)',
+      c1: '#1a98ff', c2: '#0f79af', numA: '#1a98ff', numB: '#8fdcff', num: 'solid',
+      base: '#0f171e', bg: '#0f171e', shape: 'landscape', caption: 'below',
       font: '"Amazon Ember", Arial, "Helvetica Neue", sans-serif',
+      labels: { tagMovie: '✓ Included with Prime', tagTv: '✓ Included with Prime', play: 'Play', info: 'Details', request: 'Request' },
       css: `
+        .js-bb { height: min(52vh, 540px) !important; margin: 1em 3.3% 1.6em !important; border-radius: 8px; }
+        .js-bb-tag { color: #1a98ff; font-weight: 700; font-size: .9em; }
+        .js-bb-title { font-weight: 700 !important; }
+        .js-bb-btn { border-radius: 6px !important; font-weight: 700 !important; padding: .65em 1.6em !important; }
+        .js-bb-btn.js-primary { background: #1a98ff !important; color: #fff !important; }
+        .js-bb-btn.js-secondary { background: rgba(66,82,99,.8) !important; color: #fff !important; }
         .js-view .sectionTitle { font-weight: 700 !important; color: #fff !important; }
         .js-view .js-section .sectionTitle::before {
           content: "✓" !important; width: 1.15em !important; height: 1.15em !important; border-radius: 50% !important;
-          background: #1aa7ec !important; color: #0f171e; font-size: .62em; line-height: 1.15em; text-align: center;
+          background: #1a98ff !important; color: #0f171e; font-size: .62em; line-height: 1.15em; text-align: center;
           vertical-align: .25em !important; box-shadow: none !important; font-weight: 900;
         }
-        .js-view .cardImageContainer { border-radius: 8px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 16px 34px rgba(0,0,0,.6) !important; }
-        .js-hero { border-radius: 8px !important; background: #1b2530 !important; border: none !important; }
-        .js-hero h1 { font-weight: 700 !important; }
-        .js-hero .js-back { border-radius: 6px !important; background: #1aa7ec !important; color: #0f171e !important; border: none !important; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; }
+        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.04); }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 16px 34px rgba(0,0,0,.6) !important; }`,
     },
     hulu: {
       c1: '#1ce783', c2: '#0f9d5a', numA: '#0b0c0f', numB: '#1ce783', num: 'outline',
-      bg: 'radial-gradient(70% 50% at 0% 100%, rgba(28,231,131,.12), transparent 60%), #0b0c0f',
+      base: '#0b0c0f', bg: '#0b0c0f', shape: 'landscape', caption: 'below',
       font: '"Graphik", "Inter", "Helvetica Neue", Arial, sans-serif',
+      labels: { tagMovie: 'TRENDING ON HULU', tagTv: 'TRENDING ON HULU', play: 'START WATCHING', info: 'DETAILS', request: 'REQUEST' },
       css: `
-        .js-view .sectionTitle { font-weight: 700 !important; text-transform: uppercase; letter-spacing: .12em; font-size: 1em !important; color: #fff !important; }
-        .js-view .js-section .sectionTitle::before { width: .5em !important; height: .5em !important; border-radius: 50% !important; vertical-align: .1em !important; background: #1ce783 !important; }
-        .js-view .cardImageContainer { border-radius: 6px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #1ce783, 0 16px 34px rgba(0,0,0,.6) !important; }
-        .js-hero { background: transparent !important; border: none !important; border-bottom: 3px solid #1ce783 !important; border-radius: 0 !important; box-shadow: none !important; }
-        .js-hero h1 { font-weight: 800 !important; }
-        .js-hero .js-back { border-radius: 4px !important; background: #1ce783 !important; color: #0b0c0f !important; border: none !important; text-transform: uppercase; letter-spacing: .08em; }`,
+        .js-bb { height: min(66vh, 700px) !important; }
+        .js-bb-tag { color: #1ce783; letter-spacing: .14em; font-size: .78em; font-weight: 700; }
+        .js-bb-title { font-weight: 800 !important; text-transform: uppercase; letter-spacing: .01em; }
+        .js-bb-btn { border-radius: 4px !important; letter-spacing: .12em; font-size: .82em !important; font-weight: 700 !important; padding: .8em 1.6em !important; }
+        .js-bb-btn.js-primary { background: #fff !important; color: #0b0c0f !important; }
+        .js-bb-btn.js-secondary { background: transparent !important; border: 2px solid rgba(255,255,255,.9) !important; color: #fff !important; }
+        .js-view .sectionTitle { font-weight: 700 !important; text-transform: uppercase; letter-spacing: .12em; font-size: .95em !important; color: #fff !important; }
+        .js-view .js-section .sectionTitle::before { display: none !important; }
+        .js-view .js-lib .cardImageContainer { border-radius: 6px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #1ce783, 0 16px 34px rgba(0,0,0,.6) !important; }`,
     },
     apple: {
       c1: '#f5f5f7', c2: '#86868b', num: 'glass',
-      bg: 'radial-gradient(100% 60% at 50% -10%, #2a2a2e 0%, transparent 65%), #000',
+      base: '#000', bg: '#000', shape: 'landscape', caption: 'below',
       font: '-apple-system, "SF Pro Display", "Inter", "Helvetica Neue", sans-serif',
+      labels: { tagMovie: 'Movie', tagTv: 'TV Show', play: 'Play', info: 'Details', request: 'Request' },
       css: `
+        .js-bb { height: min(72vh, 760px) !important; }
+        .js-bb-shade { background: linear-gradient(0deg, #000 0%, rgba(0,0,0,.55) 28%, transparent 55%), linear-gradient(90deg, rgba(0,0,0,.6) 0%, transparent 50%) !important; }
+        .js-bb-tag { color: rgba(255,255,255,.7); font-weight: 600; font-size: .85em; }
+        .js-bb-title { font-weight: 700 !important; letter-spacing: -.035em; }
+        .js-bb-btn { border-radius: 10px !important; font-weight: 600 !important; padding: .65em 1.9em !important; }
+        .js-bb-btn.js-primary { background: #fff !important; color: #000 !important; }
+        .js-bb-btn.js-secondary { background: rgba(255,255,255,.16) !important; color: #fff !important; }
+        html:not(.js-lite) .js-bb-btn.js-secondary { -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
         .js-view .sectionTitle { font-weight: 600 !important; letter-spacing: -.015em; color: #f5f5f7 !important; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .cardImageContainer { border-radius: 12px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 22px 44px rgba(0,0,0,.8) !important; }
-        .js-hero { border-radius: 20px !important; background: rgba(255,255,255,.06) !important; border: 1px solid rgba(255,255,255,.12) !important; }
-        .js-hero h1 { font-weight: 700 !important; letter-spacing: -.03em; }
-        .js-hero .js-back { background: rgba(255,255,255,.12) !important; border: 1px solid rgba(255,255,255,.2) !important; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 12px !important; }
+        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.04); box-shadow: 0 24px 44px rgba(0,0,0,.85) !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 1px rgba(255,255,255,.4), 0 22px 44px rgba(0,0,0,.8) !important; }`,
     },
     paramount: {
       c1: '#0064ff', c2: '#7fb2ff', numA: '#0064ff', numB: '#9cc4ff', num: 'solid',
-      bg: 'radial-gradient(120% 70% at 50% -15%, #0b3fae 0%, transparent 60%), linear-gradient(180deg, #001a4d 0%, #000c26 100%)',
+      base: '#000a1f', bg: 'radial-gradient(120% 60% at 50% -10%, #0b3fae 0%, transparent 55%), linear-gradient(180deg, #001a4d 0%, #000a1f 60%)',
+      shape: 'portrait', caption: 'none',
       font: '"Montserrat", "Inter", "Helvetica Neue", Arial, sans-serif',
+      labels: { tagMovie: 'PARAMOUNT+', tagTv: 'PARAMOUNT+', play: 'WATCH NOW', info: 'MORE INFO', request: 'REQUEST' },
       css: `
+        .js-bb { height: min(62vh, 660px) !important; }
+        .js-bb-shade { background: linear-gradient(90deg, rgba(0,20,61,.95) 0%, rgba(0,20,61,.6) 35%, transparent 65%), linear-gradient(0deg, #000a1f 0%, transparent 40%) !important; }
+        .js-bb-tag { color: #7fb2ff; letter-spacing: .25em; font-size: .72em; font-weight: 800; }
+        .js-bb-title { font-weight: 800 !important; }
+        .js-bb-btn { border-radius: 4px !important; letter-spacing: .1em; font-size: .85em !important; font-weight: 800 !important; padding: .8em 1.7em !important; }
+        .js-bb-btn.js-primary { background: #0064ff !important; color: #fff !important; }
+        .js-bb-btn.js-secondary { background: rgba(255,255,255,.12) !important; border: 1px solid rgba(255,255,255,.4) !important; color: #fff !important; }
         .js-view .sectionTitle { font-weight: 800 !important; color: #fff !important; }
         .js-view .js-section .sectionTitle::before { background: #0064ff !important; box-shadow: none !important; }
-        .js-view .cardImageContainer { border-radius: 4px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 0 26px rgba(0,100,255,.6) !important; }
-        .js-hero { border-radius: 6px !important; background: linear-gradient(100deg, #0064ff 0%, #0039a6 45%, rgba(0,20,60,.4) 100%) !important; border: none !important; }
-        .js-hero h1 { font-weight: 800 !important; }
-        .js-hero .js-back { border-radius: 4px !important; background: #fff !important; color: #0039a6 !important; border: none !important; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 4px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 0 26px rgba(0,100,255,.6) !important; }`,
     },
     peacock: {
       c1: '#ffb000', c2: '#e5007e', numA: '#ffb000', numB: '#e5007e', num: 'solid',
-      bg: '#000',
+      base: '#000', bg: '#000', shape: 'landscape', caption: 'overlay',
       font: '"Peacock Sans", "Inter", "Helvetica Neue", Arial, sans-serif',
+      labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Watch Now', info: 'Details', request: 'Request' },
       css: `
+        .js-bb { height: min(64vh, 680px) !important; }
+        .js-bb::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: linear-gradient(90deg, #ffb000, #ff6d00, #e5007e, #6f2da8, #0063db, #00b14f); }
+        .js-bb-tag { color: #fff; letter-spacing: .2em; font-size: .75em; font-weight: 700; opacity: .85; }
+        .js-bb-title { font-weight: 800 !important; }
+        .js-bb-btn { border-radius: 999px !important; font-weight: 700 !important; padding: .65em 1.8em !important; }
+        .js-bb-btn.js-primary { background: #fff !important; color: #000 !important; }
+        .js-bb-btn.js-secondary { background: transparent !important; border: 2px solid #fff !important; color: #fff !important; }
         .js-view .sectionTitle { font-weight: 700 !important; color: #fff !important; }
         .js-view .js-section .sectionTitle::before { background: linear-gradient(180deg, #ffb000, #ff6d00, #e5007e, #6f2da8, #0063db, #00b14f) !important; box-shadow: none !important; }
-        .js-view .cardImageContainer { border-radius: 8px !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, -6px 0 22px rgba(255,176,0,.45), 6px 0 22px rgba(229,0,126,.45), 0 8px 26px rgba(0,99,219,.45) !important; }
-        .js-hero { background: transparent !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
-        .js-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #ffb000, #ff6d00, #e5007e, #6f2da8, #0063db, #00b14f); }
-        .js-hero .js-back { border-radius: 999px !important; background: #fff !important; color: #000 !important; border: none !important; }`,
+        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, -6px 0 22px rgba(255,176,0,.45), 6px 0 22px rgba(229,0,126,.45), 0 8px 26px rgba(0,99,219,.45) !important; }`,
     },
+  };
+  const GENERIC = {
+    shape: 'portrait', caption: 'below', base: '#0b0c10',
+    labels: { tagMovie: 'MOVIE', tagTv: 'SERIES', play: 'Play', info: 'Details', request: 'Request' },
   };
 
   const brandKeyFor = (svc) => {
@@ -185,7 +236,7 @@
     const html = document.documentElement;
     const root = html.style;
     if (!svc) {
-      ['--js-c1', '--js-c2', '--js-bg', '--jst-num', '--jst-num-a', '--jst-num-b'].forEach((v) => root.removeProperty(v));
+      ['--js-c1', '--js-c2', '--js-bg', '--js-base', '--jst-num', '--jst-num-a', '--jst-num-b'].forEach((v) => root.removeProperty(v));
       delete html.dataset.jsBrand;
       delete html.dataset.jstNum;
       return;
@@ -197,6 +248,7 @@
       root.setProperty('--jst-num', b.num || 'glass');
       root.setProperty('--jst-num-a', b.numA || b.c1);
       root.setProperty('--jst-num-b', b.numB || b.c2);
+      root.setProperty('--js-base', b.base || '#0b0c10');
       html.dataset.jstNum = b.num || 'glass';
     };
     const known = brandKeyFor(svc);
@@ -414,6 +466,83 @@
       cursor: pointer;
     }
     .js-hero .js-back:hover { background: rgba(255,255,255,.14); }
+    /* billboard: the service's #1 title, full width, like the top of each service's own app */
+    .js-bb {
+      position: relative;
+      height: min(62vh, 660px);
+      min-height: 320px;
+      margin: 0 0 1.2em;
+      overflow: hidden;
+      color: #fff;
+      background: var(--js-base, #0b0c10);
+    }
+    .js-bb-art {
+      position: absolute; inset: 0;
+      background-size: cover;
+      background-position: center 20%;
+      opacity: 0;
+      transition: opacity .6s ease;
+    }
+    .js-bb-art.on { opacity: 1; }
+    .js-bb-shade {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(90deg, var(--js-base, #0b0c10) 0%, color-mix(in srgb, var(--js-base, #0b0c10) 70%, transparent) 28%, transparent 62%),
+        linear-gradient(0deg, var(--js-base, #0b0c10) 0%, transparent 38%);
+    }
+    .js-bb-content {
+      position: absolute;
+      left: 3.3%; bottom: 13%;
+      width: min(44%, 640px);
+      display: flex; flex-direction: column; gap: .75em;
+    }
+    .js-bb-tag { text-transform: none; }
+    .js-bb-title { margin: 0; font-size: clamp(2em, 4.2vw, 4.4em); line-height: 1; font-weight: 800; }
+    .js-bb-rank { font-weight: 700; font-size: 1.05em; display: flex; align-items: center; }
+    .js-bb-overview {
+      margin: 0; font-size: 1.05em; line-height: 1.45; color: rgba(255,255,255,.88);
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    }
+    .js-bb-actions { display: flex; gap: .7em; margin-top: .3em; }
+    .js-bb-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .45em;
+      height: 2.9em; box-sizing: border-box;
+      border: none; cursor: pointer; text-decoration: none;
+      font: inherit; font-size: 1em; white-space: nowrap;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .js-bb-btn:hover { filter: brightness(.9); transform: scale(1.03); }
+    .js-bb-btn .material-icons { font-size: 1.5em; }
+    .js-bb .js-hero {
+      position: absolute; top: 1.2em; right: 3.3%; left: auto;
+      margin: 0 !important; padding: .45em .55em .45em .45em !important;
+      gap: .6em !important; border-radius: 999px !important;
+      background: rgba(0,0,0,.45) !important; border: 1px solid rgba(255,255,255,.15) !important;
+      box-shadow: none !important;
+      font-size: .8em;
+    }
+    .js-bb .js-hero img { width: 2.4em !important; height: 2.4em !important; border-radius: 50% !important; }
+    .js-bb .js-hero h1 { font-size: 1.1em !important; margin: 0 !important; color: #fff !important; -webkit-text-fill-color: #fff !important; text-transform: none !important; }
+    .js-bb .js-hero .js-eyebrow, .js-bb .js-hero .js-stats { display: none !important; }
+    .js-bb .js-hero .js-back { margin-left: .4em; padding: .45em .9em !important; border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: #fff !important; border: none !important; }
+    @media (max-width: 900px) { .js-bb-content { width: 86%; } .js-bb-overview { -webkit-line-clamp: 2; } }
+
+    /* landscape library cards and captions */
+    .js-view .js-lib.overflowBackdropCard .cardImageContainer { background-size: cover; background-position: center; }
+    .js-view .js-lib .cardImageContainer { transition: transform .25s cubic-bezier(.2,.9,.25,1), box-shadow .25s ease; }
+    .js-ovl {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 1.6em .7em .55em;
+      font-weight: 700; font-size: .95em; color: #fff; text-align: left;
+      background: linear-gradient(0deg, rgba(0,0,0,.85), transparent);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      pointer-events: none;
+    }
+    .js-cap-overlay .cardFooter, .js-cap-none .cardFooter { display: none !important; }
+    .js-cap-below .cardText { text-align: left !important; padding-left: .15em; }
+    .js-cap-below .cardText-first { font-weight: 600; }
+
     /* service switcher: Home + every service, reachable with a remote */
     .js-switcher .js-sw-card { width: clamp(84px, 7.5vw, 124px) !important; }
     .js-switcher .cardPadder { padding-bottom: 100% !important; }
@@ -555,22 +684,31 @@
       if (!e.isIntersecting) continue;
       const el = e.target;
       io.unobserve(el);
-      if (el.dataset.src) el.style.backgroundImage = `url("${el.dataset.src}")`;
+      if (el.dataset.src) el.style.backgroundImage = bgOf(el.dataset.src);
     }
   }, { rootMargin: '400px 600px' }) : null;
+  // "a|b" = show a, with b underneath in case a is missing
+  const bgOf = (src) => src.split('|').filter(Boolean).map((u) => `url("${u}")`).join(', ');
   const lazy = (root) => root.querySelectorAll('.js-img[data-src]').forEach((el) => {
-    if (io) io.observe(el); else el.style.backgroundImage = `url("${el.dataset.src}")`;
+    if (io) io.observe(el); else el.style.backgroundImage = bgOf(el.dataset.src);
   });
 
   // ---------------------------------------------------------------- cards
   const imgUrl = (id) => window.ApiClient.getImageUrl(id, { type: 'Primary', maxHeight: 480, quality: 90 });
+  const wideUrl = (id) => `${window.ApiClient.getImageUrl(id, { type: 'Backdrop', maxWidth: 720, quality: 85 })}|${imgUrl(id)}`;
 
-  const card = ({ id, name, sub, img, href, cls = '', attrs = '', badge = '', type = '' }) => `
-    <div class="card overflowPortraitCard card-hoverable js-card ${cls}" ${id ? `data-id="${esc(id)}" data-serverid="${esc(serverId())}"` : ''} ${type ? `data-type="${type}"` : ''} ${attrs}>
+  // the look of the open service (cards are built after applyBrand runs)
+  const look = () => {
+    const k = document.documentElement.dataset.jsBrand;
+    return (k && BRANDS[k]) || GENERIC;
+  };
+
+  const card = ({ id, name, sub, img, href, cls = '', attrs = '', badge = '', type = '', shape = 'portrait', caption = 'below' }) => `
+    <div class="card ${shape === 'landscape' ? 'overflowBackdropCard' : 'overflowPortraitCard'} card-hoverable js-card js-cap-${caption} ${cls}" ${id ? `data-id="${esc(id)}" data-serverid="${esc(serverId())}"` : ''} ${type ? `data-type="${type}"` : ''} ${attrs}>
       <div class="cardBox cardBox-bottompadded">
         <div class="cardScalable">
-          <div class="cardPadder cardPadder-overflowPortrait"></div>
-          <a class="cardImageContainer coveredImage cardContent itemAction js-img" href="${esc(href)}" aria-label="${esc(name)}" ${img ? `data-src="${esc(img)}"` : ''}></a>
+          <div class="cardPadder ${shape === 'landscape' ? 'cardPadder-overflowBackdrop' : 'cardPadder-overflowPortrait'}"></div>
+          <a class="cardImageContainer coveredImage cardContent itemAction js-img" href="${esc(href)}" aria-label="${esc(name)}" ${img ? `data-src="${esc(img)}"` : ''}>${caption === 'overlay' ? `<span class="js-ovl">${esc(name)}</span>` : ''}</a>
           ${badge}
         </div>
         <div class="cardFooter">
@@ -582,14 +720,21 @@
 
   const detailsHref = (id) => `#/details?id=${id}&serverId=${serverId()}`;
 
-  const libraryCard = (it) => card({
-    id: it.Id,
-    name: it.Name,
-    sub: it.Year || '',
-    img: imgUrl(it.Id),
-    href: detailsHref(it.Id),
-    type: it.Type === 'tv' ? 'Series' : 'Movie',
-  });
+  // library rows follow the service's own card shape
+  const libraryCard = (it) => {
+    const l = look();
+    return card({
+      id: it.Id,
+      name: it.Name,
+      sub: it.Year || '',
+      img: l.shape === 'landscape' ? wideUrl(it.Id) : imgUrl(it.Id),
+      href: detailsHref(it.Id),
+      type: it.Type === 'tv' ? 'Series' : 'Movie',
+      cls: 'js-lib',
+      shape: l.shape,
+      caption: l.caption,
+    });
+  };
 
   const BADGES = {
     missing: '<span class="js-badge" title="Not in your library"><span class="material-icons">add</span></span>',
@@ -597,23 +742,31 @@
     partial: '<span class="js-badge" title="Partly available"><span class="material-icons">timelapse</span></span>',
   };
 
-  const titleCard = (t) => {
+  // wide = use the service's card shape (request rows); Top 10 rows stay portrait
+  const titleCard = (t, wide = false) => {
+    const l = look();
+    const landscape = wide && l.shape === 'landscape';
+    const caption = wide ? l.caption : 'below';
     if (t.ItemId) {
       return card({
-        id: t.ItemId, name: t.Name, sub: t.Year || '', img: imgUrl(t.ItemId),
+        id: t.ItemId, name: t.Name, sub: t.Year || '',
+        img: landscape ? wideUrl(t.ItemId) : imgUrl(t.ItemId),
         href: detailsHref(t.ItemId), type: t.Type === 'tv' ? 'Series' : 'Movie',
         badge: t.Status === 'partial' ? BADGES.partial : '',
+        cls: wide ? 'js-lib' : '', shape: landscape ? 'landscape' : 'portrait', caption,
       });
     }
     const status = t.Status === 'available' ? 'missing' : t.Status;
     return card({
       name: t.Name,
       sub: t.Year || '',
-      img: t.Poster,
+      img: landscape ? `${t.Backdrop || ''}|${t.Poster || ''}` : t.Poster,
       href: '#',
-      cls: 'js-missing',
+      cls: `js-missing${wide ? ' js-lib' : ''}`,
       attrs: `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`,
       badge: BADGES[status] || BADGES.missing,
+      shape: landscape ? 'landscape' : 'portrait',
+      caption,
     });
   };
 
@@ -901,8 +1054,8 @@
           x.Key === svc.Key))),
     }));
 
-    rows.push(section({ title: `Top ${cfg.TopCount} Movies on ${svc.Name}`, cards: data.topMovies.map(titleCard), attrs: top('Movies') }));
-    rows.push(section({ title: `Top ${cfg.TopCount} Shows on ${svc.Name}`, cards: data.topShows.map(titleCard), attrs: top('Shows') }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Movies on ${svc.Name}`, cards: data.topMovies.map((t) => titleCard(t)), attrs: top('Movies') }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Shows on ${svc.Name}`, cards: data.topShows.map((t) => titleCard(t)), attrs: top('Shows') }));
 
     if (cfg.ShowContinueWatching) {
       const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
@@ -941,17 +1094,69 @@
     }
 
     if (cfg.ShowPopularMissing) {
-      rows.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map(titleCard) }));
-      rows.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map(titleCard) }));
+      rows.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)) }));
+      rows.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)) }));
     }
 
     const html = rows.join('');
+    renderBillboard(view, svc, data);
     const box = view.querySelector('.js-rows');
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
     stubRows(box);
     requestAnimationFrame(() => updateAllArrows(box));
     setTimeout(() => updateAllArrows(box), 600); // after the Top 10 numbers resize their cards
+  };
+
+  // the #1 title on the service, presented the way that service's app does
+  const renderBillboard = (view, svc, data) => {
+    const hero = view.querySelector('.js-hero');
+    if (!hero || view.querySelector('.js-bb')) return;
+    const l = look();
+    const pick = [data.topShows[0], data.topMovies[0]].filter(Boolean)
+      .sort((a, b) => (b.ItemId ? 1 : 0) - (a.ItemId ? 1 : 0))[0] || data.topMovies[0] || data.topShows[0];
+    const bb = document.createElement('section');
+    bb.className = 'js-bb';
+    if (!pick) {
+      bb.innerHTML = `<div class="js-bb-shade"></div>`;
+      bb.style.height = '9em';
+      bb.style.minHeight = '0';
+    } else {
+      const isTv = pick.Type === 'tv';
+      const rank = data.topShows[0] === pick ? 'TV Shows' : 'Movies';
+      const when = state.cfg.TopSource === 'day' ? 'Today' : state.cfg.TopSource === 'week' ? 'This Week' : '';
+      const owned = !!pick.ItemId;
+      bb.innerHTML = `
+        <div class="js-bb-art"></div>
+        <div class="js-bb-shade"></div>
+        <div class="js-bb-content">
+          <div class="js-bb-tag">${esc(isTv ? l.labels.tagTv : l.labels.tagMovie)}</div>
+          <h2 class="js-bb-title">${esc(pick.Name)}</h2>
+          <div class="js-bb-rank">#1 in ${rank}${when ? ` ${when}` : ''}</div>
+          <p class="js-bb-overview"></p>
+          <div class="js-bb-actions">
+            ${owned
+              ? `<a class="js-bb-btn js-primary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">play_arrow</span>${esc(l.labels.play)}</a>`
+              : `<button type="button" class="js-bb-btn js-primary js-bb-request" data-jstmdb="${pick.TmdbId}" data-jstype="${pick.Type}"><span class="material-icons">add</span>${esc(l.labels.request)}</button>`}
+            ${owned && l.labels.info
+              ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">info_outline</span>${esc(l.labels.info)}</a>`
+              : owned ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}" aria-label="Details"><span class="material-icons">add</span></a>` : ''}
+          </div>
+        </div>`;
+      const art = bb.querySelector('.js-bb-art');
+      const big = (pick.Backdrop || '').replace('/w780/', '/w1280/');
+      if (big) {
+        const img = new Image();
+        img.onload = () => { art.style.backgroundImage = `url("${big}")`; art.classList.add('on'); };
+        img.src = big;
+      }
+      getJSON(`Details?type=${pick.Type}&tmdbId=${pick.TmdbId}`).then((d) => {
+        const p = bb.querySelector('.js-bb-overview');
+        if (p && d?.Overview) p.textContent = d.Overview;
+      }).catch(() => {});
+    }
+    hero.replaceWith(bb);
+    bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
   };
 
   const closeService = (sections) => {
@@ -1005,18 +1210,39 @@
   };
 
   // open a title the way Jellyfin's own cards do (its router), falling back to the link
-  const openDetails = (href, cardEl) => {
-    const id = cardEl?.dataset.id;
+  const openDetails = (href) => {
+    const before = location.href;
     try {
-      if (id && window.Emby?.Page?.showItem) { window.Emby.Page.showItem(id, cardEl.dataset.serverid || serverId()); return; }
-      if (window.Emby?.Page?.show) { window.Emby.Page.show(href); return; }
-      if (window.Dashboard?.navigate) { window.Dashboard.navigate(href.replace(/^#!?\/?/, '')); return; }
-    } catch { /* fall through */ }
-    location.hash = href;
+      if (window.Emby?.Page?.show) window.Emby.Page.show(href);
+      else location.hash = href;
+    } catch {
+      location.hash = href;
+    }
+    // if the router didn't move (it can be waiting on an earlier navigation), use the link itself
+    setTimeout(() => { if (location.href === before) location.hash = href; }, 450);
   };
 
   // clicks: service tiles, back button, and titles you don't have
   document.addEventListener('click', (e) => {
+    const bbLink = e.target.closest?.('.js-bb a.js-bb-btn[data-id]');
+    if (bbLink) {
+      e.preventDefault();
+      e.stopPropagation();
+      openDetails(bbLink.getAttribute('href'), bbLink);
+      return;
+    }
+    const bbReq = e.target.closest?.('.js-bb-request');
+    if (bbReq) {
+      e.preventDefault();
+      e.stopPropagation();
+      const fake = document.createElement('div');
+      fake.dataset.jstmdb = bbReq.dataset.jstmdb;
+      fake.dataset.jstype = bbReq.dataset.jstype;
+      fake.dataset.jsstatus = 'missing';
+      fake.innerHTML = `<div class="cardText-first">${esc(bbReq.closest('.js-bb').querySelector('.js-bb-title')?.textContent || '')}</div>`;
+      request(fake).then(() => { if (fake.dataset.jsstatus === 'requested') bbReq.innerHTML = '<span class="material-icons">schedule</span>Requested'; });
+      return;
+    }
     const link = e.target.closest?.('.js-view a.cardImageContainer[href^="#/details"]');
     if (link && !e.target.closest('.jst-x') && !e.defaultPrevented) {
       e.preventDefault();
