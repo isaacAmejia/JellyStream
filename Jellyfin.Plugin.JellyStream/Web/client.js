@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.13.1';
+  const VERSION = '1.13.2';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1767,14 +1767,20 @@
 
     // Home + every service as tabs: logo and full name, sized inline so no theme can shrink them
     const SW_CARD = 'width:auto !important;min-width:max-content !important;max-width:none !important;flex:0 0 auto !important;';
-    const SW_FIT = 'position:static !important;width:auto !important;height:auto !important;padding:0 !important;margin:0 .45em 0 0 !important;';
+    const SW_FIT = 'position:static !important;width:auto !important;min-width:max-content !important;max-width:none !important;height:auto !important;padding:0 !important;margin:0 .45em 0 0 !important;overflow:visible !important;contain:none !important;';
+    // the tab itself: a real pill whatever a theme does to card images
+    const SW_TAB = 'position:relative !important;inset:auto !important;display:inline-flex !important;align-items:center !important;gap:.6em !important;'
+      + 'width:auto !important;min-width:max-content !important;max-width:none !important;height:3em !important;padding:0 1.25em 0 .45em !important;'
+      + 'box-sizing:border-box !important;border-radius:999px !important;white-space:nowrap !important;overflow:visible !important;contain:none !important;'
+      + 'aspect-ratio:auto !important;flex:none !important;transform:none;';
+    const SW_TEXT = 'display:inline-block !important;width:auto !important;max-width:none !important;overflow:visible !important;text-overflow:clip !important;white-space:nowrap !important;position:static !important;';
     const sw = (href, name, logo, current, color, icon) => `
-      <div class="card js-sw-card${current ? ' js-current' : ''}" style="${SW_CARD}${color ? `--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)};` : ''}">
+      <div class="card js-sw-card${current ? ' js-current' : ''}" style="${SW_CARD}height:auto !important;overflow:visible !important;contain:none !important;${color ? `--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)};` : ''}">
         <div class="cardBox" style="${SW_FIT}">
           <div class="cardScalable" style="${SW_FIT}">
-            <a class="cardImageContainer cardContent itemAction js-sw-tab" href="${esc(href)}" aria-label="${esc(name)}">
+            <a class="cardImageContainer cardContent itemAction js-sw-tab" style="${SW_TAB}" href="${esc(href)}" aria-label="${esc(name)}">
               ${icon ? `<span class="material-icons js-sw-icon">${icon}</span>` : logo ? `<img class="js-sw-logo" src="${esc(logo)}" alt="" loading="lazy">` : `<span class="js-sw-dot"></span>`}
-              <span class="js-sw-name">${esc(name)}</span>
+              <span class="js-sw-name" style="${SW_TEXT}">${esc(name)}</span>
             </a>
           </div>
         </div>
