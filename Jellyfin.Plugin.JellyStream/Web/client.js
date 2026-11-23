@@ -603,6 +603,33 @@
     .js-nav-glass .js-tab { border-radius: 999px; padding: .5em 1.3em; font-weight: 600; }
     .js-nav-glass .js-tab.on { background: rgba(255,255,255,.9); color: #000; }
 
+    /* phones: everything scaled for a small touch screen */
+    .js-view a, .js-services a, .js-tab, .js-bb-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    @media (max-width: 760px) {
+      .js-view { --js-poster-w: 96px; }
+      .js-bb { height: 62vh !important; min-height: 380px; margin: 0 0 1em !important; border-radius: 0 !important; }
+      .js-bb-content { left: 5% !important; right: 5%; width: auto !important; bottom: 7% !important; gap: .5em; }
+      .js-bb-title { font-size: 2em !important; }
+      .js-bb-overview { -webkit-line-clamp: 2; font-size: .92em; }
+      .js-bb-btn { height: 2.6em; font-size: .92em; padding: 0 1.1em !important; }
+      .js-tabs, .js-nav-rail, .js-nav-pill, .js-nav-glass {
+        top: .7em !important; left: 4% !important; right: auto; bottom: auto !important; transform: none !important;
+        flex-direction: row !important; padding: .25em !important; background: rgba(0,0,0,.35); border-radius: 999px;
+      }
+      .js-nav-rail .js-tab { flex-direction: row; min-width: 0; font-size: .82em; padding: .4em .8em; }
+      .js-nav-rail .js-tab .material-icons { display: none; }
+      .js-tab { font-size: .82em !important; padding: .4em .8em !important; }
+      .js-has-rail .js-bb-content { left: 5% !important; }
+      .js-bb .js-hero { top: .7em !important; right: 4% !important; font-size: .72em; }
+      .js-bb .js-hero h1 { display: none; }
+      .js-view .emby-scroller.js-scroller, .js-services .emby-scroller.js-scroller { padding: 10px 4% 12px !important; }
+      .js-view .sectionTitleContainer, .js-services .sectionTitleContainer { padding-left: 4%; }
+      .js-view .sectionTitle { font-size: 1.05em !important; }
+      .js-services .js-svc-card { width: 72vw !important; }
+      .js-view .overflowBackdropCard { width: 62vw !important; }
+      .js-view .overflowPortraitCard { width: 30vw !important; }
+    }
+
     /* native Top 10 rows */
     .js-view { --js-poster-w: clamp(118px, 10.5vw, 210px); }
     .js-rank-card { width: calc(var(--js-poster-w) * 1.62) !important; flex: 0 0 auto; }
@@ -1425,7 +1452,8 @@
   // ---------------------------------------------------------------- page transitions
   // Opening a service morphs its logo from the tile into the page header (View Transitions),
   // everything else cross-fades. Lite mode and older browsers just slide the page in.
-  const canMorph = () => typeof document.startViewTransition === 'function' && !lite();
+  const touch = () => matchMedia('(pointer: coarse)').matches || document.documentElement.classList.contains('layout-mobile');
+  const canMorph = () => typeof document.startViewTransition === 'function' && !lite() && !touch();
   const waitFor = (test, ms = 1200) => new Promise((res) => {
     const t0 = performance.now();
     const tick = () => (test() || performance.now() - t0 > ms ? res() : requestAnimationFrame(tick));
@@ -1441,11 +1469,16 @@
 
   // to: { href, key (service opening, or null for home), from (element to morph), fromKey (service being left), back, replace }
   const go = (to) => {
-    if (!canMorph()) { navigate(to); return; }
+    if (!canMorph()) {
+      try { navigate(to); } catch { location.hash = to.href; }
+      return;
+    }
     clearNames();
     if (to.from) to.from.style.viewTransitionName = 'js-logo';
     state.vt = true;
-    const t = document.startViewTransition(async () => {
+    let t;
+    try {
+      t = document.startViewTransition(async () => {
       if (to.from) to.from.style.viewTransitionName = '';
       navigate(to);
       await new Promise((r) => setTimeout(r, 0));
@@ -1457,8 +1490,13 @@
         ? document.querySelector('.js-view .js-hero img')
         : to.fromKey && document.querySelector(`.js-services [data-jskey="${CSS.escape(to.fromKey)}"] .js-logo`);
       if (target && to.from) target.style.viewTransitionName = 'js-logo';
-    });
-    t.finished.finally(() => { state.vt = false; clearNames(); });
+      });
+      t.finished.finally(() => { state.vt = false; clearNames(); });
+    } catch {
+      state.vt = false;
+      clearNames();
+      navigate(to);
+    }
   };
 
   document.addEventListener('click', (e) => {

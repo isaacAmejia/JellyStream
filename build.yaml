@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.7.0.0"
+version: "1.7.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,7 +14,5 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Service pages follow each app's current (2025-2026) design, including its navigation: Netflix
-  and Paramount+ top tabs, Disney+ pill tabs (Hulu now shown inside the Disney+ app look), HBO
-  Max / Prime Video / Peacock left rails, and Apple TV's Liquid Glass tab bar and poster art.
-  The tabs filter the page to shows or movies. HBO Max uses its blue look.
+  Mobile: tapping a service opens it reliably on phones and tablets, and service pages have a
+  phone layout (full-width billboard, compact tabs, smaller cards and Top 10 numerals).
