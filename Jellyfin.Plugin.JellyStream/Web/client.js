@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.11.0';
+  const VERSION = '1.12.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1013,28 +1013,32 @@
     .js-switcher .js-sw-card { width: auto !important; min-width: 0 !important; max-width: none !important; }
     .js-switcher .cardBox { margin: 0 .3em 0 0 !important; }
     .js-switcher .cardScalable { position: static !important; padding: 0 !important; }
-    .js-switcher .cardImageContainer {
+    .js-switcher .js-sw-tab {
       position: relative !important; inset: auto !important;
-      display: inline-flex !important; align-items: center; justify-content: center; gap: .4em;
-      width: auto !important; height: 2.55em !important; padding: 0 1.15em !important; box-sizing: border-box;
-      border-radius: 999px !important; white-space: nowrap; text-decoration: none;
-      font: 700 .92em/1 ${FONT}; letter-spacing: .005em;
-      color: rgba(255,255,255,.72) !important;
-      background: rgba(255,255,255,.07) !important;
-      border: 1px solid rgba(255,255,255,.1) !important;
+      display: inline-flex !important; align-items: center; gap: .6em;
+      width: auto !important; height: 3em !important; padding: 0 1.25em 0 .45em !important; box-sizing: border-box;
+      border-radius: 999px !important; white-space: nowrap !important; overflow: visible !important; text-decoration: none;
+      font: 700 1em/1 ${FONT};
+      color: rgba(255,255,255,.85) !important;
+      background: rgba(255,255,255,.08) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
       box-shadow: none !important;
-      transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+      transition: background .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
     }
-    .js-switcher .cardImageContainer .material-icons { font-size: 1.25em; }
-    .js-switcher .js-sw-card:is(:hover, :focus-within, .show-focus, .focused) .cardImageContainer {
-      color: #fff !important; background: rgba(255,255,255,.14) !important;
-      box-shadow: 0 0 0 2px rgba(255,255,255,.85) !important;
+    .js-switcher .js-sw-logo { width: 2.2em; height: 2.2em; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,.18); }
+    .js-switcher .js-sw-icon { width: 2.2em; height: 2.2em; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.12); font-size: 1.2em; flex: none; }
+    .js-switcher .js-sw-dot { width: .7em; height: .7em; margin: 0 .3em 0 .5em; border-radius: 50%; background: var(--js-sw, #fff); flex: none; }
+    .js-switcher .js-sw-name { display: inline-block !important; overflow: visible !important; text-overflow: clip !important; }
+    .js-switcher .js-sw-card:is(:hover, :focus-within, .show-focus, .focused) .js-sw-tab {
+      color: #fff !important; background: rgba(255,255,255,.16) !important;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.9) !important; transform: translateY(-1px);
     }
-    .js-switcher .js-current .cardImageContainer {
+    .js-switcher .js-current .js-sw-tab {
       color: var(--js-sw-ink, #fff) !important; border-color: transparent !important;
       background: var(--js-sw, rgba(255,255,255,.2)) !important;
       box-shadow: 0 6px 18px color-mix(in srgb, var(--js-sw, #000) 45%, transparent) !important;
     }
+    @media (max-width: 760px) { .js-switcher .js-sw-tab { height: 2.6em !important; font-size: .9em; } }
     .js-empty { margin: 0 3.3% 1.5em; color: rgba(255,255,255,.6); font-family: ${FONT}; }
 
     /* scrolling rows (plain markup, so no Jellyfin scroller upgrade is needed) */
@@ -1686,6 +1690,27 @@
     const when = cfg.TopSource === 'day' ? 'Trending today on' : cfg.TopSource === 'week' ? 'Trending this week on' : 'Popular on';
     const span = cfg.TopSource === 'day' ? 'Today' : cfg.TopSource === 'week' ? 'This Week' : '';
     const rows = [];
+
+    // Home + every service as tabs: logo and full name, sized inline so no theme can shrink them
+    const SW_CARD = 'width:auto !important;min-width:max-content !important;max-width:none !important;flex:0 0 auto !important;';
+    const SW_FIT = 'position:static !important;width:auto !important;height:auto !important;padding:0 !important;margin:0 .45em 0 0 !important;';
+    const sw = (href, name, logo, current, color, icon) => `
+      <div class="card js-sw-card${current ? ' js-current' : ''}" style="${SW_CARD}${color ? `--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)};` : ''}">
+        <div class="cardBox" style="${SW_FIT}">
+          <div class="cardScalable" style="${SW_FIT}">
+            <a class="cardImageContainer cardContent itemAction js-sw-tab" href="${esc(href)}" aria-label="${esc(name)}">
+              ${icon ? `<span class="material-icons js-sw-icon">${icon}</span>` : logo ? `<img class="js-sw-logo" src="${esc(logo)}" alt="" loading="lazy">` : `<span class="js-sw-dot"></span>`}
+              <span class="js-sw-name">${esc(name)}</span>
+            </a>
+          </div>
+        </div>
+      </div>`;
+    rows.push(section({
+      title: 'Services',
+      cls: 'js-switcher',
+      cards: [sw('#/home', 'Home', null, false, null, 'arrow_back')].concat(cfg.Services.map((x) =>
+        sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, x.Logo, x.Key === svc.Key, tintOf(x)))),
+    }));
 
     rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: uniqueTop(data.topMovies).map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' }));
     rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: uniqueTop(data.topShows).map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' }));

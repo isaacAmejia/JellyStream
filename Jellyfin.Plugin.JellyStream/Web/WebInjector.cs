@@ -158,9 +158,16 @@ public partial class WebInjector : IHostedService
 
     private static string Insert(string html)
     {
-        html = OurTag().Replace(html, string.Empty);
+        // only ever touch a real HTML page; anything else is returned exactly as it came
         var at = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
-        return at < 0 ? html + Tag : html.Insert(at, Tag);
+        if (at < 0 || html.IndexOf("<html", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            return html;
+        }
+
+        html = OurTag().Replace(html, string.Empty);
+        at = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
+        return html.Insert(at, Tag);
     }
 
     private void Inject()
@@ -205,7 +212,9 @@ public partial class WebInjector : IHostedService
 
             var json = "{"
                 + $"\"id\":\"{TransformId}\","
-                + "\"fileNamePattern\":\"index.html\","
+                // a regular expression: anchored, so it can't match Jellyfin's chunk files like
+                // "itemDetails-index-html.<hash>.chunk.js" (a bare "index.html" did, which broke them)
+                + "\"fileNamePattern\":\"^(.*[/\\\\\\\\])?index\\\\.html$\","
                 + $"\"callbackAssembly\":\"{typeof(WebInjector).Assembly.FullName}\","
                 + $"\"callbackClass\":\"{typeof(WebInjector).FullName}\","
                 + $"\"callbackMethod\":\"{nameof(TransformIndex)}\""

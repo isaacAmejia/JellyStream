@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.11.0.0"
+version: "1.12.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,5 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Adds a diagnostics panel (Settings > Show the diagnostics panel) that records page changes and errors
-  and can send them to the server log. Removes the service tabs from service pages. No more automatic
-  reload when a title is slow to open.
+  Fixes titles not opening: the script was also being added to Jellyfin's details page file
+  (itemDetails-index-html...chunk.js), which broke it. Service tabs are back, with logos and full names.
