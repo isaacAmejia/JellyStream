@@ -530,8 +530,16 @@ public class JellyStreamController : ControllerBase
         var user = CurrentUser();
         var index = _store.TmdbIndex();
         var cards = new List<TitleCard>();
+        var seenTitles = new HashSet<int>();
+        var seenItems = new HashSet<Guid>();
         foreach (var t in titles)
         {
+            // TMDB's paged lists can repeat a title when the ranking shifts between pages
+            if (!seenTitles.Add(t.Id))
+            {
+                continue;
+            }
+
             Guid? itemId = null;
             if (index.TryGetValue((type, t.Id), out var found))
             {
@@ -549,6 +557,19 @@ public class JellyStreamController : ControllerBase
                 {
                     itemId = null;
                 }
+            }
+
+            // two titles linked to the same library item (a remake matched to the original, say):
+            // only the first keeps the link, the other shows as its own title
+            if (itemId is not null && !seenItems.Add(itemId.Value))
+            {
+                itemId = null;
+            }
+
+            // nothing to show for a title with no poster that isn't in the library
+            if (itemId is null && string.IsNullOrEmpty(t.PosterPath))
+            {
+                continue;
             }
 
             var status = itemId is not null ? "available" : StatusOf(t.MediaInfo?.Status ?? 0);

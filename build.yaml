@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.8.0.0"
+version: "1.9.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,5 +14,7 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Top 10 rows fixed on themes that collapsed them into thin lines.
-  Each service now plays its own brand intro while its page loads.
+  Opening a title from a service page goes straight to its details page.
+  Each service now has its own background, row sizes and Top 10 style.
+  No more duplicate or blank Top 10 entries; intros are capped at about two seconds.
+  Cleaner services row and switcher with no small app icons.

@@ -103,6 +103,7 @@ public class TrendingService
         var config = Config;
         var pages = Math.Clamp(config.TrendingPages, 1, 25);
         var titles = new List<SeerrTitle>();
+        var seen = new HashSet<int>();
         for (var page = 1; page <= pages; page++)
         {
             var result = await _seerr.TrendingPageAsync(type, window, page, CancellationToken.None).ConfigureAwait(false);
@@ -111,7 +112,14 @@ public class TrendingService
                 break;
             }
 
-            titles.AddRange(result.Results.Where(t => t.MediaType is null || t.MediaType == type));
+            foreach (var t in result.Results)
+            {
+                // pages can overlap when the ranking moves while we page through it
+                if ((t.MediaType is null || t.MediaType == type) && !string.IsNullOrEmpty(t.PosterPath) && seen.Add(t.Id))
+                {
+                    titles.Add(t);
+                }
+            }
             if (page >= result.TotalPages)
             {
                 break;

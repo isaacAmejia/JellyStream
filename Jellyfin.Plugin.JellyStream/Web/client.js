@@ -230,6 +230,56 @@
     peacock: '--js-num-fill: #000; --js-num-stroke: 3px #ffb000;',
   };
 
+  // row sizing per service: card widths, spacing, and how wide a Top 10 slot is next to its poster
+  const LAYOUT = {
+    netflix: '--js-land-w: clamp(210px, 15.5vw, 300px); --js-gap: .16em; --js-rank-ratio: 1.62;',
+    disney: '--js-land-w: clamp(240px, 19vw, 350px); --js-gap: .6em; --js-rank-ratio: 1.16;',
+    max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-ratio: 1.5;',
+    prime: '--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; --js-rank-ratio: 1.58;',
+    hulu: '--js-land-w: clamp(260px, 21vw, 370px); --js-gap: .6em; --js-rank-ratio: 1.16;',
+    apple: '--js-port-w: clamp(140px, 11vw, 205px); --js-gap: .75em; --js-rank-ratio: 1.04;',
+    paramount: '--js-port-w: clamp(150px, 11.5vw, 210px); --js-gap: .3em; --js-rank-ratio: 1.6;',
+    peacock: '--js-land-w: clamp(250px, 20vw, 345px); --js-gap: .45em; --js-rank-ratio: 1.56;',
+  };
+
+  // each service's Top 10, drawn the way that service draws it
+  const RANKS = {
+    // big gray-outlined numbers with the poster tucked in
+    netflix: `
+      .js-rank-num { font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif; font-weight: 900; }
+      .js-rank-poster { border-radius: 4px !important; }`,
+    // the rank sits on the art, bottom left, over a soft shadow; framed tiles
+    disney: `
+      .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: .04em !important; font-size: calc(var(--js-poster-w) * .74) !important; font-weight: 800 !important; letter-spacing: -.05em !important; color: #f9f9f9 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 6px 22px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.6); }
+      .js-rank-poster { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), inset 0 0 0 3px rgba(249,249,249,.1) !important; }`,
+    // tall, thin white numerals
+    max: `
+      .js-rank-num { font-weight: 200 !important; letter-spacing: -.07em !important; color: #fff !important; -webkit-text-stroke: 0 !important; bottom: -.08em !important; opacity: .95; }
+      .js-rank-poster { border-radius: 6px !important; }`,
+    // numbers fading from white into Prime blue
+    prime: `
+      .js-rank-num { color: transparent !important; -webkit-text-stroke: 0 !important; background: linear-gradient(180deg, #ffffff 15%, #1a98ff 95%); -webkit-background-clip: text; background-clip: text; font-weight: 800 !important; }
+      .js-rank-poster { border-radius: 8px !important; }`,
+    // green-outlined rank over the corner of the art
+    hulu: `
+      .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: .02em !important; font-size: calc(var(--js-poster-w) * .8) !important; font-weight: 900 !important; letter-spacing: -.05em !important; color: #0b0c0f !important; -webkit-text-stroke: 3px #1ce783 !important; text-shadow: 0 8px 24px rgba(0,0,0,.7); }
+      .js-rank-poster { border-radius: 8px !important; }`,
+    // Apple TV's charts: no giant numerals, the rank leads the caption under a rounded poster
+    apple: `
+      .js-rank-num { display: none !important; }
+      .js-rank-card .js-rank-cap { display: flex !important; }
+      .js-rank-cap b { color: #f5f5f7; }
+      .js-rank-poster { border-radius: 12px !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 26px rgba(0,0,0,.6) !important; }`,
+    // dark numerals outlined in Paramount blue, with a glow
+    paramount: `
+      .js-rank-num { color: #000a1f !important; -webkit-text-stroke: 3px #3d8bff !important; font-weight: 800 !important; filter: drop-shadow(0 0 14px rgba(0,100,255,.55)); }
+      .js-rank-poster { border-radius: 4px !important; box-shadow: inset 0 -3px 0 #0064ff, -8px 0 18px rgba(0,0,0,.5) !important; }`,
+    // numerals in the six feather colors
+    peacock: `
+      .js-rank-num { color: transparent !important; -webkit-text-stroke: 0 !important; background: linear-gradient(160deg, #ffb000 0%, #ff6d00 22%, #e5007e 45%, #6f2da8 65%, #0063db 82%, #00b14f 100%); -webkit-background-clip: text; background-clip: text; font-weight: 800 !important; }
+      .js-rank-poster { border-radius: 8px !important; }`,
+  };
+
   const brandKeyFor = (svc) => {
     const id = `${svc.Key} ${svc.Name}`.toLowerCase();
     return Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
@@ -251,9 +301,9 @@
     const el = document.createElement('style');
     el.id = 'jellystream-brands';
     el.textContent = Object.entries(BRANDS).map(([k, b]) => {
-      const rules = b.css.replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
+      const rules = (b.css + (RANKS[k] || '')).replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
         `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
-      return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} }`;
+      return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} ${LAYOUT[k] || ''} }`;
     }).join('\n');
     return el;
   })();
@@ -289,6 +339,27 @@
       const c = svc.Accent || accent || '#8aa0b8';
       set({ c1: c, c2: c, num: 'glass', bg: `radial-gradient(110% 70% at 10% -10%, color-mix(in srgb, ${c} 32%, transparent), transparent 60%), #0b0c10` });
     });
+  };
+
+  // the service's background on everything that could paint over it (themes color .page, body, ...)
+  let painted = [];
+  const paintPage = (on) => {
+    painted.forEach((el) => { el.style.removeProperty('background'); el.style.removeProperty('background-color'); });
+    painted = [];
+    if (!on) return;
+    const view = document.querySelector('.js-view');
+    const page = view?.closest('[data-role="page"], .page, .mainAnimatedPage');
+    const targets = [document.body, page, page?.querySelector('.tabContent'), view?.closest('.tabContent'),
+      ...document.querySelectorAll('.backgroundContainer, .skinBody')].filter(Boolean);
+    for (const el of new Set(targets)) {
+      if (el === page || el === document.body) {
+        el.style.setProperty('background', 'var(--js-bg, #0b0c10)', 'important');
+        el.style.setProperty('background-attachment', 'fixed', 'important');
+      } else {
+        el.style.setProperty('background', 'transparent', 'important');
+      }
+      painted.push(el);
+    }
   };
 
   const state = {
@@ -341,7 +412,7 @@
       position: absolute;
       left: .7em; right: .7em; bottom: .7em;
       display: flex; align-items: center; gap: .65em;
-      padding: .45em .6em .45em .45em;
+      padding: .55em .8em .55em .6em;
       border-radius: 12px;
       background: rgba(18,20,26,.45);
       border: 1px solid rgba(255,255,255,.14);
@@ -355,15 +426,14 @@
       backdrop-filter: blur(14px) saturate(160%);
     }
     html.js-lite .js-services .js-tile-info { background: rgba(18,20,26,.8); }
-    .js-services .js-tile-logo {
-      width: 2.5em; height: 2.5em; flex: none;
-      border-radius: 22%;
-      object-fit: cover;
-      box-shadow: 0 4px 12px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.14);
+    .js-services .js-tile-bar {
+      width: 4px; align-self: stretch; flex: none; border-radius: 4px;
+      background: var(--js-t1, #fff);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--js-t1, #fff) 70%, transparent);
     }
     .js-services .js-tile-text { min-width: 0; line-height: 1.15; }
     .js-services .js-tile-text b {
-      display: block; font-weight: 800; font-size: 1.02em; letter-spacing: -.01em;
+      display: block; font-weight: 800; font-size: 1.12em; letter-spacing: -.01em;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .js-services .js-tile-text small {
@@ -637,7 +707,7 @@
       background: var(--js-intro-bg, #000);
       overflow: hidden;
       opacity: 1;
-      transition: opacity .45s ease;
+      transition: opacity .35s ease;
     }
     .js-intro.out { opacity: 0; pointer-events: none; }
     .js-intro-logo {
@@ -723,6 +793,19 @@
     html.js-lite .js-intro-fx { display: none; }
     @media (prefers-reduced-motion: reduce) { .js-intro-fx { display: none; } .js-intro-logo, .js-intro-name { animation: none; } }
 
+    /* each service sizes and spaces its rows its own way (vars set per brand) */
+    @media (min-width: 761px) {
+      .js-view .js-lib.overflowBackdropCard { width: var(--js-land-w, clamp(220px, 17vw, 320px)) !important; }
+      .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w, clamp(130px, 10.5vw, 200px)) !important; }
+    }
+    .js-view .js-lib .cardBox { margin-left: var(--js-gap, .3em) !important; margin-right: var(--js-gap, .3em) !important; }
+    /* themes that frame or tint every card don't get to on service pages */
+    .js-view .cardBox, .js-view .cardScalable {
+      border: 0 !important; outline: 0 !important; background: transparent !important; box-shadow: none !important;
+    }
+    .js-view .cardBox::before, .js-view .cardBox::after { display: none !important; }
+    .js-view.js-leaving { opacity: .55; transition: opacity .2s ease; pointer-events: none; }
+
     /* native Top 10 rows */
     .js-view { --js-poster-w: clamp(118px, 10.5vw, 210px); }
     .js-rank-card { width: calc(var(--js-poster-w) * 1.62) !important; flex: 0 0 auto; }
@@ -761,25 +844,42 @@
       border-radius: 4px;
       box-shadow: -8px 0 18px rgba(0,0,0,.45);
     }
-    .js-rank-card .js-badge { z-index: 2; }
+    .js-rank-card .js-badge { z-index: 3; }
     .js-rank-card .cardFooter { display: none !important; }
+    .js-rank-cap { align-items: baseline; gap: .45em; padding: .55em .1em 0 calc(100% - var(--js-poster-w)); text-align: left; }
+    .js-rank-cap b { font-size: 1.5em; font-weight: 700; line-height: 1; }
+    .js-rank-cap .cardText { padding: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255,255,255,.75); }
     .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: scale(1.04); }
     .js-rank-poster { transition: transform .22s cubic-bezier(.2,.9,.25,1), box-shadow .22s ease; }
 
-    /* service switcher: Home + every service, reachable with a remote */
-    .js-switcher .js-sw-card { width: clamp(84px, 7.5vw, 124px) !important; }
-    .js-switcher .cardPadder { padding-bottom: 100% !important; }
+    /* service switcher: Home + every service as one even row of chips, reachable with a remote */
+    .js-switcher .sectionTitleContainer { display: none !important; }
+    .js-switcher .js-scroller { padding-top: 6px !important; padding-bottom: 10px !important; }
+    .js-switcher .js-sw-card { width: auto !important; min-width: 0 !important; max-width: none !important; }
+    .js-switcher .cardBox { margin: 0 .3em 0 0 !important; }
+    .js-switcher .cardScalable { position: static !important; padding: 0 !important; }
     .js-switcher .cardImageContainer {
-      display: flex !important; align-items: center; justify-content: center;
-      border-radius: 22% !important; overflow: hidden;
-      background: linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.03)), rgba(22,24,30,.9) !important;
-      border: 1px solid rgba(255,255,255,.12);
+      position: relative !important; inset: auto !important;
+      display: inline-flex !important; align-items: center; justify-content: center; gap: .4em;
+      width: auto !important; height: 2.55em !important; padding: 0 1.15em !important; box-sizing: border-box;
+      border-radius: 999px !important; white-space: nowrap; text-decoration: none;
+      font: 700 .92em/1 ${FONT}; letter-spacing: .005em;
+      color: rgba(255,255,255,.72) !important;
+      background: rgba(255,255,255,.07) !important;
+      border: 1px solid rgba(255,255,255,.1) !important;
+      box-shadow: none !important;
+      transition: background .15s ease, color .15s ease, box-shadow .15s ease;
     }
-    .js-switcher .cardImageContainer img { width: 100%; height: 100%; object-fit: cover; }
-    .js-switcher .cardImageContainer .material-icons { font-size: 2.4em; color: rgba(255,255,255,.85); }
-    .js-switcher .js-current .cardImageContainer { box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 0 18px rgba(255,255,255,.25); }
-    .js-switcher .js-sw-card:not(.js-current) .cardImageContainer img { opacity: .8; }
-    .js-switcher .cardText { font-size: .85em; }
+    .js-switcher .cardImageContainer .material-icons { font-size: 1.25em; }
+    .js-switcher .js-sw-card:is(:hover, :focus-within, .show-focus, .focused) .cardImageContainer {
+      color: #fff !important; background: rgba(255,255,255,.14) !important;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.85) !important;
+    }
+    .js-switcher .js-current .cardImageContainer {
+      color: var(--js-sw-ink, #fff) !important; border-color: transparent !important;
+      background: var(--js-sw, rgba(255,255,255,.2)) !important;
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--js-sw, #000) 45%, transparent) !important;
+    }
     .js-empty { margin: 0 3.3% 1.5em; color: rgba(255,255,255,.6); font-family: ${FONT}; }
 
     /* scrolling rows (plain markup, so no Jellyfin scroller upgrade is needed) */
@@ -967,7 +1067,7 @@
 
   // Top 10 card: a big rank numeral with the poster tucked against it, styled per service
   // inline !important beats any theme rule that sizes .card / .cardScalable / .cardImageContainer
-  const RANK_CARD_STYLE = 'width:calc(var(--js-poster-w, 150px) * 1.62) !important;min-width:calc(var(--js-poster-w, 150px) * 1.62) !important;max-width:none !important;flex:0 0 auto !important;';
+  const RANK_CARD_STYLE = 'width:calc(var(--js-poster-w, 150px) * var(--js-rank-ratio, 1.62)) !important;min-width:calc(var(--js-poster-w, 150px) * var(--js-rank-ratio, 1.62)) !important;max-width:none !important;flex:0 0 auto !important;';
   const RANK_BOX_STYLE = 'position:relative !important;width:100% !important;height:calc(var(--js-poster-w, 150px) * 1.5) !important;padding:0 !important;overflow:visible !important;';
   const RANK_POSTER_STYLE = 'position:absolute !important;top:0 !important;bottom:0 !important;right:0 !important;left:auto !important;width:var(--js-poster-w, 150px) !important;height:100% !important;';
   const rankCard = (t, i) => {
@@ -978,12 +1078,22 @@
       <div class="cardBox">
         <div class="cardScalable js-rank-box" style="${RANK_BOX_STYLE}">
           <span class="js-rank-num" aria-hidden="true">${i + 1}</span>
-          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(owned ? imgUrl(t.ItemId) : (t.Poster || ''))}"></a>
+          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(owned ? `${imgUrl(t.ItemId)}|${t.Poster || ''}` : (t.Poster || ''))}"></a>
           ${owned ? (t.Status === 'partial' ? BADGES.partial : '') : (BADGES[status] || BADGES.missing)}
         </div>
-        <div class="cardFooter"><div class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></div></div>
+        <div class="cardFooter js-rank-cap"><b>${i + 1}</b><span class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></span></div>
       </div>
     </div>`;
+  };
+  // one card per title (and per library item), whatever the server sent
+  const uniqueTop = (list) => {
+    const seen = new Set();
+    return (list || []).filter((t) => {
+      const k = t.ItemId ? `i${t.ItemId}` : `t${t.Type}${t.TmdbId}`;
+      if (seen.has(k) || (!t.ItemId && !t.Poster)) return false;
+      seen.add(k);
+      return true;
+    });
   };
 
   // wide = use the service's card shape (request rows); Top 10 rows stay portrait
@@ -1117,6 +1227,23 @@
     return root?.querySelector('.sections') || null;
   };
 
+  // a service's own color, never plain white (Disney+, Max and Apple TV are white-on-dark brands)
+  const tintOf = (s) => {
+    const k = brandKeyFor(s);
+    const b = k ? BRANDS[k] : null;
+    const light = (c) => /^#(f[0-9a-f]){3}$|^#ffffff$|^#f9f9f9$|^#f5f5f7$/i.test(c || '');
+    return s.Accent || (b && !light(b.c1) ? b.c1 : k === 'apple' ? '#3a3a3c' : b?.c2) || '';
+  };
+
+  // black or white text, whichever reads better on a color
+  const inkOn = (hex) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return '#fff';
+    const n = parseInt(m[1], 16);
+    const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+    return lum > 0.6 ? '#0b0c0f' : '#fff';
+  };
+
   const renderHomeRow = (sections) => {
     const cfg = state.cfg;
     let row = sections.querySelector(':scope > .js-services');
@@ -1133,7 +1260,7 @@
       const n = s.Movies + s.Shows;
       const known = brandKeyFor(s);
       const b = known ? BRANDS[known] : null;
-      const t1 = s.Accent || (b && b.c1 !== '#ffffff' && b.c1 !== '#f9f9f9' && b.c1 !== '#f5f5f7' ? b.c1 : b?.c2) || '';
+      const t1 = tintOf(s);
       const t2 = b ? b.c2 : '';
       const style = [t1 && `--js-t1:${t1}`, t2 && `--js-t2:${t2}`].filter(Boolean).join(';');
       return `
@@ -1146,7 +1273,7 @@
               <span class="js-tile-tint"></span>
               <span class="js-tile-sheen"></span>
               <span class="js-tile-info">
-                ${s.Logo ? `<img class="js-tile-logo js-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : ''}
+                <span class="js-tile-bar"></span>
                 <span class="js-tile-text">
                   <b>${esc(s.Name)}</b>
                   <small class="js-tile-sub">${n ? `${n} title${n === 1 ? '' : 's'} in your library` : 'Browse'}</small>
@@ -1256,14 +1383,17 @@
       : `<div class="js-intro-name">${esc(svc.Name)}</div>`}`;
     document.body.appendChild(el);
     const started = performance.now();
+    let ended = false;
     const done = () => {
-      const wait = Math.max(0, 1300 - (performance.now() - started));
+      if (ended) return;
+      ended = true;
+      const wait = Math.max(0, 1000 - (performance.now() - started));
       setTimeout(() => {
         el.classList.add('out');
-        setTimeout(() => el.remove(), 500);
+        setTimeout(() => el.remove(), 400);
       }, wait);
     };
-    setTimeout(done, 6000); // never get stuck on the intro
+    setTimeout(done, 2100); // a couple of seconds at most, even if the page is still loading
     return done;
   };
 
@@ -1312,27 +1442,23 @@
     const rows = [];
 
     // Home + all services, so a remote can switch or leave without a Back key
-    const sw = (href, name, inner, current) => `
-      <div class="card js-sw-card${current ? ' js-current' : ''}">
+    const sw = (href, name, inner, current, color) => `
+      <div class="card js-sw-card${current ? ' js-current' : ''}"${color ? ` style="--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)}"` : ''}>
         <div class="cardBox">
           <div class="cardScalable">
-            <div class="cardPadder"></div>
             <a class="cardImageContainer cardContent itemAction" href="${esc(href)}" aria-label="${esc(name)}">${inner}</a>
           </div>
-          <div class="cardFooter"><div class="cardText cardTextCentered cardText-first"><bdi>${esc(name)}</bdi></div></div>
         </div>
       </div>`;
     rows.push(section({
       title: 'Services',
       cls: 'js-switcher',
-      cards: [sw('#/home', 'Home', '<span class="material-icons">home</span>', false)].concat(cfg.Services.map((x) =>
-        sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name,
-          x.Logo ? `<img src="${esc(x.Logo)}" alt="" loading="lazy">` : `<span class="js-logo-text">${esc(x.Name)}</span>`,
-          x.Key === svc.Key))),
+      cards: [sw('#/home', 'Home', '<span class="material-icons">arrow_back</span><span>Home</span>', false)].concat(cfg.Services.map((x) =>
+        sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, `<span>${esc(x.Name)}</span>`, x.Key === svc.Key, tintOf(x)))),
     }));
 
-    rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: data.topMovies.map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' }));
-    rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: data.topShows.map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: uniqueTop(data.topMovies).map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' }));
+    rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: uniqueTop(data.topShows).map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' }));
 
     if (cfg.ShowContinueWatching) {
       const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
@@ -1381,6 +1507,7 @@
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
     stubRows(box);
+    paintPage(true);
     introDone?.();
     requestAnimationFrame(() => updateAllArrows(box));
     setTimeout(() => updateAllArrows(box), 600); // after the Top 10 numbers resize their cards
@@ -1453,8 +1580,8 @@
     document.querySelectorAll('.js-view').forEach((v) => v.remove());
     document.querySelectorAll('.js-hide-native').forEach((el) => el.classList.remove('js-hide-native'));
     state.brandKey = null;
-    state.introKey = null;
     document.querySelector('.js-intro')?.remove();
+    paintPage(false);
     applyBrand(null);
   };
 
@@ -1509,17 +1636,28 @@
   };
 
   // open a title the way Jellyfin's own cards do (its router), falling back to the link
+  // The service page stays up until the route really changes (the hashchange tears it down), so a
+  // slow or stuck navigation can never leave you on a half-restored home screen.
+  const isDetails = () => /^#!?\/details/i.test(location.hash || '');
+  const detailsShown = () => [...document.querySelectorAll('.itemDetailPage')].some(visible);
   const openDetails = (href) => {
-    teardown();
-    const before = location.href;
+    document.querySelector('.js-view')?.classList.add('js-leaving');
+    let sent = false;
     try {
-      if (window.Emby?.Page?.show) window.Emby.Page.show(href);
-      else location.hash = href;
-    } catch {
-      location.hash = href;
-    }
-    // if the router didn't move (it can be waiting on an earlier navigation), use the link itself
-    setTimeout(() => { if (location.href === before) location.hash = href; }, 450);
+      const router = window.Emby?.Page;
+      if (router?.show) {
+        // Jellyfin's router queues behind its last navigation, which never finishes when only the
+        // home screen's query changed (as it does for service pages), so clear that first
+        router.promiseShow = null;
+        router.resolveOnNextShow = null;
+        router.show(href.replace(/^#!?/, ''));
+        sent = true;
+      }
+    } catch { /* fall through to the link */ }
+    if (!sent) location.hash = href;
+    setTimeout(() => { if (!isDetails()) location.hash = href; }, 500);
+    // last resort: the address changed but nothing drew the details page
+    setTimeout(() => { if (isDetails() && !detailsShown()) location.reload(); }, 5000);
   };
 
   // clicks: service tiles, back button, and titles you don't have
@@ -1537,7 +1675,7 @@
     if (bbLink) {
       e.preventDefault();
       e.stopPropagation();
-      openDetails(bbLink.getAttribute('href'), bbLink);
+      openDetails(bbLink.getAttribute('href'));
       return;
     }
     const bbReq = e.target.closest?.('.js-bb-request');
@@ -1556,8 +1694,7 @@
     if (link && !e.target.closest('.jst-x') && !e.defaultPrevented) {
       e.preventDefault();
       e.stopPropagation();
-      document.documentElement.classList.remove('js-service-open');
-      openDetails(link.getAttribute('href'), link.closest('.card'));
+      openDetails(link.getAttribute('href'));
       return;
     }
     const missing = e.target.closest?.('.js-missing');
@@ -1682,7 +1819,9 @@
       if (key) {
         sections.querySelector(':scope > .js-services')?.remove();
         await renderService(sections, key);
+        if (!painted.includes(sections.closest('[data-role="page"], .page, .mainAnimatedPage'))) paintPage(true);
       } else {
+        if (painted.length) paintPage(false);
         closeService(sections);
         state.introKey = null;
         renderHomeRow(sections);
