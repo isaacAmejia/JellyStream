@@ -1,6 +1,6 @@
 name: "JellyStream"
-guid: "5c4e9982-450c-443e-a4a4-297d618258e5"
-version: "1.5.0.0"
+guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
+version: "1.6.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,7 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Service pages now open with a billboard of that service's #1 title and follow its app's
-  layout: landscape or poster cards, captions, buttons and type per service (Netflix, Disney+,
-  HBO Max, Prime Video, Hulu, Apple TV+, Paramount+, Peacock). Opening a title falls back to a
-  plain link if Jellyfin's router doesn't respond.
+  Fixes updates not loading: Jellyfin could leave an empty folder from the previous version and
+  then remove the new install on restart. JellyStream now cleans those up and can't be replaced
+  by them. Includes the 1.5 billboards and per-service layouts.

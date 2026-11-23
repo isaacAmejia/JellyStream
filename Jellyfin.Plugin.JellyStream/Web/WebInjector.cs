@@ -79,6 +79,8 @@ public partial class WebInjector : IHostedService
             Plugin.Instance.ConfigurationSaved += OnConfigurationSaved;
         }
 
+        CleanUpOldFolders();
+
         if (Plugin.Instance?.Configuration.AutoInject != false)
         {
             Inject();
@@ -98,6 +100,59 @@ public partial class WebInjector : IHostedService
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Jellyfin sometimes can't fully delete an old version's folder after an update and leaves it
+    /// behind empty. On the next start it treats that leftover as a plugin of its own and removes the
+    /// real install, so clear out any JellyStream_* folder that no longer has a DLL in it.
+    /// </summary>
+    private void CleanUpOldFolders()
+    {
+        try
+        {
+            var current = Path.GetDirectoryName(typeof(WebInjector).Assembly.Location);
+            if (string.IsNullOrEmpty(current))
+            {
+                return;
+            }
+
+            var pluginsDir = Path.GetDirectoryName(current);
+            if (string.IsNullOrEmpty(pluginsDir) || !Directory.Exists(pluginsDir))
+            {
+                return;
+            }
+
+            foreach (var dir in Directory.EnumerateDirectories(pluginsDir))
+            {
+                var name = Path.GetFileName(dir);
+                var ours = string.Equals(name, "JellyStream", StringComparison.OrdinalIgnoreCase)
+                    || name.StartsWith("JellyStream_", StringComparison.OrdinalIgnoreCase);
+                if (!ours || string.Equals(Path.GetFullPath(dir), Path.GetFullPath(current), StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (Directory.EnumerateFiles(dir, "*.dll", SearchOption.AllDirectories).Any())
+                {
+                    continue; // an older full install; Jellyfin removes those itself
+                }
+
+                try
+                {
+                    Directory.Delete(dir, true);
+                    _logger.LogInformation("JellyStream: removed leftover folder {Dir}", dir);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning("JellyStream: couldn't remove leftover folder {Dir}: {Message}. Delete it by hand, or the next update may not load.", dir, ex.Message);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogDebug(ex, "JellyStream: leftover folder check failed");
+        }
     }
 
     private static string Insert(string html)

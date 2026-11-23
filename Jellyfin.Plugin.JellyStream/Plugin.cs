@@ -16,7 +16,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <summary>
     /// The plugin id.
     /// </summary>
-    public static readonly Guid PluginId = Guid.Parse("5c4e9982-450c-443e-a4a4-297d618258e5");
+    public static readonly Guid PluginId = Guid.Parse("f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
