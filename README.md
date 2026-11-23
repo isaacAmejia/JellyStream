@@ -34,7 +34,7 @@ That's it. The first library check starts automatically, the setup checklist sho
 <details>
 <summary>Manual install / if the row doesn't appear</summary>
 
-- Download `jellystream_x.x.x.x.zip` from the latest release and put `Jellyfin.Plugin.JellyStream.dll` in `plugins/JellyStream` in your Jellyfin config folder, then restart.
+- Download `jellystream_x.x.x.x.zip` from the latest release and put `Jellyfin.Plugin.JellyStream.dll` in `plugins/JellyStream_x.x.x.x` (with the version number) in your Jellyfin config folder, then restart. Don't use a folder named just `JellyStream`: Jellyfin treats an unversioned folder as newer than any catalog install and deletes the real one at startup.
 - JellyStream adds itself to the web client through the **File Transformation** plugin when it's installed, or by editing Jellyfin's `index.html`. If neither is possible (read-only web folder), the settings page shows a one-line snippet to paste into **JavaScript Injector**.
 
 </details>
