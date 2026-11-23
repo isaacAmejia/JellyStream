@@ -157,7 +157,8 @@ public class JellyStreamController : ControllerBase
             config.GenreRows,
             config.ShowContinueWatching,
             config.ShowRecentlyAdded,
-            config.ShowPopularMissing && config.ShowMissing && SeerrClient.IsConfigured);
+            config.ShowPopularMissing && config.ShowMissing && SeerrClient.IsConfigured,
+            config.Diagnostics);
     }
 
     /// <summary>The most popular titles on a service, marked with what you have.</summary>
@@ -340,7 +341,7 @@ public class JellyStreamController : ControllerBase
     public ActionResult ClientLogMessage([FromBody] ClientLog log)
     {
         var message = log?.Message ?? string.Empty;
-        _logger.LogWarning("JellyStream web client: {Message}", message.Length > 6000 ? message[..6000] : message);
+        _logger.LogWarning("JellyStream web client: {Message}", message.Length > 60000 ? message[..60000] : message);
         return NoContent();
     }
 

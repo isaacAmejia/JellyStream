@@ -171,6 +171,10 @@
                     <div class="checkboxContainer">
                         <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsHideEmpty" /><span>Hide services with nothing in my library</span></label>
                     </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsDiagnostics" /><span>Show the diagnostics panel</span></label>
+                        <div class="fieldDescription checkboxFieldDescription">Adds a small "JellyStream diagnostics" button to every page. It records page changes and errors so a problem can be copied or sent to the server log. Turn it off when you're done.</div>
+                    </div>
                 </div>
 
                 <!-- 4. Service pages -->
@@ -458,6 +462,7 @@
             $('jsHomeRowPosition').value = config.HomeRowPosition || 'top';
             $('jsVisualMode').value = config.VisualMode || 'auto';
             $('jsHideEmpty').checked = config.HideEmptyServices;
+            $('jsDiagnostics').checked = !!config.Diagnostics;
             $('jsTopCount').value = config.TopCount;
             $('jsTopSource').value = config.TopSource || 'week';
             $('jsTrendingPages').value = config.TrendingPages || 10;
@@ -489,6 +494,7 @@
             config.HomeRowPosition = $('jsHomeRowPosition').value;
             config.VisualMode = $('jsVisualMode').value;
             config.HideEmptyServices = $('jsHideEmpty').checked;
+            config.Diagnostics = $('jsDiagnostics').checked;
             config.TopCount = num('jsTopCount', 10, 1, 20);
             config.TopSource = $('jsTopSource').value;
             config.TrendingPages = num('jsTrendingPages', 10, 1, 25);

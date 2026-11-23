@@ -117,6 +117,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether services with nothing in your library are hidden.</summary>
     public bool HideEmptyServices { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether the web client shows the diagnostics panel.</summary>
+    public bool Diagnostics { get; set; }
+
     /// <summary>Gets or sets the visual mode: "auto", "full" or "lite" (for low-power devices).</summary>
     public string VisualMode { get; set; } = "auto";
 

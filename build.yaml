@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.10.0.0"
+version: "1.11.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Service pages no longer change Jellyfin's route, which on the classic layout left a stale copy of
-  the home screen behind when opening a title. Each service's Top 10 now follows that service's own
-  layout. Intros always play (about two seconds). Posters are cached by the browser and load faster.
+  Adds a diagnostics panel (Settings > Show the diagnostics panel) that records page changes and errors
+  and can send them to the server log. Removes the service tabs from service pages. No more automatic
+  reload when a title is slow to open.

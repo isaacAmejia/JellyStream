@@ -9,7 +9,115 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.10.0';
+  const VERSION = '1.11.0';
+
+  // ---------------------------------------------------------------- diagnostics
+  // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
+  // what is actually on screen. Kept across reloads for this tab (sessionStorage). The panel to read,
+  // copy or send it shows when "Show the diagnostics panel" is on in the plugin settings (or
+  // localStorage 'jellystream-debug' = '1').
+  const diag = (() => {
+    const KEY = 'jellystream-diag';
+    let buf = [];
+    try { buf = JSON.parse(sessionStorage.getItem(KEY) || '[]'); } catch { buf = []; }
+    let saveTimer;
+    let onAdd = null;
+    const t0 = Date.now();
+    const text = (v) => {
+      if (v == null) return String(v);
+      if (typeof v === 'string') return v;
+      if (v instanceof Error) return v.stack || `${v.name}: ${v.message}`;
+      if (v instanceof Element) return describe(v);
+      try {
+        const seen = new WeakSet();
+        return JSON.stringify(v, (k, x) => {
+          if (x && typeof x === 'object') {
+            if (seen.has(x)) return '[circular]';
+            seen.add(x);
+            if (x instanceof Element) return describe(x);
+          }
+          return typeof x === 'function' ? '[fn]' : x;
+        });
+      } catch { return String(v); }
+    };
+    const add = (kind, ...args) => {
+      const m = args.map(text).join(' ').slice(0, 900);
+      buf.push({ t: Date.now(), k: kind, m });
+      if (buf.length > 700) buf = buf.slice(-500);
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { try { sessionStorage.setItem(KEY, JSON.stringify(buf.slice(-500))); } catch { /* full */ } }, 200);
+      onAdd?.();
+    };
+    const describe = (el) => {
+      if (!el || !el.tagName) return String(el);
+      const cls = (typeof el.className === 'string' ? el.className : '').trim().split(/\s+/).filter(Boolean).slice(0, 4).join('.');
+      return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${cls ? `.${cls}` : ''}`;
+    };
+    const hidden = (el) => el.classList.contains('hide') || getComputedStyle(el).display === 'none';
+    // what is on screen right now
+    const snapshot = (why) => {
+      const pages = [...document.querySelectorAll('.mainAnimatedPages > *, .skinBody > *')]
+        .map((p) => `${describe(p)}${p.dataset?.url ? `[${p.dataset.url}]` : ''}${hidden(p) ? ' (hidden)' : ' (SHOWN)'}`);
+      const stack = [];
+      for (let el = document.elementFromPoint(innerWidth / 2, innerHeight / 2); el && stack.length < 6; el = el.parentElement) stack.push(describe(el));
+      const router = window.Emby?.Page;
+      add('snap', why, {
+        hash: location.hash,
+        state: history.state,
+        html: document.documentElement.className,
+        pages,
+        centre: stack.join(' < '),
+        jellystream: { view: !!document.querySelector('.js-view'), open: document.documentElement.classList.contains('js-service-open'), intro: !!document.querySelector('.js-intro') },
+        routerPending: !!router?.promiseShow,
+        scrollY: Math.round(scrollY),
+      });
+    };
+    // other scripts' errors and Jellyfin's router/view logging
+    addEventListener('error', (e) => {
+      if (e.target && e.target !== window && e.target.tagName) add('error', 'failed to load', describe(e.target), e.target.src || e.target.href || '');
+      else add('error', e.message, `${e.filename || ''}:${e.lineno || ''}:${e.colno || ''}`, e.error?.stack || '');
+    }, true);
+    addEventListener('unhandledrejection', (e) => add('error', 'unhandled rejection:', e.reason));
+    const INTERESTING = /viewContainer|ViewManager|viewManager|AppRouter|appRouter|RouterHistory|itemDetails|ConnectionRequired|LayoutManager|homesections|Router/i;
+    for (const level of ['error', 'warn', 'info', 'log', 'debug']) {
+      const orig = console[level]?.bind(console);
+      if (!orig) continue;
+      console[level] = (...args) => {
+        try {
+          const first = typeof args[0] === 'string' ? args[0] : '';
+          if (first.includes('[RouterHistory]')) {
+            const st = args[1] || {};
+            add('router', 'history update', st.historyAction, `${st.location?.pathname || ''}${st.location?.search || ''}`, 'navigation:', st.navigation?.state, st.errors ? ['errors', st.errors] : '');
+          } else if (level === 'error' || level === 'warn' || INTERESTING.test(first)) {
+            if (!first.startsWith('[JellyStream diag]')) add(level === 'error' || level === 'warn' ? level : 'jf', ...args);
+          }
+        } catch { /* never break logging */ }
+        return orig(...args);
+      };
+    }
+    for (const fn of ['pushState', 'replaceState']) {
+      const orig = history[fn].bind(history);
+      history[fn] = (st, title, url) => {
+        add('history', fn, url ?? '(same url)', st);
+        return orig(st, title, url);
+      };
+    }
+    addEventListener('hashchange', () => { add('nav', 'hashchange ->', location.hash); setTimeout(() => snapshot('after hashchange'), 400); });
+    addEventListener('popstate', (e) => add('nav', 'popstate ->', location.hash, e.state));
+    for (const ev of ['viewbeforeshow', 'viewshow', 'viewbeforehide', 'viewhide', 'viewdestroy']) {
+      document.addEventListener(ev, (e) => {
+        add('view', ev, describe(e.target), e.detail?.params || '');
+        if (ev === 'viewshow') setTimeout(() => snapshot('after viewshow'), 300);
+      }, true);
+    }
+    add('load', `--- page loaded (client ${VERSION}) ---`, location.href, navigator.userAgent);
+    return {
+      add, snapshot, describe,
+      dump: () => buf.map((e) => `${new Date(e.t).toISOString().slice(11, 23)} +${((e.t - t0) / 1000).toFixed(2)}s [${e.k}] ${e.m}`).join('\n'),
+      clear: () => { buf = []; try { sessionStorage.removeItem(KEY); } catch { /* ignore */ } onAdd?.(); },
+      set onAdd(fn) { onAdd = fn; },
+    };
+  })();
   const FONT = '"Manrope", "SF Pro Display", "Inter", system-ui, sans-serif';
 
   // ---------------------------------------------------------------- helpers
@@ -1048,6 +1156,89 @@
     toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
   };
 
+  // ---------------------------------------------------------------- diagnostics panel
+  const diagEnabled = () => {
+    try { if (localStorage.getItem('jellystream-debug') === '1') return true; } catch { /* ignore */ }
+    return !!state.cfg?.Diagnostics;
+  };
+  const diagCss = document.createElement('style');
+  diagCss.textContent = `
+    .jsd-btn { position: fixed; left: 10px; bottom: 10px; z-index: 2147483000; font: 700 12px/1 system-ui, sans-serif;
+      padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: #c62828; color: #fff; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+    .jsd-panel { position: fixed; left: 10px; right: 10px; bottom: 50px; top: 12vh; z-index: 2147483000; display: flex; flex-direction: column; gap: 8px;
+      padding: 10px; border-radius: 12px; background: rgba(12,12,14,.97); border: 1px solid rgba(255,255,255,.2); color: #fff; font: 13px system-ui, sans-serif; }
+    .jsd-panel textarea { flex: 1; width: 100%; box-sizing: border-box; resize: none; background: #000; color: #b9f6ca;
+      font: 11px/1.35 ui-monospace, Menlo, Consolas, monospace; border: 1px solid #333; border-radius: 6px; padding: 6px; white-space: pre; }
+    .jsd-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .jsd-row button { font: 600 13px system-ui, sans-serif; padding: 8px 12px; border-radius: 8px; border: 0; background: #2b2f38; color: #fff; cursor: pointer; }
+    .jsd-row button.jsd-main { background: #1e88e5; }
+    .jsd-row span { opacity: .7; margin-left: auto; }`;
+  document.head.appendChild(diagCss);
+  const diagUi = () => {
+    let btn = document.querySelector('.jsd-btn');
+    if (!diagEnabled()) { btn?.remove(); document.querySelector('.jsd-panel')?.remove(); return; }
+    if (btn) return;
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'jsd-btn';
+    btn.textContent = 'JellyStream diagnostics';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const open = document.querySelector('.jsd-panel');
+      if (open) { open.remove(); diag.onAdd = null; return; }
+      diag.snapshot('panel opened');
+      const panel = document.createElement('div');
+      panel.className = 'jsd-panel';
+      panel.innerHTML = `
+        <div class="jsd-row"><b>JellyStream diagnostics</b><span>client ${VERSION}</span></div>
+        <textarea readonly spellcheck="false"></textarea>
+        <div class="jsd-row">
+          <button type="button" class="jsd-main" data-a="send">Send to server log</button>
+          <button type="button" data-a="copy">Copy</button>
+          <button type="button" data-a="snap">Snapshot</button>
+          <button type="button" data-a="clear">Clear</button>
+          <button type="button" data-a="close">Close</button>
+          <span class="jsd-status"></span>
+        </div>`;
+      const ta = panel.querySelector('textarea');
+      const status = panel.querySelector('.jsd-status');
+      const fill = () => { ta.value = diag.dump(); ta.scrollTop = ta.scrollHeight; };
+      fill();
+      diag.onAdd = () => requestAnimationFrame(fill);
+      panel.addEventListener('click', async (ev) => {
+        const a = ev.target.closest('button')?.dataset.a;
+        if (!a) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (a === 'close') { panel.remove(); diag.onAdd = null; }
+        if (a === 'clear') diag.clear();
+        if (a === 'snap') diag.snapshot('manual');
+        if (a === 'copy') {
+          ta.focus(); ta.select();
+          let ok = false;
+          try { await navigator.clipboard.writeText(ta.value); ok = true; } catch { ok = document.execCommand?.('copy'); }
+          status.textContent = ok ? 'Copied' : 'Select the text and copy it';
+        }
+        if (a === 'send') {
+          status.textContent = 'Sending…';
+          try {
+            await window.ApiClient.ajax({ type: 'POST', url: api('Client/Log'), data: JSON.stringify({ Message: `diagnostics from ${navigator.userAgent}\n${diag.dump()}` }), contentType: 'application/json' });
+            status.textContent = 'Sent: look for "JellyStream web client" in the Jellyfin log';
+          } catch (err) {
+            status.textContent = `Couldn't send (${err?.status || err?.message || err}); use Copy`;
+          }
+        }
+      }, true);
+      // keep Jellyfin and other scripts from treating typing/clicks in the panel as navigation
+      for (const ev of ['keydown', 'keyup']) panel.addEventListener(ev, (x) => x.stopPropagation());
+      document.body.appendChild(panel);
+    }, true);
+    document.body.appendChild(btn);
+  };
+  setInterval(diagUi, 2000);
+
   // ---------------------------------------------------------------- lazy images
   const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
     for (const e of entries) {
@@ -1496,22 +1687,6 @@
     const span = cfg.TopSource === 'day' ? 'Today' : cfg.TopSource === 'week' ? 'This Week' : '';
     const rows = [];
 
-    // Home + all services, so a remote can switch or leave without a Back key
-    const sw = (href, name, inner, current, color) => `
-      <div class="card js-sw-card${current ? ' js-current' : ''}"${color ? ` style="--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)}"` : ''}>
-        <div class="cardBox">
-          <div class="cardScalable">
-            <a class="cardImageContainer cardContent itemAction" href="${esc(href)}" aria-label="${esc(name)}">${inner}</a>
-          </div>
-        </div>
-      </div>`;
-    rows.push(section({
-      title: 'Services',
-      cls: 'js-switcher',
-      cards: [sw('#/home', 'Home', '<span class="material-icons">arrow_back</span><span>Home</span>', false)].concat(cfg.Services.map((x) =>
-        sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, `<span>${esc(x.Name)}</span>`, x.Key === svc.Key, tintOf(x)))),
-    }));
-
     rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: uniqueTop(data.topMovies).map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' }));
     rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: uniqueTop(data.topShows).map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' }));
 
@@ -1696,6 +1871,8 @@
   const isDetails = () => /^#!?\/details/i.test(location.hash || '');
   const detailsShown = () => [...document.querySelectorAll('.itemDetailPage')].some(visible);
   const openDetails = (href) => {
+    diag.add('open', 'opening', href, 'router:', !!window.Emby?.Page?.show, 'pending:', !!window.Emby?.Page?.promiseShow);
+    diag.snapshot('before opening a title');
     document.querySelector('.js-view')?.classList.add('js-leaving');
     let sent = false;
     try {
@@ -1739,16 +1916,13 @@
       snap('2.5s');
       removeEventListener('error', onErr);
       removeEventListener('unhandledrejection', onErr);
+      diag.add('open', 'title open trace', log);
+      diag.snapshot('2.5s after opening a title');
       if (!isDetails() || detailsShown()) return;
-      const text = `open title failed (client ${VERSION}, layout ${document.documentElement.className.match(/layout-\S+/g)?.join(' ') || '?'}): ${JSON.stringify(log)}`;
-      console.warn('[JellyStream]', text);
-      let reloaded = false;
-      const reload = () => { if (!reloaded) { reloaded = true; location.reload(); } };
+      const text = `open title failed (client ${VERSION}, layout ${document.documentElement.className.match(/layout-\S+/g)?.join(' ') || '?'}): ${JSON.stringify(log)}\n${diag.dump()}`;
       try {
-        window.ApiClient.ajax({ type: 'POST', url: api('Client/Log'), data: JSON.stringify({ Message: text }), contentType: 'application/json' })
-          .then(reload, reload);
+        window.ApiClient.ajax({ type: 'POST', url: api('Client/Log'), data: JSON.stringify({ Message: text }), contentType: 'application/json' });
       } catch { /* ignore */ }
-      setTimeout(reload, 800);
     }, 2500);
   };
 
@@ -1896,6 +2070,10 @@
   let busy = false;
   const sync = async () => {
     if (busy || !window.ApiClient || !userId()) return;
+    if (!state.cfg && !state.cfgLoading) {
+      state.cfgLoading = true;
+      loadConfig().finally(() => { state.cfgLoading = false; diagUi(); });
+    }
     if (!onHome()) {
       teardown();
       return;

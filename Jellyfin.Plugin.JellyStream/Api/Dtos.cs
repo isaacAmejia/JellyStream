@@ -27,6 +27,7 @@ public record ClientService(string Key, string Name, string? Logo, string Accent
 /// <param name="ShowContinueWatching">Show Continue Watching.</param>
 /// <param name="ShowRecentlyAdded">Show Recently Added.</param>
 /// <param name="ShowPopularMissing">Show Popular to request.</param>
+/// <param name="Diagnostics">Show the diagnostics panel.</param>
 public record ClientConfig(
     List<ClientService> Services,
     bool ShowHomeRow,
@@ -40,7 +41,8 @@ public record ClientConfig(
     int GenreRows,
     bool ShowContinueWatching,
     bool ShowRecentlyAdded,
-    bool ShowPopularMissing);
+    bool ShowPopularMissing,
+    bool Diagnostics = false);
 
 /// <summary>A popular title (in the library or not).</summary>
 /// <param name="TmdbId">TMDB id.</param>
