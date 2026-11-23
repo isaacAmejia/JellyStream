@@ -630,6 +630,99 @@
       .js-view .overflowPortraitCard { width: 30vw !important; }
     }
 
+    /* service intro: plays over the screen while the service page loads */
+    .js-intro {
+      position: fixed; inset: 0; z-index: 99990;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--js-intro-bg, #000);
+      overflow: hidden;
+      opacity: 1;
+      transition: opacity .45s ease;
+    }
+    .js-intro.out { opacity: 0; pointer-events: none; }
+    .js-intro-logo {
+      position: relative; z-index: 2;
+      width: min(26vmin, 220px); height: min(26vmin, 220px);
+      border-radius: 22%; object-fit: cover;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      animation: js-intro-pop 1.1s cubic-bezier(.2,.9,.25,1) both;
+    }
+    .js-intro-name {
+      position: relative; z-index: 2;
+      font: 900 clamp(2em, 8vmin, 5em) / 1 ${FONT}; color: #fff; letter-spacing: -.03em;
+      animation: js-intro-pop 1.1s cubic-bezier(.2,.9,.25,1) both;
+    }
+    .js-intro-fx { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    @keyframes js-intro-pop { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes js-intro-sweep { from { transform: translateX(-120%) skewX(-20deg); } to { transform: translateX(220%) skewX(-20deg); } }
+    @keyframes js-intro-ribbons { 0% { transform: scaleX(0); opacity: 0; } 35% { opacity: 1; } 100% { transform: scaleX(1.4); opacity: 0; } }
+    @keyframes js-intro-spin { to { transform: rotate(360deg); } }
+    @keyframes js-intro-ring { from { transform: scale(.4); opacity: .9; } to { transform: scale(2.6); opacity: 0; } }
+    @keyframes js-intro-arc { from { transform: rotate(-150deg); opacity: 0; } 40% { opacity: 1; } to { transform: rotate(10deg); opacity: 1; } }
+    @keyframes js-intro-draw { from { width: 0; } to { width: min(30vmin, 260px); } }
+    @keyframes js-intro-burst { 0% { transform: translate(0,0) scale(.2); opacity: 0; } 50% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } }
+    @keyframes js-intro-unblur { from { filter: blur(30px); opacity: 0; transform: scale(1.15); } to { filter: blur(0); opacity: 1; transform: scale(1); } }
+    /* netflix: red ribbons of light stretching out from the logo */
+    .js-intro-netflix .js-intro-fx {
+      background: repeating-linear-gradient(90deg, transparent 0 2.2vw, rgba(229,9,20,.85) 2.2vw 2.6vw, transparent 2.6vw 4vw, rgba(178,7,16,.7) 4vw 4.3vw);
+      animation: js-intro-ribbons 1.3s cubic-bezier(.6,0,.2,1) .15s both;
+      -webkit-mask-image: radial-gradient(60% 45% at 50% 50%, #000 0%, transparent 75%);
+      mask-image: radial-gradient(60% 45% at 50% 50%, #000 0%, transparent 75%);
+    }
+    /* disney+ and hulu: a glowing arc swinging over the logo */
+    .js-intro-disney .js-intro-fx::before, .js-intro-hulu .js-intro-fx::before {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      width: min(52vmin, 460px); height: min(52vmin, 460px); margin: calc(min(52vmin, 460px) / -2) 0 0 calc(min(52vmin, 460px) / -2);
+      border-radius: 50%; border: 3px solid transparent; border-top-color: var(--js-intro-c1);
+      filter: drop-shadow(0 0 12px var(--js-intro-c1)) drop-shadow(0 0 30px var(--js-intro-c1));
+      animation: js-intro-arc 1.2s cubic-bezier(.2,.9,.25,1) both;
+    }
+    /* hbo max: blue rings pulsing out */
+    .js-intro-max .js-intro-fx::before, .js-intro-max .js-intro-fx::after {
+      content: ""; position: absolute; left: 50%; top: 50%; width: 40vmin; height: 40vmin; margin: -20vmin 0 0 -20vmin;
+      border-radius: 50%; border: 2px solid rgba(43,92,255,.9); box-shadow: 0 0 40px rgba(43,92,255,.6);
+      animation: js-intro-ring 1.6s ease-out infinite;
+    }
+    .js-intro-max .js-intro-fx::after { animation-delay: .5s; }
+    /* prime video: the smile line drawing under the logo */
+    .js-intro-prime .js-intro-fx::before {
+      content: ""; position: absolute; left: 50%; top: calc(50% + min(16vmin, 135px)); transform: translateX(-50%);
+      height: min(5vmin, 40px); width: 0; border-bottom: 5px solid #1a98ff; border-radius: 0 0 50% 50%;
+      filter: drop-shadow(0 0 10px rgba(26,152,255,.8));
+      animation: js-intro-draw .9s cubic-bezier(.6,0,.2,1) .35s both;
+    }
+    /* apple tv: glass sheen and a blur-to-sharp reveal */
+    .js-intro-apple .js-intro-logo, .js-intro-apple .js-intro-name { animation: js-intro-unblur 1.1s cubic-bezier(.2,.9,.25,1) both; }
+    .js-intro-apple .js-intro-fx::before {
+      content: ""; position: absolute; top: 0; bottom: 0; width: 30%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+      animation: js-intro-sweep 1.4s ease-in-out .3s both;
+    }
+    /* paramount+: a ring of stars turning around the logo */
+    .js-intro-paramount .js-intro-fx::before {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      width: min(48vmin, 420px); height: min(48vmin, 420px); margin: calc(min(48vmin, 420px) / -2) 0 0 calc(min(48vmin, 420px) / -2);
+      border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, #fff 0 1.2deg, transparent 1.2deg 14deg);
+      -webkit-mask-image: radial-gradient(closest-side, transparent 88%, #000 90%, #000 96%, transparent 98%);
+      mask-image: radial-gradient(closest-side, transparent 88%, #000 90%, #000 96%, transparent 98%);
+      filter: drop-shadow(0 0 8px #7fb2ff);
+      animation: js-intro-spin 6s linear infinite, js-intro-pop 1s ease both;
+    }
+    /* peacock: colored feathers bursting out */
+    .js-intro-peacock .js-intro-fx i {
+      position: absolute; left: 50%; top: 50%; width: 5vmin; height: 5vmin; margin: -2.5vmin 0 0 -2.5vmin;
+      border-radius: 50%; animation: js-intro-burst 1.3s cubic-bezier(.2,.9,.25,1) .2s both;
+    }
+    /* anything else: a sheen in the service's color */
+    .js-intro-generic .js-intro-fx::before {
+      content: ""; position: absolute; top: 0; bottom: 0; width: 35%;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--js-intro-c1) 35%, transparent), transparent);
+      animation: js-intro-sweep 1.3s ease-in-out .2s both;
+    }
+    html.js-lite .js-intro-fx { display: none; }
+    @media (prefers-reduced-motion: reduce) { .js-intro-fx { display: none; } .js-intro-logo, .js-intro-name { animation: none; } }
+
     /* native Top 10 rows */
     .js-view { --js-poster-w: clamp(118px, 10.5vw, 210px); }
     .js-rank-card { width: calc(var(--js-poster-w) * 1.62) !important; flex: 0 0 auto; }
@@ -873,15 +966,19 @@
   };
 
   // Top 10 card: a big rank numeral with the poster tucked against it, styled per service
+  // inline !important beats any theme rule that sizes .card / .cardScalable / .cardImageContainer
+  const RANK_CARD_STYLE = 'width:calc(var(--js-poster-w, 150px) * 1.62) !important;min-width:calc(var(--js-poster-w, 150px) * 1.62) !important;max-width:none !important;flex:0 0 auto !important;';
+  const RANK_BOX_STYLE = 'position:relative !important;width:100% !important;height:calc(var(--js-poster-w, 150px) * 1.5) !important;padding:0 !important;overflow:visible !important;';
+  const RANK_POSTER_STYLE = 'position:absolute !important;top:0 !important;bottom:0 !important;right:0 !important;left:auto !important;width:var(--js-poster-w, 150px) !important;height:100% !important;';
   const rankCard = (t, i) => {
     const owned = !!t.ItemId;
     const status = owned ? '' : (t.Status === 'available' ? 'missing' : t.Status);
     return `
-    <div class="card js-card js-rank-card${owned ? '' : ' js-missing'}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
+    <div class="card js-card js-rank-card${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
       <div class="cardBox">
-        <div class="cardScalable js-rank-box">
+        <div class="cardScalable js-rank-box" style="${RANK_BOX_STYLE}">
           <span class="js-rank-num" aria-hidden="true">${i + 1}</span>
-          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(owned ? imgUrl(t.ItemId) : (t.Poster || ''))}"></a>
+          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(owned ? imgUrl(t.ItemId) : (t.Poster || ''))}"></a>
           ${owned ? (t.Status === 'partial' ? BADGES.partial : '') : (BADGES[status] || BADGES.missing)}
         </div>
         <div class="cardFooter"><div class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></div></div>
@@ -1139,6 +1236,37 @@
     return data;
   };
 
+  // the service's intro, shown until its page is ready (at least ~1.3s so it can play)
+  const playIntro = (svc) => {
+    document.querySelector('.js-intro')?.remove();
+    const k = brandKeyFor(svc) || 'generic';
+    const b = BRANDS[k] || {};
+    const el = document.createElement('div');
+    el.className = `js-intro js-intro-${k}`;
+    el.style.setProperty('--js-intro-bg', b.base || '#0b0c10');
+    el.style.setProperty('--js-intro-c1', svc.Accent || (k === 'disney' ? '#3ec7ff' : b.c1) || '#8aa0b8');
+    const feathers = k === 'peacock'
+      ? ['#ffb000', '#ff6d00', '#e5007e', '#6f2da8', '#0063db', '#00b14f'].map((c, i) => {
+        const a = (-150 + i * 24) * Math.PI / 180;
+        return `<i style="background:${c};--dx:${Math.round(Math.cos(a) * 30)}vmin;--dy:${Math.round(Math.sin(a) * 30)}vmin;animation-delay:${0.15 + i * 0.05}s"></i>`;
+      }).join('')
+      : '';
+    el.innerHTML = `<div class="js-intro-fx">${feathers}</div>${svc.Logo
+      ? `<img class="js-intro-logo" src="${esc(svc.Logo)}" alt="">`
+      : `<div class="js-intro-name">${esc(svc.Name)}</div>`}`;
+    document.body.appendChild(el);
+    const started = performance.now();
+    const done = () => {
+      const wait = Math.max(0, 1300 - (performance.now() - started));
+      setTimeout(() => {
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 500);
+      }, wait);
+    };
+    setTimeout(done, 6000); // never get stuck on the intro
+    return done;
+  };
+
   const renderService = async (sections, key) => {
     const cfg = state.cfg;
     const svc = cfg?.Services.find((s) => s.Key === key);
@@ -1151,6 +1279,8 @@
     view.className = state.vt ? 'js-view' : 'js-view js-anim';
     view.dataset.key = key;
     sections.appendChild(view);
+    const introDone = svc && state.introKey !== key ? playIntro(svc) : null;
+    state.introKey = key;
 
     if (!svc) {
       view.innerHTML = `<div class="js-empty">This service isn't available. <a href="#/home">Back to Home</a></div>`;
@@ -1251,6 +1381,7 @@
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
     stubRows(box);
+    introDone?.();
     requestAnimationFrame(() => updateAllArrows(box));
     setTimeout(() => updateAllArrows(box), 600); // after the Top 10 numbers resize their cards
   };
@@ -1322,6 +1453,8 @@
     document.querySelectorAll('.js-view').forEach((v) => v.remove());
     document.querySelectorAll('.js-hide-native').forEach((el) => el.classList.remove('js-hide-native'));
     state.brandKey = null;
+    state.introKey = null;
+    document.querySelector('.js-intro')?.remove();
     applyBrand(null);
   };
 
@@ -1519,7 +1652,7 @@
       go({ href: a.getAttribute('href'), key, from: null, replace: true });
     } else {
       state.cameFromHome = true;
-      go({ href: a.getAttribute('href'), key, from: a.querySelector('.js-logo') });
+      try { location.hash = a.getAttribute('href'); } catch { /* ignore */ }
     }
   }, true);
 
@@ -1551,6 +1684,7 @@
         await renderService(sections, key);
       } else {
         closeService(sections);
+        state.introKey = null;
         renderHomeRow(sections);
       }
     } finally {

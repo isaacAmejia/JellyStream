@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.7.1.0"
+version: "1.8.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,5 +14,5 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Mobile: tapping a service opens it reliably on phones and tablets, and service pages have a
-  phone layout (full-width billboard, compact tabs, smaller cards and Top 10 numerals).
+  Top 10 rows fixed on themes that collapsed them into thin lines.
+  Each service now plays its own brand intro while its page loads.
