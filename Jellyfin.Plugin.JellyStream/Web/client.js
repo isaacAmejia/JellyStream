@@ -999,10 +999,13 @@
     }
   };
 
-  const openDetails = (href) => {
-    const route = href.replace(/^#!?\/?/, '');
+  // open a title the way Jellyfin's own cards do (its router), falling back to the link
+  const openDetails = (href, cardEl) => {
+    const id = cardEl?.dataset.id;
     try {
-      if (window.Dashboard?.navigate) { window.Dashboard.navigate(route); return; }
+      if (id && window.Emby?.Page?.showItem) { window.Emby.Page.showItem(id, cardEl.dataset.serverid || serverId()); return; }
+      if (window.Emby?.Page?.show) { window.Emby.Page.show(href); return; }
+      if (window.Dashboard?.navigate) { window.Dashboard.navigate(href.replace(/^#!?\/?/, '')); return; }
     } catch { /* fall through */ }
     location.hash = href;
   };
@@ -1014,7 +1017,7 @@
       e.preventDefault();
       e.stopPropagation();
       document.documentElement.classList.remove('js-service-open');
-      openDetails(link.getAttribute('href'));
+      openDetails(link.getAttribute('href'), link.closest('.card'));
       return;
     }
     const missing = e.target.closest?.('.js-missing');
