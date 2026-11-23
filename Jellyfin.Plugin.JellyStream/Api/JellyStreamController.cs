@@ -44,6 +44,7 @@ public class JellyStreamController : ControllerBase
     private readonly SeerrClient _seerr;
     private readonly AvailabilityStore _store;
     private readonly TrendingService _trending;
+    private readonly IntroStore _intros;
     private readonly ILogger<JellyStreamController> _logger;
 
     /// <summary>
@@ -55,6 +56,7 @@ public class JellyStreamController : ControllerBase
     /// <param name="seerr">Seerr client.</param>
     /// <param name="store">Availability store.</param>
     /// <param name="trending">Trending lists.</param>
+    /// <param name="intros">Intro videos.</param>
     /// <param name="logger">Logger.</param>
     public JellyStreamController(
         ILibraryManager libraryManager,
@@ -63,6 +65,7 @@ public class JellyStreamController : ControllerBase
         SeerrClient seerr,
         AvailabilityStore store,
         TrendingService trending,
+        IntroStore intros,
         ILogger<JellyStreamController> logger)
     {
         _libraryManager = libraryManager;
@@ -71,6 +74,7 @@ public class JellyStreamController : ControllerBase
         _seerr = seerr;
         _store = store;
         _trending = trending;
+        _intros = intros;
         _logger = logger;
     }
 
@@ -141,7 +145,8 @@ public class JellyStreamController : ControllerBase
                 !string.IsNullOrWhiteSpace(s.LogoUrl) ? s.LogoUrl : s.ProviderIds.Select(id => logos.GetValueOrDefault(id)).FirstOrDefault(l => l is not null),
                 s.Accent,
                 movies,
-                shows));
+                shows,
+                _intros.VersionOf(KeyOf(s))));
         }
 
         return new ClientConfig(

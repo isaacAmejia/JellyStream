@@ -68,6 +68,11 @@
         #JellyStreamConfigPage .js-steps li.done .material-icons { opacity: 1; color: #4caf50; }
         #JellyStreamConfigPage .js-steps li.busy .material-icons { opacity: 1; color: #64b5f6; }
         #JellyStreamConfigPage .js-steps small { opacity: .6; }
+        #JellyStreamConfigPage .js-intro-row .js-name small.ok { color: #81c784; opacity: 1; }
+        #JellyStreamConfigPage .js-intro-row .js-bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); margin-top: .35em; overflow: hidden; display: none; }
+        #JellyStreamConfigPage .js-intro-row .js-bar i { display: block; height: 100%; width: 0; background: #64b5f6; transition: width .2s; }
+        #JellyStreamConfigPage .js-intro-row.busy .js-bar { display: block; }
+        #JellyStreamConfigPage .js-intro-preview { width: 100%; max-height: 260px; border-radius: 10px; background: #000; margin: -.2em 0 .8em; }
     </style>
 
     <div data-role="content">
@@ -208,7 +213,14 @@
                     <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAsUser" /><span>Request as the matching Seerr user (their permissions and limits apply)</span></label></div>
                 </div>
 
-                <!-- 5. Advanced -->
+                <!-- 5. Intros -->
+                <div class="js-card">
+                    <h2>5. Intros</h2>
+                    <p class="js-sub">Give a service an intro video and it plays, with sound, while that service's page loads. It plays full screen with no player controls. Services without one show the built-in animation. Short clips (a few seconds of 720p or 1080p H.264 MP4) load instantly; they're kept by the browser after the first play and preloaded on the home screen.</p>
+                    <div id="jsIntros"></div>
+                </div>
+
+                <!-- 6. Advanced -->
                 <div class="js-card">
                     <details>
                         <summary>Advanced</summary>
@@ -305,6 +317,7 @@
         }
 
         function renderServices() {
+            renderIntros();
             var box = $('jsServices');
             box.innerHTML = config.Services.map(function (s, i) {
                 var logo = logoFor(s);
@@ -512,6 +525,87 @@
             config.Services.forEach(function (s) { if (!s.Key) s.Key = slug(s.Name); });
         }
 
+        // ---- intro videos
+        var intros = {};
+        var fmtSize = function (n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; };
+        function loadIntros() {
+            return ApiClient.getJSON(api('Admin/Intros')).then(function (map) { intros = map || {}; }, function () { intros = {}; }).then(renderIntros);
+        }
+        function renderIntros() {
+            var box = $('jsIntros');
+            if (!box || !config) return;
+            var list = (config.Services || []).filter(function (s) { return s.Key; });
+            if (!list.length) { box.innerHTML = '<p class="js-sub">Add a service first.</p>'; return; }
+            box.innerHTML = list.map(function (s) {
+                var it = intros[s.Key] || intros[s.Key.toLowerCase()];
+                var logo = logoFor(s);
+                return '<div class="js-svc js-intro-row' + (s.Enabled ? '' : ' off') + '" data-key="' + esc(s.Key) + '">'
+                    + (logo ? '<img src="' + esc(logo) + '" alt="">' : '<span class="js-nologo"></span>')
+                    + '<div class="js-name"><b>' + esc(s.Name) + '</b>'
+                    + (it ? '<small class="ok">Intro video · ' + fmtSize(it.Size) + '</small>' : '<small>No video: plays the built-in animation</small>')
+                    + '<div class="js-bar"><i></i></div></div>'
+                    + '<input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov" data-act="intro-file" hidden>'
+                    + (it ? '<button type="button" class="js-icon" data-act="intro-preview" title="Preview"><span class="material-icons">play_circle</span></button>' : '')
+                    + '<button type="button" class="js-icon" data-act="intro-pick" title="' + (it ? 'Replace video' : 'Upload video') + '"><span class="material-icons">upload</span></button>'
+                    + (it ? '<button type="button" class="js-icon" data-act="intro-remove" title="Remove video"><span class="material-icons">delete</span></button>' : '')
+                    + '</div>';
+            }).join('');
+        }
+        function uploadIntro(row, file) {
+            var key = row.getAttribute('data-key');
+            var small = row.querySelector('.js-name small');
+            var bar = row.querySelector('.js-bar i');
+            row.classList.add('busy');
+            small.className = '';
+            small.textContent = 'Uploading ' + file.name + '…';
+            var form = new FormData();
+            form.append('file', file, file.name);
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', api('Admin/Intro/' + encodeURIComponent(key)));
+            xhr.setRequestHeader('X-Emby-Token', ApiClient.accessToken());
+            xhr.upload.onprogress = function (e) { if (e.lengthComputable) bar.style.width = Math.round(e.loaded / e.total * 100) + '%'; };
+            xhr.onload = function () {
+                row.classList.remove('busy');
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    Dashboard.alert('Intro saved for ' + row.querySelector('b').textContent + '. Reload Jellyfin in your browser to use it.');
+                    loadIntros();
+                } else {
+                    small.textContent = 'Upload failed: ' + (xhr.responseText || xhr.status).toString().replace(/^"|"$/g, '').slice(0, 160);
+                }
+            };
+            xhr.onerror = function () { row.classList.remove('busy'); small.textContent = 'Upload failed (connection lost).'; };
+            xhr.send(form);
+        }
+        page.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-act^="intro-"]');
+            if (!btn) return;
+            e.preventDefault();
+            var row = btn.closest('.js-intro-row');
+            var key = row.getAttribute('data-key');
+            var act = btn.getAttribute('data-act');
+            if (act === 'intro-pick') row.querySelector('input[type=file]').click();
+            if (act === 'intro-remove') {
+                ApiClient.ajax({ type: 'DELETE', url: api('Admin/Intro/' + encodeURIComponent(key)) }).then(loadIntros, loadIntros);
+            }
+            if (act === 'intro-preview') {
+                var open = row.nextElementSibling;
+                if (open && open.classList.contains('js-intro-preview')) { open.remove(); return; }
+                var it = intros[key] || intros[key.toLowerCase()] || {};
+                var v = document.createElement('video');
+                v.className = 'js-intro-preview';
+                v.controls = true;
+                v.autoplay = true;
+                v.src = api('Intro/' + encodeURIComponent(key) + '?v=' + (it.Version || ''));
+                row.after(v);
+            }
+        });
+        page.addEventListener('change', function (e) {
+            var input = e.target.closest('[data-act="intro-file"]');
+            if (!input || !input.files || !input.files[0]) return;
+            uploadIntro(input.closest('.js-intro-row'), input.files[0]);
+            input.value = '';
+        });
+
         function save() {
             read();
             return ApiClient.updatePluginConfiguration(pluginId, config);
@@ -525,6 +619,7 @@
             ApiClient.getPluginConfiguration(pluginId).then(function (c) {
                 config = c;
                 fill();
+                loadIntros();
                 Dashboard.hideLoadingMsg();
                 return refreshStatus().then(function () {
                     if (!config.SeerrUrl) return findSeerr(true);

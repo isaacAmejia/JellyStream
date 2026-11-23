@@ -19,6 +19,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<SeerrClient>();
         serviceCollection.AddSingleton<AvailabilityStore>();
         serviceCollection.AddSingleton<TrendingService>();
+        serviceCollection.AddSingleton<IntroStore>();
         serviceCollection.AddHostedService<WebInjector>();
     }
 }

@@ -11,7 +11,8 @@ namespace Jellyfin.Plugin.JellyStream.Api;
 /// <param name="Accent">Accent color.</param>
 /// <param name="Movies">Movies in the library on this service.</param>
 /// <param name="Shows">Shows in the library on this service.</param>
-public record ClientService(string Key, string Name, string? Logo, string Accent, int Movies, int Shows);
+/// <param name="IntroVersion">Version of the service's uploaded intro video, or null when it has none.</param>
+public record ClientService(string Key, string Name, string? Logo, string Accent, int Movies, int Shows, string? IntroVersion = null);
 
 /// <summary>Client settings.</summary>
 /// <param name="Services">Enabled services, in order.</param>

@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.13.3';
+  const VERSION = '1.14.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1615,6 +1615,7 @@
     if (cfg.HomeRowPosition === 'bottom') sections.appendChild(row); else sections.prepend(row);
     matchTileSize(sections, row);
     stubRows(row);
+    warmIntros();
     requestAnimationFrame(() => updateAllArrows(row));
 
     cfg.Services.forEach((s) => {
@@ -1687,8 +1688,130 @@
     return data;
   };
 
-  // the service's intro, shown until its page is ready (at least ~1.3s so it can play)
+  // ---- uploaded intro videos
+  // The video sits in a closed shadow root: other scripts looking for <video> elements (players, pause
+  // screens, remote navigation) can't see it, and its play/pause events never reach the page. No
+  // controls, picture-in-picture or casting either. Videos are preloaded into memory on the home screen.
+  const introBlobs = new Map(); // key + version -> object URL
+  const introSrc = (svc) => (svc.IntroVersion ? api(`Intro/${encodeURIComponent(svc.Key)}?v=${svc.IntroVersion}`) : null);
+  let warming = false;
+  const warmIntros = () => {
+    if (warming || !state.cfg) return;
+    const list = state.cfg.Services.filter((x) => x.IntroVersion && !introBlobs.has(x.Key + x.IntroVersion));
+    if (!list.length) return;
+    warming = true;
+    const next = () => {
+      const x = list.shift();
+      if (!x) { warming = false; return; }
+      fetch(introSrc(x))
+        .then((r) => (r.ok ? r.blob() : null))
+        .then((b) => { if (b && b.size) introBlobs.set(x.Key + x.IntroVersion, URL.createObjectURL(b)); })
+        .catch(() => {})
+        .finally(() => setTimeout(next, 250));
+    };
+    setTimeout(next, 1200);
+  };
+
+  const playIntroVideo = (svc, src, onFail) => {
+    const el = document.createElement('div');
+    el.className = 'js-intro js-intro-video';
+    el.style.setProperty('--js-intro-bg', '#000');
+    const host = document.createElement('div');
+    host.className = 'js-intro-host';
+    const root = host.attachShadow({ mode: 'closed' });
+    const style = document.createElement('style');
+    style.textContent = `
+      :host { all: initial; position: absolute; inset: 0; display: block; pointer-events: none; }
+      video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; pointer-events: none; display: block; outline: none; }
+      video::-webkit-media-controls, video::-webkit-media-controls-enclosure, video::-webkit-media-controls-panel,
+      video::-webkit-media-controls-overlay-play-button, video::-webkit-media-controls-start-playback-button,
+      video::-internal-media-controls-overlay-cast-button { display: none !important; -webkit-appearance: none; opacity: 0 !important; }`;
+    const v = document.createElement('video');
+    v.controls = false;
+    v.playsInline = true;
+    v.preload = 'auto';
+    v.tabIndex = -1;
+    v.disablePictureInPicture = true;
+    v.disableRemotePlayback = true;
+    for (const [a, val] of [['playsinline', ''], ['webkit-playsinline', ''], ['disablepictureinpicture', ''], ['disableremoteplayback', ''],
+      ['x-webkit-airplay', 'deny'], ['controlslist', 'nodownload nofullscreen noremoteplayback noplaybackrate'], ['aria-hidden', 'true']]) v.setAttribute(a, val);
+    v.src = src;
+    root.append(style, v);
+    el.appendChild(host);
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.body.appendChild(el);
+
+    let ended = false, ready = false, gone = false, started = false;
+    const timers = [];
+    const cleanup = () => {
+      timers.forEach(clearTimeout);
+      removeEventListener('keydown', onKey, true);
+      try { v.pause(); v.removeAttribute('src'); v.load(); } catch { /* ignore */ }
+    };
+    const finish = () => {
+      if (gone) return;
+      gone = true;
+      el.classList.add('out');
+      setTimeout(() => { cleanup(); el.remove(); }, 380);
+    };
+    const fail = (why) => {
+      if (gone) return;
+      diag.add('intro', 'video intro failed, using the animation:', svc.Key, why);
+      gone = true;
+      cleanup();
+      el.remove();
+      onFail(ready);
+    };
+    // Back / Enter / Escape or a click skips the intro
+    const onKey = (e) => {
+      if (!['Escape', 'Backspace', 'Enter', ' ', 'GoBack', 'BrowserBack'].includes(e.key)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      finish();
+    };
+    addEventListener('keydown', onKey, true);
+    el.addEventListener('click', finish);
+
+    v.addEventListener('playing', () => { started = true; }, { once: true });
+    v.addEventListener('ended', () => { ended = true; if (ready) finish(); });
+    v.addEventListener('error', () => (started ? finish() : fail(v.error?.message || 'error')));
+    v.addEventListener('loadedmetadata', () => {
+      if (Number.isFinite(v.duration)) timers.push(setTimeout(finish, Math.min(v.duration, 30) * 1000 + 3000));
+    });
+    timers.push(setTimeout(() => { if (!started) fail('did not start'); }, 3000));
+    timers.push(setTimeout(finish, 35000));
+
+    // with sound: this runs inside the click / remote press that opened the service, which browsers
+    // require for audio. If one still refuses, play muted rather than not at all.
+    v.muted = false;
+    v.volume = 1;
+    const p = v.play();
+    if (p && p.catch) {
+      p.catch(() => {
+        diag.add('intro', 'browser blocked intro sound; playing muted', svc.Key);
+        v.muted = true;
+        return v.play();
+      }).catch((err) => fail(err?.message || 'play refused'));
+    }
+    return () => { ready = true; if (ended) finish(); };
+  };
+
+  // the service's intro: its uploaded video, or the built-in animation
   const playIntro = (svc) => {
+    document.querySelector('.js-intro')?.remove();
+    const src = svc.IntroVersion ? (introBlobs.get(svc.Key + svc.IntroVersion) || introSrc(svc)) : null;
+    if (!src) return playIntroAnim(svc);
+    let anim = null;
+    let pageReady = false;
+    const videoDone = playIntroVideo(svc, src, (readyAlready) => {
+      anim = playIntroAnim(svc);
+      if (readyAlready || pageReady) anim();
+    });
+    return () => { pageReady = true; (anim || videoDone)(); };
+  };
+
+  // the built-in animation, shown until the page is ready (about two seconds)
+  const playIntroAnim = (svc) => {
     document.querySelector('.js-intro')?.remove();
     const k = brandKeyFor(svc) || 'generic';
     const b = BRANDS[k] || {};
@@ -1733,7 +1856,7 @@
     view.className = state.vt ? 'js-view' : 'js-view js-anim';
     view.dataset.key = key;
     sections.appendChild(view);
-    const introDone = svc && state.introKey !== key ? playIntro(svc) : null;
+    if (svc && state.introKey !== key) state.introDone = playIntro(svc);
     state.introKey = key;
 
     if (!svc) {
@@ -1848,7 +1971,8 @@
     lazy(box);
     stubRows(box);
     paintPage(true);
-    introDone?.();
+    state.introDone?.();
+    state.introDone = null;
     requestAnimationFrame(() => updateAllArrows(box));
     setTimeout(() => updateAllArrows(box), 600); // after the Top 10 numbers resize their cards
   };
@@ -2165,6 +2289,12 @@
     }
     const key = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get(PARAM);
     if (!key || key === current) return;
+    // the intro starts right here, inside the click / remote press, so browsers let it play sound
+    const opening = state.cfg?.Services.find((x) => x.Key === key);
+    if (opening && state.introKey !== key) {
+      state.introDone = playIntro(opening);
+      state.introKey = key;
+    }
     // switching services replaces the entry, so Back still goes home; opening one adds an entry
     if (current) go({ key, from: null, replace: true });
     else navigate({ key });
