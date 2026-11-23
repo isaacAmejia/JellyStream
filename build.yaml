@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "5c4e9982-450c-443e-a4a4-297d618258e5"
-version: "1.4.1.0"
+version: "1.4.2.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,5 +14,4 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Selecting a movie or show on a service page opens its details page (through Jellyfin's own
-  router), and leaving a service page no longer breaks navigation. Landscape trending tiles.
+  Fixed: service tiles on the home screen showed as empty boxes and couldn't be clicked.

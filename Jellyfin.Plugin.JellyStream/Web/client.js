@@ -226,8 +226,13 @@
   css.textContent = `
     /* service tiles: landscape glass cards. The backdrop is what's trending on that service right now,
        washed in the service's color, with the logo and name on a frosted strip. */
+    .js-services .js-svc-card .cardScalable { background: transparent !important; box-shadow: none !important; }
     .js-services .js-svc-card .cardImageContainer {
-      position: relative;
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
       overflow: hidden;
       border-radius: 16px !important;
       background: linear-gradient(135deg, var(--js-t1, #3a4150), var(--js-t2, #171a21)) !important;
