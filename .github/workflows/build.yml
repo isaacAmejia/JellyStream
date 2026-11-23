@@ -3,7 +3,6 @@ name: Build
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -21,26 +20,41 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Check client scripts
-        run: node --check Jellyfin.Plugin.JellyStream/Web/client.js
+        run: |
+          node --check Jellyfin.Plugin.JellyStream/Web/client.js
+          for f in extras/theme/*.js; do node --check "$f"; done
 
       - name: Build
         run: dotnet build Jellyfin.Plugin.JellyStream/Jellyfin.Plugin.JellyStream.csproj -c Release -o out
 
       - name: Package
+        id: pkg
         run: |
           VERSION=$(grep -oP '(?<=<AssemblyVersion>)[^<]+' Jellyfin.Plugin.JellyStream/Jellyfin.Plugin.JellyStream.csproj)
-          mkdir -p artifacts/JellyStream
-          cp out/Jellyfin.Plugin.JellyStream.dll artifacts/JellyStream/
-          cd artifacts/JellyStream && zip -q ../jellystream_${VERSION}.zip Jellyfin.Plugin.JellyStream.dll
-          cd .. && md5sum jellystream_${VERSION}.zip | cut -d' ' -f1 > jellystream_${VERSION}.zip.md5
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          mkdir -p artifacts/pkg
+          cp out/Jellyfin.Plugin.JellyStream.dll artifacts/pkg/
+          (cd artifacts/pkg && zip -q ../jellystream_${VERSION}.zip Jellyfin.Plugin.JellyStream.dll)
+          python3 .github/manifest.py "$VERSION" "artifacts/jellystream_${VERSION}.zip" "${{ github.repository }}" > artifacts/manifest.json
+          cat artifacts/manifest.json
 
       - uses: actions/upload-artifact@v4
         with:
           name: jellystream
-          path: artifacts/*.zip*
+          path: |
+            artifacts/*.zip
+            artifacts/manifest.json
 
+      # every new version on main becomes a release, with the plugin catalog manifest attached
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/*.zip*
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.pkg.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "v$VERSION already released"
+          else
+            gh release create "v$VERSION" artifacts/jellystream_${VERSION}.zip artifacts/manifest.json \
+              --title "JellyStream $VERSION" --notes-file <(python3 .github/manifest.py --notes)
+          fi

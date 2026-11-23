@@ -114,6 +114,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets the visual mode: "auto", "full" or "lite" (for low-power devices).</summary>
     public string VisualMode { get; set; } = "auto";
 
+    /// <summary>Gets or sets a value indicating whether the script is added to the web client automatically.</summary>
+    public bool AutoInject { get; set; } = true;
+
     // ---- Sync ----
 
     /// <summary>Gets or sets how many days a title's availability is trusted before it is checked again.</summary>

@@ -17,18 +17,27 @@ It's built with Jellyfin's own card markup, so themes, the top 10 / expand scrip
 
 - Jellyfin **12.4** or newer
 - [Seerr](https://github.com/seerr-team/seerr) (Jellyseerr / Overseerr) that your Jellyfin server can reach
-- The **JavaScript Injector** plugin, to load the home screen part
 
 ## Install
 
-1. Download `jellystream_x.x.x.x.zip` from the latest release (or the build artifact) and unzip it.
-2. Put `Jellyfin.Plugin.JellyStream.dll` in a new folder `plugins/JellyStream` inside your Jellyfin config folder.
-3. Restart Jellyfin.
-4. Open **Dashboard → Plugins → JellyStream**:
-   - enter your Seerr address and API key, then select **Save & test**
-   - select **Sync now**
-5. Copy the snippet at the bottom of the settings page into **JavaScript Injector** and save.
-6. Reload Jellyfin. The services row appears on the home screen.
+1. In Jellyfin go to **Dashboard → Plugins → Repositories**, add:
+
+   ```
+   https://github.com/isaacAmejia/JellyStream/releases/latest/download/manifest.json
+   ```
+
+2. Install **JellyStream** from the catalog and restart Jellyfin.
+3. Open **Dashboard → Plugins → JellyStream**. It looks for Seerr on its own; paste your Seerr API key and select **Save & connect**.
+
+That's it. The first library check starts automatically, the setup checklist shows its progress, and the services row appears on the home screen after a reload. Updates arrive through the catalog like any other plugin.
+
+<details>
+<summary>Manual install / if the row doesn't appear</summary>
+
+- Download `jellystream_x.x.x.x.zip` from the latest release and put `Jellyfin.Plugin.JellyStream.dll` in `plugins/JellyStream` in your Jellyfin config folder, then restart.
+- JellyStream adds itself to the web client through the **File Transformation** plugin when it's installed, or by editing Jellyfin's `index.html`. If neither is possible (read-only web folder), the settings page shows a one-line snippet to paste into **JavaScript Injector**.
+
+</details>
 
 ## Settings
 

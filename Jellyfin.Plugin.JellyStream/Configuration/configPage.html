@@ -62,11 +62,26 @@
             white-space: pre-wrap; word-break: break-all; font-size: .85em; margin: .4em 0;
         }
         #JellyStreamConfigPage details summary { cursor: pointer; opacity: .8; margin: .4em 0; }
+        #JellyStreamConfigPage .js-steps { list-style: none; padding: 0; margin: .4em 0 0; }
+        #JellyStreamConfigPage .js-steps li { display: flex; align-items: center; gap: .7em; padding: .45em 0; }
+        #JellyStreamConfigPage .js-steps .material-icons { font-size: 1.4em; opacity: .35; }
+        #JellyStreamConfigPage .js-steps li.done .material-icons { opacity: 1; color: #4caf50; }
+        #JellyStreamConfigPage .js-steps li.busy .material-icons { opacity: 1; color: #64b5f6; }
+        #JellyStreamConfigPage .js-steps small { opacity: .6; }
     </style>
 
     <div data-role="content">
         <div class="content-primary">
             <form id="JellyStreamForm">
+
+                <div class="js-card">
+                    <h2>Setup</h2>
+                    <ul class="js-steps">
+                        <li id="jsStepSeerr"><span class="material-icons">check_circle</span><div><b>Connect Seerr</b><br><small>Enter the address (or let JellyStream find it) and the API key below.</small></div></li>
+                        <li id="jsStepSync"><span class="material-icons">check_circle</span><div><b>Check your library</b><br><small>Starts by itself once Seerr is connected.</small></div></li>
+                        <li id="jsStepWeb"><span class="material-icons">check_circle</span><div><b>Show it in Jellyfin</b><br><small>Checking…</small></div></li>
+                    </ul>
+                </div>
 
                 <!-- 1. Connection -->
                 <div class="js-card">
@@ -93,7 +108,8 @@
                         <span id="jsStatusText">Not checked yet</span>
                     </div>
                     <div class="js-btns">
-                        <button is="emby-button" type="button" class="raised emby-button" id="jsTest"><span>Save &amp; test</span></button>
+                        <button is="emby-button" type="button" class="raised emby-button" id="jsTest"><span>Save &amp; connect</span></button>
+                        <button is="emby-button" type="button" class="emby-button" id="jsFind"><span>Find Seerr for me</span></button>
                         <button is="emby-button" type="button" class="raised emby-button" id="jsSync"><span>Sync now</span></button>
                         <button is="emby-button" type="button" class="emby-button" id="jsFullSync"><span>Re-check everything</span></button>
                     </div>
@@ -194,13 +210,17 @@
                                 <input is="emby-input" id="jsConcurrency" type="number" min="1" max="16" />
                             </div>
                         </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAutoInject" /><span>Add JellyStream to the web client automatically</span></label>
+                            <div class="fieldDescription checkboxFieldDescription">Uses the File Transformation plugin when it's installed, otherwise edits Jellyfin's index.html. Turn off if you'd rather use JavaScript Injector. Needs a restart.</div>
+                        </div>
                     </details>
                 </div>
 
                 <!-- 6. Install -->
-                <div class="js-card">
+                <div class="js-card" id="jsManualCard">
                     <h2>Show it in Jellyfin</h2>
-                    <p class="js-sub">Add this to the JavaScript Injector plugin (one time):</p>
+                    <p class="js-sub" id="jsManualText">Add this to the JavaScript Injector plugin (one time):</p>
                     <pre class="js-snippet" id="jsSnippet"></pre>
                     <div class="js-btns"><button is="emby-button" type="button" class="emby-button" id="jsCopy"><span>Copy</span></button></div>
                 </div>
@@ -363,9 +383,19 @@
         });
 
         // ---------- status / providers ----------
-        function refreshStatus() {
-            $('jsStatusText').textContent = 'Checking…';
-            $('jsDot').className = 'js-dot';
+        var pollTimer = null;
+        function step(id, state, text) {
+            var li = $(id);
+            li.className = state;
+            li.querySelector('.material-icons').textContent = state === 'busy' ? 'sync' : 'check_circle';
+            if (text) li.querySelector('small').textContent = text;
+        }
+
+        function refreshStatus(quiet) {
+            if (!quiet) {
+                $('jsStatusText').textContent = 'Checking…';
+                $('jsDot').className = 'js-dot';
+            }
             return ApiClient.getJSON(api('Admin/Status')).then(function (st) {
                 counts = st.Counts || {};
                 $('jsDot').className = 'js-dot ' + (st.Connected ? 'ok' : 'bad');
@@ -373,7 +403,25 @@
                 $('jsStatusText').textContent = st.Connected
                     ? 'Connected to Seerr ' + st.Version + ' · ' + st.Titles + ' titles checked · last sync ' + when
                     : 'Not connected' + (st.Error ? ': ' + st.Error : '');
-                if (!st.Connected) return;
+
+                step('jsStepSeerr', st.Connected ? 'done' : '', st.Connected ? 'Connected to Seerr ' + st.Version + '.' : null);
+                if (st.Syncing) {
+                    step('jsStepSync', 'busy', 'Checking your library… ' + Math.round(st.SyncProgress || 0) + '%');
+                } else if (st.LastSync) {
+                    step('jsStepSync', 'done', st.Titles + ' titles checked. Updates every night.');
+                } else {
+                    step('jsStepSync', '', 'Starts by itself once Seerr is connected.');
+                }
+                var auto = st.Injection !== 'manual';
+                step('jsStepWeb', auto ? 'done' : '', auto
+                    ? 'Added automatically (' + (st.Injection === 'file-transformation' ? 'File Transformation' : 'index.html') + '). Reload Jellyfin to see it.'
+                    : 'Couldn\'t add it automatically. Paste the snippet at the bottom into JavaScript Injector.');
+                $('jsManualCard').style.display = auto ? 'none' : '';
+
+                clearTimeout(pollTimer);
+                if (st.Syncing) pollTimer = setTimeout(function () { refreshStatus(true).then(renderServices); }, 3000);
+
+                if (!st.Connected || providers.length) return;
                 return ApiClient.getJSON(api('Admin/Providers')).then(function (list) { providers = list || []; });
             }).catch(function () {
                 $('jsDot').className = 'js-dot bad';
@@ -407,6 +455,7 @@
             $('jsAsUser').checked = config.RequestAsUser;
             $('jsRefreshDays').value = config.RefreshDays;
             $('jsConcurrency').value = config.SyncConcurrency;
+            $('jsAutoInject').checked = config.AutoInject !== false;
             config.Services = (config.Services || []).map(function (s) {
                 return Object.assign({ Enabled: true, ProviderIds: [], RentBuyProviderIds: [], LogoUrl: '', Accent: '' }, s);
             });
@@ -435,6 +484,7 @@
             config.RequestAsUser = $('jsAsUser').checked;
             config.RefreshDays = num('jsRefreshDays', 3, 0, 60);
             config.SyncConcurrency = num('jsConcurrency', 4, 1, 16);
+            config.AutoInject = $('jsAutoInject').checked;
             config.Services.forEach(function (s) { if (!s.Key) s.Key = slug(s.Name); });
         }
 
@@ -452,14 +502,40 @@
                 config = c;
                 fill();
                 Dashboard.hideLoadingMsg();
-                return refreshStatus();
+                return refreshStatus().then(function () {
+                    if (!config.SeerrUrl) return findSeerr(true);
+                });
             });
         });
 
         $('jsTest').addEventListener('click', function () {
             Dashboard.showLoadingMsg();
-            save().then(function () { Dashboard.hideLoadingMsg(); return refreshStatus(); });
+            save().then(function () {
+                Dashboard.hideLoadingMsg();
+                // give the server a moment to start the first sync
+                return new Promise(function (r) { setTimeout(r, 800); }).then(function () { return refreshStatus(); });
+            });
         });
+
+        function findSeerr(silent) {
+            var btn = $('jsFind');
+            btn.disabled = true;
+            if (!silent) $('jsStatusText').textContent = 'Looking for Seerr…';
+            return ApiClient.ajax({ type: 'GET', url: api('Admin/FindSeerr'), dataType: 'json' }).then(function (url) {
+                btn.disabled = false;
+                if (url) {
+                    $('jsSeerrUrl').value = url;
+                    $('jsStatusText').textContent = 'Found Seerr at ' + url + (config.SeerrApiKey ? '' : '. Now paste its API key.');
+                    if (!config.SeerrApiKey) $('jsSeerrKey').focus();
+                } else if (!silent) {
+                    $('jsStatusText').textContent = 'Couldn\'t find Seerr automatically. Enter its address.';
+                }
+            }, function () {
+                btn.disabled = false;
+                if (!silent) $('jsStatusText').textContent = 'Couldn\'t find Seerr automatically. Enter its address.';
+            });
+        }
+        $('jsFind').addEventListener('click', function () { findSeerr(false); });
 
         $('jsSync').addEventListener('click', function () {
             save().then(function () {

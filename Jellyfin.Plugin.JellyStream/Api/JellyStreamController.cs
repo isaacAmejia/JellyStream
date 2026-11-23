@@ -15,6 +15,7 @@ using Jellyfin.Plugin.JellyStream.Catalog;
 using Jellyfin.Plugin.JellyStream.Configuration;
 using Jellyfin.Plugin.JellyStream.Seerr;
 using Jellyfin.Plugin.JellyStream.Tasks;
+using Jellyfin.Plugin.JellyStream.Web;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -343,7 +344,29 @@ public class JellyStreamController : ControllerBase
             counts.TryAdd(KeyOf(s), _store.All.Count(e => AvailabilityStore.IsOn(e, s, config)));
         }
 
-        return new AdminStatus(version is not null, version, error, _store.All.Count, _store.LastSyncUtc, counts);
+        var task = _taskManager.ScheduledTasks.FirstOrDefault(t => t.ScheduledTask is SyncAvailabilityTask);
+        var running = task?.State == TaskState.Running;
+        return new AdminStatus(
+            version is not null,
+            version,
+            error,
+            _store.All.Count,
+            _store.LastSyncUtc,
+            counts,
+            WebInjector.Mode,
+            running,
+            running ? task!.CurrentProgress : null);
+    }
+
+    /// <summary>Looks for Seerr on the usual addresses.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The first address that answers, or null.</returns>
+    [HttpGet("Admin/FindSeerr")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<ActionResult<string?>> FindSeerr(CancellationToken ct)
+    {
+        var url = await SeerrClient.FindAsync(ct).ConfigureAwait(false);
+        return url is null ? NoContent() : Ok(url);
     }
 
     /// <summary>All streaming providers in the region, for picking services.</summary>

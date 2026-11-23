@@ -227,6 +227,72 @@ public class SeerrClient
         return null;
     }
 
+    /// <summary>
+    /// Looks for Seerr on the usual addresses (this machine, Docker names and the local network)
+    /// by asking each for its public status.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The first address that answers, or null.</returns>
+    public static async Task<string?> FindAsync(CancellationToken ct)
+    {
+        var hosts = new List<string> { "localhost", "127.0.0.1", "host.docker.internal", "jellyseerr", "seerr", "overseerr", "172.17.0.1" };
+        try
+        {
+            foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            {
+                foreach (var a in ni.GetIPProperties().UnicastAddresses)
+                {
+                    if (a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !IPAddress.IsLoopback(a.Address))
+                    {
+                        hosts.Add(a.Address.ToString());
+                    }
+                }
+
+                foreach (var g in ni.GetIPProperties().GatewayAddresses)
+                {
+                    if (g.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        hosts.Add(g.Address.ToString());
+                    }
+                }
+            }
+        }
+        catch (System.Net.NetworkInformation.NetworkInformationException)
+        {
+            // fall back to the fixed names
+        }
+
+        var candidates = hosts.Distinct().Select(h => $"http://{h}:5055").ToList();
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var probes = candidates.Select(async url =>
+        {
+            try
+            {
+                var status = await client.GetFromJsonAsync<SeerrStatus>(url + "/api/v1/status", JsonOptions, cts.Token).ConfigureAwait(false);
+                return string.IsNullOrEmpty(status?.Version) ? null : url;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or JsonException or NotSupportedException or ObjectDisposedException)
+            {
+                return null;
+            }
+        }).ToList();
+
+        while (probes.Count > 0)
+        {
+            var done = await Task.WhenAny(probes).ConfigureAwait(false);
+            probes.Remove(done);
+            var found = await done.ConfigureAwait(false);
+            if (found is not null)
+            {
+                await cts.CancelAsync().ConfigureAwait(false);
+                return found;
+            }
+        }
+
+        return null;
+    }
+
     private static string? ReadMessage(string json)
     {
         try

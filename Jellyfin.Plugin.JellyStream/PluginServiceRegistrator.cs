@@ -1,5 +1,6 @@
 using Jellyfin.Plugin.JellyStream.Catalog;
 using Jellyfin.Plugin.JellyStream.Seerr;
+using Jellyfin.Plugin.JellyStream.Web;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,5 +18,6 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddHttpClient("JellyStream");
         serviceCollection.AddSingleton<SeerrClient>();
         serviceCollection.AddSingleton<AvailabilityStore>();
+        serviceCollection.AddHostedService<WebInjector>();
     }
 }

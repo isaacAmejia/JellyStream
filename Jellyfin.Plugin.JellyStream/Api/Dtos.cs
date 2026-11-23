@@ -109,7 +109,10 @@ public class RequestBody
 /// <param name="Titles">Titles checked so far.</param>
 /// <param name="LastSync">Last finished sync (UTC).</param>
 /// <param name="Counts">Titles per service key.</param>
-public record AdminStatus(bool Connected, string? Version, string? Error, int Titles, DateTime? LastSync, Dictionary<string, int> Counts);
+/// <param name="Injection">How the web script is loaded: "file-transformation", "index.html" or "manual".</param>
+/// <param name="Syncing">Whether a sync is running now.</param>
+/// <param name="SyncProgress">Sync progress (0-100) while running.</param>
+public record AdminStatus(bool Connected, string? Version, string? Error, int Titles, DateTime? LastSync, Dictionary<string, int> Counts, string Injection, bool Syncing, double? SyncProgress);
 
 /// <summary>A streaming provider for the settings page.</summary>
 /// <param name="Id">TMDB provider id.</param>
