@@ -368,7 +368,7 @@
           <div class="cardScalable">
             <div class="cardPadder cardPadder-overflowBackdrop"></div>
             <a class="cardImageContainer cardContent itemAction" href="#/home?${PARAM}=${encodeURIComponent(s.Key)}" aria-label="${esc(s.Name)}">
-              ${s.Logo ? `<img class="js-logo" src="${esc(s.Logo)}" alt="" loading="lazy" crossorigin="anonymous">` : `<span class="js-logo-text">${esc(s.Name)}</span>`}
+              ${s.Logo ? `<img class="js-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : `<span class="js-logo-text">${esc(s.Name)}</span>`}
             </a>
           </div>
           <div class="cardFooter">
