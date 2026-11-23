@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.12.0';
+  const VERSION = '1.13.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -186,7 +186,7 @@
       rankShape: 'landscape',
       c1: '#f9f9f9', c2: '#0063e5', num: 'glass',
       base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #2b3a66 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
-      shape: 'landscape', caption: 'none',
+      shape: 'landscape', caption: 'overlay',
       nav: 'pill', tabs: ['For You', 'Series', 'Movies'],
       font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
       labels: { tagMovie: 'FEATURED', tagTv: 'FEATURED', play: 'PLAY', info: '', request: 'REQUEST' },
@@ -251,7 +251,7 @@
       rankShape: 'landscape',
       c1: '#1ce783', c2: '#0f9d5a', numA: '#1a1d29', numB: '#1ce783', num: 'outline',
       base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #1d3b37 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
-      shape: 'landscape', caption: 'none',
+      shape: 'landscape', caption: 'below', rankCaption: 'below',
       nav: 'pill', tabs: ['For You', 'Series', 'Movies'],
       font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
       labels: { tagMovie: 'HULU', tagTv: 'HULU', play: 'PLAY', info: '', request: 'REQUEST' },
@@ -272,7 +272,7 @@
     apple: {
       rankShape: 'landscape',
       c1: '#f5f5f7', c2: '#86868b', num: 'glass',
-      base: '#000', bg: '#000', shape: 'portrait', caption: 'none',
+      base: '#000', bg: '#000', shape: 'landscape', caption: 'below', rankCaption: 'below',
       nav: 'glass', tabs: ['Home', 'TV Shows', 'Movies'],
       font: '-apple-system, "SF Pro Display", "Inter", "Helvetica Neue", sans-serif',
       labels: { tagMovie: 'Movie', tagTv: 'TV Show', play: 'Play', info: 'Details', request: 'Request' },
@@ -406,6 +406,39 @@
       .js-rank-poster { border-radius: 8px !important; }`,
   };
 
+  // how each service dresses its rows: where the title art sits, captions, focus details
+  const ROWS = {
+    netflix: `
+      .js-tlogo { max-width: 46% !important; max-height: 34% !important; left: 5% !important; bottom: 8% !important; }
+      .js-view .js-section .sectionTitle { font-size: 1.35em !important; }`,
+    disney: `
+      .js-tlogo { left: 50% !important; transform: translateX(-50%); object-position: center bottom !important; max-width: 66% !important; max-height: 40% !important; bottom: 11% !important; }
+      .js-tshade { background: linear-gradient(0deg, rgba(0,0,0,.5), transparent 55%) !important; }
+      .js-rank-poster .js-tlogo { left: auto !important; right: 6% !important; transform: none !important; object-position: right bottom !important; max-width: 55% !important; }
+      .js-rank-poster .js-ovl { text-align: right !important; }
+      .js-view .js-ovl { text-align: center; background: linear-gradient(0deg, rgba(0,0,0,.65), transparent) !important; }`,
+    max: `
+      .js-view .js-section .sectionTitle { font-size: 1.3em !important; letter-spacing: -.015em; }`,
+    prime: `
+      .js-view .js-lib .cardText-secondary bdi::before { content: "✓ Included with Prime"; color: #1a98ff; font-weight: 700; margin-right: .6em; }
+      .js-view .js-lib .cardText-secondary { color: rgba(255,255,255,.55) !important; }
+      .js-view .js-cap-below .cardText-first { font-weight: 700 !important; }`,
+    hulu: `
+      .js-view .js-cap-below .cardText-first { font-weight: 700 !important; color: #fff !important; }
+      .js-view .js-cap-below .cardText-secondary { color: rgba(255,255,255,.55) !important; text-transform: uppercase; letter-spacing: .1em; font-size: .72em !important; }`,
+    apple: `
+      .js-view .js-cap-below .cardText-first { font-weight: 600 !important; color: #f5f5f7 !important; }
+      .js-view .js-cap-below .cardText-secondary { color: rgba(235,235,245,.6) !important; }
+      .js-view .js-section .sectionTitle { font-size: 1.4em !important; }`,
+    paramount: `
+      .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: inset 0 -4px 0 #0064ff, 0 0 0 2px #fff, 0 0 26px rgba(0,100,255,.6) !important; }`,
+    peacock: `
+      .js-tlogo { max-width: 50% !important; }
+      .js-view .js-lib .cardImageContainer::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; opacity: 0; transition: opacity .2s ease;
+        background: linear-gradient(90deg, #ffb000, #ff6d00, #e5007e, #6f2da8, #0063db, #00b14f); }
+      .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer::after { opacity: 1; }`,
+  };
+
   const brandKeyFor = (svc) => {
     const id = `${svc.Key} ${svc.Name}`.toLowerCase();
     return Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
@@ -427,7 +460,7 @@
     const el = document.createElement('style');
     el.id = 'jellystream-brands';
     el.textContent = Object.entries(BRANDS).map(([k, b]) => {
-      const rules = (b.css + (RANKS[k] || '')).replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
+      const rules = (b.css + (RANKS[k] || '') + (ROWS[k] || '')).replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
         `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
       return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} ${LAYOUT[k] || ''} }`;
     }).join('\n');
@@ -501,7 +534,8 @@
   css.textContent = `
     /* service tiles: landscape glass cards. The backdrop is what's trending on that service right now,
        washed in the service's color, with the logo and name on a frosted strip. */
-    .js-services .js-svc-card { width: clamp(230px, 21vw, 380px) !important; min-width: 0 !important; flex: 0 0 auto !important; }
+    .js-services .js-svc-card { width: var(--js-tile-w, clamp(220px, 18vw, 330px)) !important; min-width: 0 !important; flex: 0 0 auto !important; }
+    .js-services .js-tile-logo { width: 2.3em; height: 2.3em; flex: none; border-radius: 22%; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.14); }
     .js-services .js-svc-card .cardScalable { background: transparent !important; box-shadow: none !important; }
     .js-services .js-svc-card .cardImageContainer {
       position: absolute !important;
@@ -763,6 +797,17 @@
       pointer-events: none;
     }
     .js-cap-overlay .cardFooter, .js-cap-none .cardFooter { display: none !important; }
+    .js-tshade { position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+      background: linear-gradient(0deg, rgba(0,0,0,.6) 0%, rgba(0,0,0,.15) 38%, transparent 60%); }
+    .js-tlogo {
+      position: absolute; left: 6%; bottom: 9%;
+      max-width: 52%; max-height: 36%; width: auto; height: auto;
+      object-fit: contain; object-position: left bottom;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.7));
+      pointer-events: none;
+    }
+    .js-rank-poster .js-ovl, .js-rank-poster .js-tlogo { z-index: 2; }
+    .js-bb-logo { display: block; max-width: min(36vw, 520px); max-height: min(24vh, 220px); width: auto; height: auto; object-fit: contain; object-position: left bottom; filter: drop-shadow(0 4px 18px rgba(0,0,0,.6)); }
     .js-cap-below .cardText { text-align: left !important; padding-left: .15em; }
     .js-cap-below .cardText-first { font-weight: 600; }
 
@@ -1263,6 +1308,8 @@
   // from the cache after the first visit; sizes match what the rows actually show.
   const imgUrl = (id, tag) => window.ApiClient.getImageUrl(id, { type: 'Primary', fillHeight: 420, quality: 82, ...(tag ? { tag } : {}) });
   const backdropUrl = (id, tag) => window.ApiClient.getImageUrl(id, { type: 'Backdrop', fillWidth: 640, quality: 80, ...(tag ? { tag } : {}) });
+  const thumbUrl = (id, tag) => window.ApiClient.getImageUrl(id, { type: 'Thumb', fillWidth: 640, quality: 80, ...(tag ? { tag } : {}) });
+  const logoUrl = (id, tag) => window.ApiClient.getImageUrl(id, { type: 'Logo', maxWidth: 400, quality: 90, ...(tag ? { tag } : {}) });
   const wideUrl = (id, tags = {}) => (tags.backdrop ? `${backdropUrl(id, tags.backdrop)}|` : '') + imgUrl(id, tags.primary);
 
   // the look of the open service (cards are built after applyBrand runs)
@@ -1271,12 +1318,20 @@
     return (k && BRANDS[k]) || GENERIC;
   };
 
-  const card = ({ id, name, sub, img, href, cls = '', attrs = '', badge = '', type = '', shape = 'portrait', caption = 'below' }) => `
+  // On wide art the title is always visible: the title's own logo when Jellyfin has one, else its name.
+  // Art that already carries the title (a "thumb") gets neither.
+  const titleOnArt = ({ name, shape, caption, logo, titled }) => {
+    if (titled) return '';
+    if (logo) return `<span class="js-tshade"></span><img class="js-tlogo" src="${esc(logo)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=&quot;js-ovl&quot;>${esc(esc(name))}</span>'">`;
+    if (caption === 'overlay' || (shape === 'landscape' && caption !== 'below')) return `<span class="js-ovl">${esc(name)}</span>`;
+    return '';
+  };
+  const card = ({ id, name, sub, img, href, cls = '', attrs = '', badge = '', type = '', shape = 'portrait', caption = 'below', logo = null, titled = false }) => `
     <div class="card ${shape === 'landscape' ? 'overflowBackdropCard' : 'overflowPortraitCard'} card-hoverable js-card js-cap-${caption} ${cls}" ${id ? `data-id="${esc(id)}" data-serverid="${esc(serverId())}"` : ''} ${type ? `data-type="${type}"` : ''} ${attrs}>
       <div class="cardBox cardBox-bottompadded">
         <div class="cardScalable">
           <div class="cardPadder ${shape === 'landscape' ? 'cardPadder-overflowBackdrop' : 'cardPadder-overflowPortrait'}"></div>
-          <a class="cardImageContainer coveredImage cardContent itemAction js-img" href="${esc(href)}" aria-label="${esc(name)}" ${img ? `data-src="${esc(img)}"` : ''}>${caption === 'overlay' ? `<span class="js-ovl">${esc(name)}</span>` : ''}</a>
+          <a class="cardImageContainer coveredImage cardContent itemAction js-img" href="${esc(href)}" aria-label="${esc(name)}" ${img ? `data-src="${esc(img)}"` : ''}>${titleOnArt({ name, shape, caption, logo, titled })}</a>
           ${badge}
         </div>
         <div class="cardFooter">
@@ -1289,13 +1344,21 @@
   const detailsHref = (id) => `#/details?id=${id}&serverId=${serverId()}`;
 
   // library rows follow the service's own card shape
+  // wide art for an item: its thumb (art with the title on it) when it has one, else backdrop + logo
+  const wideArt = (id, tags) => {
+    if (tags.ThumbTag) return { img: `${thumbUrl(id, tags.ThumbTag)}|${imgUrl(id, tags.PrimaryTag)}`, titled: true, logo: null };
+    return { img: wideUrl(id, { backdrop: tags.BackdropTag, primary: tags.PrimaryTag }), titled: false, logo: tags.LogoTag ? logoUrl(id, tags.LogoTag) : null };
+  };
   const libraryCard = (it) => {
     const l = look();
+    const w = l.shape === 'landscape' ? wideArt(it.Id, it) : null;
     return card({
       id: it.Id,
       name: it.Name,
       sub: it.Year || '',
-      img: l.shape === 'landscape' ? wideUrl(it.Id, { backdrop: it.BackdropTag, primary: it.PrimaryTag }) : imgUrl(it.Id, it.PrimaryTag),
+      img: w ? w.img : imgUrl(it.Id, it.PrimaryTag),
+      logo: w?.logo,
+      titled: w?.titled,
       href: detailsHref(it.Id),
       type: it.Type === 'tv' ? 'Series' : 'Movie',
       cls: 'js-lib',
@@ -1319,16 +1382,18 @@
   const rankCard = (t, i) => {
     const owned = !!t.ItemId;
     const land = look().rankShape === 'landscape';
+    const w = land && owned ? wideArt(t.ItemId, t) : null;
     const art = land
-      ? (owned ? `${wideUrl(t.ItemId, { backdrop: t.BackdropTag, primary: t.PrimaryTag })}|${t.Backdrop || ''}` : `${t.Backdrop || ''}|${t.Poster || ''}`)
+      ? (owned ? `${w.img}|${t.Backdrop || ''}` : `${t.Backdrop || ''}|${t.Poster || ''}`)
       : (owned ? `${imgUrl(t.ItemId, t.PrimaryTag)}|${t.Poster || ''}` : (t.Poster || ''));
+    const onArt = land ? titleOnArt({ name: t.Name, shape: 'landscape', caption: look().rankCaption || 'overlay', logo: w?.logo, titled: w?.titled }) : '';
     const status = owned ? '' : (t.Status === 'available' ? 'missing' : t.Status);
     return `
     <div class="card js-card js-rank-card${land ? ' js-rank-land' : ''}${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
       <div class="cardBox">
         <div class="cardScalable js-rank-box" style="${RANK_BOX_STYLE}">
           <span class="js-rank-num" aria-hidden="true">${i + 1}</span>
-          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(art)}"></a>
+          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(art)}">${onArt}</a>
           ${owned ? (t.Status === 'partial' ? BADGES.partial : '') : (BADGES[status] || BADGES.missing)}
         </div>
         <div class="cardFooter js-rank-cap"><b>${i + 1}</b><span class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></span></div>
@@ -1352,9 +1417,10 @@
     const landscape = wide && l.shape === 'landscape';
     const caption = wide ? l.caption : 'below';
     if (t.ItemId) {
+      const w = landscape ? wideArt(t.ItemId, t) : null;
       return card({
         id: t.ItemId, name: t.Name, sub: t.Year || '',
-        img: landscape ? wideUrl(t.ItemId, { backdrop: t.BackdropTag, primary: t.PrimaryTag }) : imgUrl(t.ItemId, t.PrimaryTag),
+        img: w ? w.img : imgUrl(t.ItemId, t.PrimaryTag), logo: w?.logo, titled: w?.titled,
         href: detailsHref(t.ItemId), type: t.Type === 'tv' ? 'Series' : 'Movie',
         badge: t.Status === 'partial' ? BADGES.partial : '',
         cls: wide ? 'js-lib' : '', shape: landscape ? 'landscape' : 'portrait', caption,
@@ -1494,6 +1560,13 @@
     return lum > 0.6 ? '#0b0c0f' : '#fff';
   };
 
+  // the tiles take the width of the home screen's own wide cards (Continue Watching etc.)
+  const matchTileSize = (sections, row) => {
+    const native = [...sections.querySelectorAll('.overflowBackdropCard:not(.js-svc-card)')].find((c) => c.offsetWidth > 60);
+    if (native) row.style.setProperty('--js-tile-w', `${native.offsetWidth}px`);
+    else setTimeout(() => row.isConnected && !row.style.getPropertyValue('--js-tile-w') && matchTileSize(sections, row), 1500);
+  };
+
   const renderHomeRow = (sections) => {
     const cfg = state.cfg;
     let row = sections.querySelector(':scope > .js-services');
@@ -1523,7 +1596,7 @@
               <span class="js-tile-tint"></span>
               <span class="js-tile-sheen"></span>
               <span class="js-tile-info">
-                <span class="js-tile-bar"></span>
+                ${s.Logo ? `<img class="js-tile-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : '<span class="js-tile-bar"></span>'}
                 <span class="js-tile-text">
                   <b>${esc(s.Name)}</b>
                   <small class="js-tile-sub">${n ? `${n} title${n === 1 ? '' : 's'} in your library` : 'Browse'}</small>
@@ -1540,6 +1613,7 @@
     row = wrap.firstElementChild;
     row.dataset.v = String(state.cfgAt);
     if (cfg.HomeRowPosition === 'bottom') sections.appendChild(row); else sections.prepend(row);
+    matchTileSize(sections, row);
     stubRows(row);
     requestAnimationFrame(() => updateAllArrows(row));
 
@@ -1712,13 +1786,15 @@
         sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, x.Logo, x.Key === svc.Key, tintOf(x)))),
     }));
 
-    rows.push(section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: uniqueTop(data.topMovies).map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' }));
-    rows.push(section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: uniqueTop(data.topShows).map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' }));
+    const topMovies = section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: uniqueTop(data.topMovies).map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' });
+    const topShows = section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: uniqueTop(data.topShows).map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' });
+    const head = [];
+    const body = [];
 
     if (cfg.ShowContinueWatching) {
       const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
       const resume = data.resume.filter((it) => onService.has(norm(it.Id)) || onService.has(norm(it.SeriesId)));
-      rows.push(section({
+      head.push(section({
         title: 'Continue Watching',
         cards: resume.map((it) => card({
           id: it.Id,
@@ -1732,29 +1808,32 @@
     }
 
     if (cfg.ShowRecentlyAdded) {
-      rows.push(section({ title: `Recently Added on ${svc.Name}`, cards: data.library.slice(0, 24).map(libraryCard) }));
+      body.push(section({ title: `New on ${svc.Name}`, cards: data.library.slice(0, 24).map(libraryCard) }));
     }
 
-    for (const g of groupByGenre(movies, cfg.GenreRows)) {
-      rows.push(section({ title: `${g.genre} Movies`, cards: g.items.map(libraryCard), attrs: 'data-kind="movie"' }));
+    // genre rows alternate between movies and shows, the way the services mix them
+    const gm = groupByGenre(movies, cfg.GenreRows);
+    const gs = groupByGenre(shows, cfg.GenreRows);
+    for (let i = 0; i < Math.max(gm.length, gs.length); i++) {
+      if (gs[i]) body.push(section({ title: `${gs[i].genre} Shows`, cards: gs[i].items.map(libraryCard), attrs: 'data-kind="tv"' }));
+      if (gm[i]) body.push(section({ title: `${gm[i].genre} Movies`, cards: gm[i].items.map(libraryCard), attrs: 'data-kind="movie"' }));
     }
-    if (movies.length) {
-      const az = [...movies].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      rows.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard), attrs: 'data-kind="movie"' }));
-    }
-
-    for (const g of groupByGenre(shows, cfg.GenreRows)) {
-      rows.push(section({ title: `${g.genre} Shows`, cards: g.items.map(libraryCard), attrs: 'data-kind="tv"' }));
+    if (cfg.ShowPopularMissing) {
+      body.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)), attrs: 'data-kind="movie"' }));
+      body.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)), attrs: 'data-kind="tv"' }));
     }
     if (shows.length) {
       const az = [...shows].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      rows.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard), attrs: 'data-kind="tv"' }));
+      body.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard), attrs: 'data-kind="tv"' }));
+    }
+    if (movies.length) {
+      const az = [...movies].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
+      body.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard), attrs: 'data-kind="movie"' }));
     }
 
-    if (cfg.ShowPopularMissing) {
-      rows.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)), attrs: 'data-kind="movie"' }));
-      rows.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)), attrs: 'data-kind="tv"' }));
-    }
+    // the two Top 10s never sit next to each other: shows near the top, movies a few rows later
+    const filled = body.filter(Boolean);
+    rows.push(...head, topShows, ...filled.slice(0, 3), topMovies, ...filled.slice(3));
 
     const html = rows.join('');
     renderBillboard(view, svc, data);
@@ -1791,7 +1870,9 @@
         <div class="js-bb-shade"></div>
         <div class="js-bb-content">
           <div class="js-bb-tag">${esc(isTv ? l.labels.tagTv : l.labels.tagMovie)}</div>
-          <h2 class="js-bb-title">${esc(pick.Name)}</h2>
+          <h2 class="js-bb-title">${owned && pick.LogoTag
+            ? `<img class="js-bb-logo" src="${esc(logoUrl(pick.ItemId, pick.LogoTag))}" alt="${esc(pick.Name)}">`
+            : esc(pick.Name)}</h2>
           <div class="js-bb-rank">#1 in ${rank}${when ? ` ${when}` : ''}</div>
           <p class="js-bb-overview"></p>
           <div class="js-bb-actions">
@@ -1799,7 +1880,7 @@
               ? `<a class="js-bb-btn js-primary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">play_arrow</span>${esc(l.labels.play)}</a>`
               : `<button type="button" class="js-bb-btn js-primary js-bb-request" data-jstmdb="${pick.TmdbId}" data-jstype="${pick.Type}"><span class="material-icons">add</span>${esc(l.labels.request)}</button>`}
             ${owned && l.labels.info
-              ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">info_outline</span>${esc(l.labels.info)}</a>`
+              ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">info</span>${esc(l.labels.info)}</a>`
               : owned ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}" aria-label="Details"><span class="material-icons">add</span></a>` : ''}
           </div>
         </div>`;
@@ -1815,14 +1896,6 @@
         if (p && d?.Overview) p.textContent = d.Overview;
       }).catch(() => {});
     }
-    const icons = ['home', 'tv', 'movie'];
-    const kinds = ['all', 'tv', 'movie'];
-    const nav = document.createElement('nav');
-    nav.className = `js-tabs js-nav-${l.nav || 'top'}`;
-    nav.innerHTML = (l.tabs || GENERIC.tabs).map((t, i) =>
-      `<button type="button" class="js-tab${i === 0 ? ' on' : ''}" data-f="${kinds[i]}">${l.nav === 'rail' ? `<span class="material-icons">${icons[i]}</span>` : ''}<span>${esc(t)}</span></button>`).join('');
-    bb.appendChild(nav);
-    if (l.nav === 'rail') bb.classList.add('js-has-rail');
     hero.replaceWith(bb);
     bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
   };

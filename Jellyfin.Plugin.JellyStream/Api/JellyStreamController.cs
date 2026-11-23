@@ -330,7 +330,9 @@ public class JellyStreamController : ControllerBase
                 i.CommunityRating,
                 i.DateCreated,
                 ImageTag(i, ImageType.Primary),
-                ImageTag(i, ImageType.Backdrop)))
+                ImageTag(i, ImageType.Backdrop),
+                ImageTag(i, ImageType.Logo),
+                ImageTag(i, ImageType.Thumb)))
             .ToList();
     }
 
@@ -605,7 +607,9 @@ public class JellyStreamController : ControllerBase
             cards.Add(new TitleCard(
                 t.Id, type, t.DisplayName, t.Year, Image(t.PosterPath, "w342"), Image(t.BackdropPath, "w780"), status, itemId,
                 owned is null ? null : ImageTag(owned, ImageType.Primary),
-                owned is null ? null : ImageTag(owned, ImageType.Backdrop)));
+                owned is null ? null : ImageTag(owned, ImageType.Backdrop),
+                owned is null ? null : ImageTag(owned, ImageType.Logo),
+                owned is null ? null : ImageTag(owned, ImageType.Thumb)));
         }
 
         return cards;
