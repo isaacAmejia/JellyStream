@@ -1,1 +1,504 @@
-<div data-role="page" class="page type-interior pluginConfigurationPage"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JellyStream</title>
+</head>
+<body>
+<div id="JellyStreamConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox">
+    <style>
+        #JellyStreamConfigPage .js-card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 14px;
+            padding: 1.2em 1.4em;
+            margin: 0 0 1.4em;
+        }
+        #JellyStreamConfigPage .js-card h2 { margin: 0 0 .2em; font-size: 1.25em; }
+        #JellyStreamConfigPage .js-sub { opacity: .65; margin: 0 0 1em; font-size: .92em; }
+        #JellyStreamConfigPage .js-status { display: flex; align-items: center; gap: .6em; flex-wrap: wrap; margin: .4em 0 1em; }
+        #JellyStreamConfigPage .js-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; flex: none; }
+        #JellyStreamConfigPage .js-dot.ok { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
+        #JellyStreamConfigPage .js-dot.bad { background: #e5534b; }
+        #JellyStreamConfigPage .js-row { display: flex; gap: 1em; flex-wrap: wrap; }
+        #JellyStreamConfigPage .js-row > * { flex: 1 1 220px; }
+        #JellyStreamConfigPage .js-btns { display: flex; gap: .6em; flex-wrap: wrap; margin-top: .6em; }
+        #JellyStreamConfigPage .js-btns .emby-button { margin: 0; }
+
+        #JellyStreamConfigPage .js-svc {
+            display: flex; align-items: center; gap: .9em;
+            padding: .6em .7em; margin: 0 0 .5em;
+            border-radius: 12px; background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.06);
+        }
+        #JellyStreamConfigPage .js-svc.off { opacity: .5; }
+        #JellyStreamConfigPage .js-svc img, #JellyStreamConfigPage .js-svc .js-nologo {
+            width: 42px; height: 42px; border-radius: 10px; object-fit: cover; flex: none;
+            background: rgba(255,255,255,.08);
+        }
+        #JellyStreamConfigPage .js-svc .js-name { flex: 1 1 auto; min-width: 0; }
+        #JellyStreamConfigPage .js-svc .js-name b { display: block; }
+        #JellyStreamConfigPage .js-svc .js-name small { opacity: .6; }
+        #JellyStreamConfigPage .js-icon {
+            background: none; border: none; color: inherit; cursor: pointer;
+            padding: .35em; border-radius: 8px; opacity: .8;
+        }
+        #JellyStreamConfigPage .js-icon:hover { background: rgba(255,255,255,.08); opacity: 1; }
+        #JellyStreamConfigPage .js-edit {
+            margin: -.3em 0 .9em; padding: .9em 1em; border-radius: 0 0 12px 12px;
+            background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.05); border-top: none;
+        }
+        #JellyStreamConfigPage .js-chips { display: flex; flex-wrap: wrap; gap: .4em; margin: .3em 0 .8em; }
+        #JellyStreamConfigPage .js-chip {
+            display: inline-flex; align-items: center; gap: .35em;
+            padding: .25em .4em .25em .3em; border-radius: 999px;
+            background: rgba(255,255,255,.08); font-size: .88em;
+        }
+        #JellyStreamConfigPage .js-chip img { width: 20px; height: 20px; border-radius: 50%; }
+        #JellyStreamConfigPage .js-chip button { background: none; border: none; color: inherit; cursor: pointer; opacity: .6; }
+        #JellyStreamConfigPage pre.js-snippet {
+            background: rgba(0,0,0,.35); padding: .8em 1em; border-radius: 10px;
+            white-space: pre-wrap; word-break: break-all; font-size: .85em; margin: .4em 0;
+        }
+        #JellyStreamConfigPage details summary { cursor: pointer; opacity: .8; margin: .4em 0; }
+    </style>
+
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="JellyStreamForm">
+
+                <!-- 1. Connection -->
+                <div class="js-card">
+                    <h2>1. Connect to Seerr</h2>
+                    <p class="js-sub">JellyStream uses your Seerr (Jellyseerr / Overseerr) to see what's on each service and to send requests. The API key stays on your server.</p>
+                    <div class="js-row">
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="jsSeerrUrl">Seerr address</label>
+                            <input is="emby-input" id="jsSeerrUrl" type="url" placeholder="http://192.168.1.10:5055" />
+                            <div class="fieldDescription">The address your Jellyfin server uses to reach Seerr.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="jsSeerrKey">API key</label>
+                            <input is="emby-input" id="jsSeerrKey" type="password" autocomplete="off" />
+                            <div class="fieldDescription">Seerr → Settings → General → API Key.</div>
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="jsRegion">Region</label>
+                            <select is="emby-select" id="jsRegion"></select>
+                        </div>
+                    </div>
+                    <div class="js-status">
+                        <span class="js-dot" id="jsDot"></span>
+                        <span id="jsStatusText">Not checked yet</span>
+                    </div>
+                    <div class="js-btns">
+                        <button is="emby-button" type="button" class="raised emby-button" id="jsTest"><span>Save &amp; test</span></button>
+                        <button is="emby-button" type="button" class="raised emby-button" id="jsSync"><span>Sync now</span></button>
+                        <button is="emby-button" type="button" class="emby-button" id="jsFullSync"><span>Re-check everything</span></button>
+                    </div>
+                </div>
+
+                <!-- 2. Services -->
+                <div class="js-card">
+                    <h2>2. Services</h2>
+                    <p class="js-sub">Shown in this order. Turn services on or off, rename them, or add any provider Seerr knows about. Open a service to fine-tune which plans and stores count.</p>
+                    <div id="jsServices"></div>
+                    <div class="js-row" style="align-items:flex-end">
+                        <div class="selectContainer" style="margin-bottom:0">
+                            <label class="selectLabel" for="jsAddPick">Add a service</label>
+                            <select is="emby-select" id="jsAddPick"><option value="">Choose a provider…</option></select>
+                        </div>
+                        <div class="js-btns" style="flex:0 0 auto">
+                            <button is="emby-button" type="button" class="raised emby-button" id="jsAdd"><span>Add</span></button>
+                            <button is="emby-button" type="button" class="emby-button" id="jsDefaults"><span>Reset to defaults</span></button>
+                        </div>
+                    </div>
+                    <div class="selectContainer" style="margin-top:1.4em">
+                        <label class="selectLabel" for="jsRentBuy">Rent / buy titles</label>
+                        <select is="emby-select" id="jsRentBuy">
+                            <option value="NotOnAnySubscription">Count them when no subscription service has the title</option>
+                            <option value="NotOnMyServices">Count them when none of my services above have the title</option>
+                            <option value="Off">Only count titles included with the subscription</option>
+                        </select>
+                        <div class="fieldDescription">Rent/buy titles go to the service tied to that store (for example Amazon Video → Prime Video, Apple TV store → Apple TV+). Set these stores per service.</div>
+                    </div>
+                </div>
+
+                <!-- 3. Home screen -->
+                <div class="js-card">
+                    <h2>3. Home screen</h2>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowHomeRow" /><span>Show the services row on the home screen</span></label>
+                    </div>
+                    <div class="js-row">
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="jsHomeRowTitle">Row title</label>
+                            <input is="emby-input" id="jsHomeRowTitle" type="text" />
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="jsHomeRowPosition">Position</label>
+                            <select is="emby-select" id="jsHomeRowPosition">
+                                <option value="top">Top of the home screen</option>
+                                <option value="bottom">Bottom of the home screen</option>
+                            </select>
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="jsVisualMode">Look</label>
+                            <select is="emby-select" id="jsVisualMode">
+                                <option value="auto">Automatic (lighter on Raspberry Pi / TV boxes)</option>
+                                <option value="full">Full glass effects</option>
+                                <option value="lite">Lite (fast on low-power devices)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsHideEmpty" /><span>Hide services with nothing in my library</span></label>
+                    </div>
+                </div>
+
+                <!-- 4. Service pages -->
+                <div class="js-card">
+                    <h2>4. Service pages</h2>
+                    <div class="js-row">
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="jsTopCount">Top list length</label>
+                            <input is="emby-input" id="jsTopCount" type="number" min="1" max="20" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="jsGenreRows">Genre rows (per movies / shows)</label>
+                            <input is="emby-input" id="jsGenreRows" type="number" min="0" max="20" />
+                        </div>
+                    </div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowContinue" /><span>Continue Watching row</span></label></div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowRecent" /><span>Recently Added row</span></label></div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowMissing" /><span>Include titles I don't have (shown as missing)</span></label></div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowPopularMissing" /><span>"Popular to request" row</span></label></div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAllowRequests" /><span>Selecting a missing title requests it in Seerr (default settings)</span></label></div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsConfirm" /><span>Ask to press again to confirm a request</span></label></div>
+                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAsUser" /><span>Request as the matching Seerr user (their permissions and limits apply)</span></label></div>
+                </div>
+
+                <!-- 5. Advanced -->
+                <div class="js-card">
+                    <details>
+                        <summary>Advanced</summary>
+                        <div class="js-row">
+                            <div class="inputContainer">
+                                <label class="inputLabel" for="jsRefreshDays">Re-check each title every (days)</label>
+                                <input is="emby-input" id="jsRefreshDays" type="number" min="0" max="60" />
+                                <div class="fieldDescription">The daily sync only re-checks titles older than this. 0 checks everything every time.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel" for="jsConcurrency">Lookups at once</label>
+                                <input is="emby-input" id="jsConcurrency" type="number" min="1" max="16" />
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- 6. Install -->
+                <div class="js-card">
+                    <h2>Show it in Jellyfin</h2>
+                    <p class="js-sub">Add this to the JavaScript Injector plugin (one time):</p>
+                    <pre class="js-snippet" id="jsSnippet"></pre>
+                    <div class="js-btns"><button is="emby-button" type="button" class="emby-button" id="jsCopy"><span>Copy</span></button></div>
+                </div>
+
+                <button is="emby-button" type="submit" class="raised button-submit block emby-button"><span>Save</span></button>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+    (function () {
+        var pluginId = '5c4e9982-450c-443e-a4a4-297d618258e5';
+        var page = document.querySelector('#JellyStreamConfigPage');
+        var $ = function (id) { return page.querySelector('#' + id); };
+
+        var REGIONS = [['US','United States'],['CA','Canada'],['GB','United Kingdom'],['IE','Ireland'],['AU','Australia'],['NZ','New Zealand'],['DE','Germany'],['AT','Austria'],['CH','Switzerland'],['FR','France'],['BE','Belgium'],['NL','Netherlands'],['ES','Spain'],['PT','Portugal'],['IT','Italy'],['SE','Sweden'],['NO','Norway'],['DK','Denmark'],['FI','Finland'],['PL','Poland'],['MX','Mexico'],['BR','Brazil'],['AR','Argentina'],['IN','India'],['JP','Japan'],['KR','South Korea']];
+        var DEFAULTS = [
+            { Key: 'netflix', Name: 'Netflix', ProviderIds: [8, 1796], RentBuyProviderIds: [] },
+            { Key: 'disney', Name: 'Disney+', ProviderIds: [337], RentBuyProviderIds: [] },
+            { Key: 'max', Name: 'HBO Max', ProviderIds: [1899, 384], RentBuyProviderIds: [] },
+            { Key: 'prime', Name: 'Prime Video', ProviderIds: [9, 119], RentBuyProviderIds: [10] },
+            { Key: 'hulu', Name: 'Hulu', ProviderIds: [15], RentBuyProviderIds: [] },
+            { Key: 'apple', Name: 'Apple TV+', ProviderIds: [350], RentBuyProviderIds: [2] },
+            { Key: 'paramount', Name: 'Paramount+', ProviderIds: [531, 2303, 2616], RentBuyProviderIds: [] },
+            { Key: 'peacock', Name: 'Peacock', ProviderIds: [386, 387], RentBuyProviderIds: [] }
+        ];
+
+        var config = null;
+        var providers = [];      // from Seerr
+        var counts = {};         // titles per service key
+        var openKey = null;      // service being edited
+
+        var esc = function (s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        };
+        var slug = function (s) { return String(s).toLowerCase().replace(/\+/g, 'plus').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'service'; };
+        var provider = function (id) { return providers.find(function (p) { return p.Id === id; }); };
+        var api = function (path) { return ApiClient.getUrl('JellyStream/' + path); };
+
+        // ---------- services list ----------
+        function logoFor(s) {
+            if (s.LogoUrl) return s.LogoUrl;
+            for (var i = 0; i < (s.ProviderIds || []).length; i++) {
+                var p = provider(s.ProviderIds[i]);
+                if (p && p.Logo) return p.Logo;
+            }
+            return null;
+        }
+
+        function chips(ids, field, s) {
+            return '<div class="js-chips">' + (ids || []).map(function (id) {
+                var p = provider(id);
+                return '<span class="js-chip">' + (p && p.Logo ? '<img src="' + esc(p.Logo) + '" alt="">' : '') +
+                    esc(p ? p.Name : '#' + id) +
+                    '<button type="button" data-act="unlink" data-field="' + field + '" data-id="' + id + '" title="Remove">✕</button></span>';
+            }).join('') + '</div>';
+        }
+
+        function providerOptions(exclude) {
+            return '<option value="">Add…</option>' + providers.filter(function (p) { return exclude.indexOf(p.Id) < 0; })
+                .map(function (p) { return '<option value="' + p.Id + '">' + esc(p.Name) + '</option>'; }).join('');
+        }
+
+        function renderServices() {
+            var box = $('jsServices');
+            box.innerHTML = config.Services.map(function (s, i) {
+                var logo = logoFor(s);
+                var n = counts[s.Key];
+                var html = '<div class="js-svc' + (s.Enabled ? '' : ' off') + '" data-i="' + i + '">' +
+                    (logo ? '<img src="' + esc(logo) + '" alt="">' : '<span class="js-nologo"></span>') +
+                    '<div class="js-name"><b>' + esc(s.Name) + '</b><small>' +
+                    (n == null ? 'not synced yet' : n + ' title' + (n === 1 ? '' : 's') + ' in your library') + '</small></div>' +
+                    '<label class="emby-checkbox-label" style="margin:0" title="Show"><input is="emby-checkbox" type="checkbox" data-act="toggle"' + (s.Enabled ? ' checked' : '') + '><span></span></label>' +
+                    '<button type="button" class="js-icon" data-act="up" title="Move up"><span class="material-icons">arrow_upward</span></button>' +
+                    '<button type="button" class="js-icon" data-act="down" title="Move down"><span class="material-icons">arrow_downward</span></button>' +
+                    '<button type="button" class="js-icon" data-act="edit" title="Edit"><span class="material-icons">tune</span></button>' +
+                    '<button type="button" class="js-icon" data-act="remove" title="Remove"><span class="material-icons">delete</span></button>' +
+                    '</div>';
+                if (openKey === s.Key) {
+                    html += '<div class="js-edit" data-i="' + i + '">' +
+                        '<div class="js-row">' +
+                        '<div class="inputContainer"><label class="inputLabel">Name</label><input is="emby-input" type="text" data-field="Name" value="' + esc(s.Name) + '"></div>' +
+                        '<div class="inputContainer"><label class="inputLabel">Accent color (optional)</label><input is="emby-input" type="text" data-field="Accent" placeholder="#e50914" value="' + esc(s.Accent) + '"></div>' +
+                        '</div>' +
+                        '<div class="inputContainer"><label class="inputLabel">Custom logo URL (optional)</label><input is="emby-input" type="url" data-field="LogoUrl" value="' + esc(s.LogoUrl) + '"></div>' +
+                        '<label class="selectLabel">Plans that count as ' + esc(s.Name) + ' (subscription)</label>' +
+                        chips(s.ProviderIds, 'ProviderIds', s) +
+                        '<select is="emby-select" data-add="ProviderIds">' + providerOptions(s.ProviderIds) + '</select>' +
+                        '<label class="selectLabel" style="margin-top:1em;display:block">Rent / buy stores tied to ' + esc(s.Name) + '</label>' +
+                        chips(s.RentBuyProviderIds, 'RentBuyProviderIds', s) +
+                        '<select is="emby-select" data-add="RentBuyProviderIds">' + providerOptions(s.RentBuyProviderIds) + '</select>' +
+                        '</div>';
+                }
+                return html;
+            }).join('') || '<p class="js-sub">No services yet. Add one below or reset to the defaults.</p>';
+
+            var pick = $('jsAddPick');
+            var used = [];
+            config.Services.forEach(function (s) { used = used.concat(s.ProviderIds || []); });
+            pick.innerHTML = '<option value="">' + (providers.length ? 'Choose a provider…' : 'Connect Seerr to see providers') + '</option>' +
+                providers.filter(function (p) { return used.indexOf(p.Id) < 0; })
+                    .map(function (p) { return '<option value="' + p.Id + '">' + esc(p.Name) + '</option>'; }).join('');
+        }
+
+        page.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-act]');
+            if (!btn || btn.tagName === 'INPUT') return;
+            var row = btn.closest('[data-i]');
+            var i = row ? +row.getAttribute('data-i') : -1;
+            var list = config.Services;
+            var s = list[i];
+            switch (btn.getAttribute('data-act')) {
+                case 'up': if (i > 0) { list.splice(i - 1, 0, list.splice(i, 1)[0]); } break;
+                case 'down': if (i < list.length - 1) { list.splice(i + 1, 0, list.splice(i, 1)[0]); } break;
+                case 'edit': openKey = openKey === s.Key ? null : s.Key; break;
+                case 'remove': list.splice(i, 1); break;
+                case 'unlink':
+                    var f = btn.getAttribute('data-field'), id = +btn.getAttribute('data-id');
+                    s[f] = (s[f] || []).filter(function (x) { return x !== id; });
+                    break;
+                default: return;
+            }
+            e.preventDefault();
+            renderServices();
+        });
+
+        page.addEventListener('change', function (e) {
+            var t = e.target;
+            var row = t.closest('[data-i]');
+            if (!row) return;
+            var s = config.Services[+row.getAttribute('data-i')];
+            if (t.getAttribute('data-act') === 'toggle') { s.Enabled = t.checked; renderServices(); return; }
+            var add = t.getAttribute('data-add');
+            if (add && t.value) { s[add] = (s[add] || []).concat([+t.value]); renderServices(); return; }
+            var field = t.getAttribute('data-field');
+            if (field) {
+                s[field] = t.value.trim();
+                if (field === 'Name') renderServices();
+            }
+        });
+
+        $('jsAdd').addEventListener('click', function () {
+            var id = +$('jsAddPick').value;
+            var p = provider(id);
+            if (!p) return;
+            var key = slug(p.Name), n = 2;
+            while (config.Services.some(function (s) { return s.Key === key; })) key = slug(p.Name) + '-' + (n++);
+            config.Services.push({ Key: key, Name: p.Name, Enabled: true, ProviderIds: [id], RentBuyProviderIds: [], LogoUrl: '', Accent: '' });
+            openKey = key;
+            renderServices();
+        });
+
+        $('jsDefaults').addEventListener('click', function () {
+            if (!confirm('Replace your services with the defaults?')) return;
+            config.Services = DEFAULTS.map(function (d) { return Object.assign({ Enabled: true, LogoUrl: '', Accent: '' }, JSON.parse(JSON.stringify(d))); });
+            openKey = null;
+            renderServices();
+        });
+
+        // ---------- status / providers ----------
+        function refreshStatus() {
+            $('jsStatusText').textContent = 'Checking…';
+            $('jsDot').className = 'js-dot';
+            return ApiClient.getJSON(api('Admin/Status')).then(function (st) {
+                counts = st.Counts || {};
+                $('jsDot').className = 'js-dot ' + (st.Connected ? 'ok' : 'bad');
+                var when = st.LastSync ? new Date(st.LastSync).toLocaleString() : 'never';
+                $('jsStatusText').textContent = st.Connected
+                    ? 'Connected to Seerr ' + st.Version + ' · ' + st.Titles + ' titles checked · last sync ' + when
+                    : 'Not connected' + (st.Error ? ': ' + st.Error : '');
+                if (!st.Connected) return;
+                return ApiClient.getJSON(api('Admin/Providers')).then(function (list) { providers = list || []; });
+            }).catch(function () {
+                $('jsDot').className = 'js-dot bad';
+                $('jsStatusText').textContent = 'Could not check the connection';
+            }).then(renderServices);
+        }
+
+        // ---------- load / save ----------
+        function fill() {
+            $('jsSeerrUrl').value = config.SeerrUrl || '';
+            $('jsSeerrKey').value = config.SeerrApiKey || '';
+            var region = config.Region || 'US';
+            var regions = REGIONS.slice();
+            if (!regions.some(function (r) { return r[0] === region; })) regions.push([region, region]);
+            $('jsRegion').innerHTML = regions.map(function (r) { return '<option value="' + r[0] + '">' + esc(r[1]) + '</option>'; }).join('');
+            $('jsRegion').value = region;
+            $('jsRentBuy').value = String(config.RentBuy === 0 ? 'Off' : config.RentBuy === 2 ? 'NotOnMyServices' : config.RentBuy === 1 ? 'NotOnAnySubscription' : config.RentBuy || 'NotOnAnySubscription');
+            $('jsShowHomeRow').checked = config.ShowHomeRow;
+            $('jsHomeRowTitle').value = config.HomeRowTitle || '';
+            $('jsHomeRowPosition').value = config.HomeRowPosition || 'top';
+            $('jsVisualMode').value = config.VisualMode || 'auto';
+            $('jsHideEmpty').checked = config.HideEmptyServices;
+            $('jsTopCount').value = config.TopCount;
+            $('jsGenreRows').value = config.GenreRows;
+            $('jsShowContinue').checked = config.ShowContinueWatching;
+            $('jsShowRecent').checked = config.ShowRecentlyAdded;
+            $('jsShowMissing').checked = config.ShowMissing;
+            $('jsShowPopularMissing').checked = config.ShowPopularMissing;
+            $('jsAllowRequests').checked = config.AllowRequests;
+            $('jsConfirm').checked = config.ConfirmRequests;
+            $('jsAsUser').checked = config.RequestAsUser;
+            $('jsRefreshDays').value = config.RefreshDays;
+            $('jsConcurrency').value = config.SyncConcurrency;
+            config.Services = (config.Services || []).map(function (s) {
+                return Object.assign({ Enabled: true, ProviderIds: [], RentBuyProviderIds: [], LogoUrl: '', Accent: '' }, s);
+            });
+            renderServices();
+        }
+
+        function read() {
+            var num = function (id, def, min, max) { var v = parseInt($(id).value, 10); return isNaN(v) ? def : Math.max(min, Math.min(max, v)); };
+            config.SeerrUrl = $('jsSeerrUrl').value.trim();
+            config.SeerrApiKey = $('jsSeerrKey').value.trim();
+            config.Region = $('jsRegion').value || 'US';
+            config.RentBuy = $('jsRentBuy').value;
+            config.ShowHomeRow = $('jsShowHomeRow').checked;
+            config.HomeRowTitle = $('jsHomeRowTitle').value.trim() || 'Streaming services';
+            config.HomeRowPosition = $('jsHomeRowPosition').value;
+            config.VisualMode = $('jsVisualMode').value;
+            config.HideEmptyServices = $('jsHideEmpty').checked;
+            config.TopCount = num('jsTopCount', 10, 1, 20);
+            config.GenreRows = num('jsGenreRows', 6, 0, 20);
+            config.ShowContinueWatching = $('jsShowContinue').checked;
+            config.ShowRecentlyAdded = $('jsShowRecent').checked;
+            config.ShowMissing = $('jsShowMissing').checked;
+            config.ShowPopularMissing = $('jsShowPopularMissing').checked;
+            config.AllowRequests = $('jsAllowRequests').checked;
+            config.ConfirmRequests = $('jsConfirm').checked;
+            config.RequestAsUser = $('jsAsUser').checked;
+            config.RefreshDays = num('jsRefreshDays', 3, 0, 60);
+            config.SyncConcurrency = num('jsConcurrency', 4, 1, 16);
+            config.Services.forEach(function (s) { if (!s.Key) s.Key = slug(s.Name); });
+        }
+
+        function save() {
+            read();
+            return ApiClient.updatePluginConfiguration(pluginId, config);
+        }
+
+        page.addEventListener('pageshow', function () {
+            Dashboard.showLoadingMsg();
+            var base = ApiClient.serverAddress();
+            $('jsSnippet').textContent =
+                "(function () {\n  var s = document.createElement('script');\n  s.src = '" + base + "/JellyStream/client.js';\n  s.defer = true;\n  document.head.appendChild(s);\n})();";
+            ApiClient.getPluginConfiguration(pluginId).then(function (c) {
+                config = c;
+                fill();
+                Dashboard.hideLoadingMsg();
+                return refreshStatus();
+            });
+        });
+
+        $('jsTest').addEventListener('click', function () {
+            Dashboard.showLoadingMsg();
+            save().then(function () { Dashboard.hideLoadingMsg(); return refreshStatus(); });
+        });
+
+        $('jsSync').addEventListener('click', function () {
+            save().then(function () {
+                return ApiClient.ajax({ type: 'POST', url: api('Admin/Sync') });
+            }).then(function () {
+                Dashboard.alert('Sync started. You can follow it under Dashboard → Scheduled Tasks.');
+            });
+        });
+
+        $('jsFullSync').addEventListener('click', function () {
+            if (!confirm('Re-check every title in your library? This can take a while on big libraries.')) return;
+            save().then(function () {
+                return ApiClient.ajax({ type: 'POST', url: api('Admin/Sync?full=true') });
+            }).then(function () {
+                Dashboard.alert('Full re-check started.');
+            });
+        });
+
+        $('jsCopy').addEventListener('click', function () {
+            var text = $('jsSnippet').textContent;
+            (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
+                Dashboard.alert('Copied.');
+            }, function () {
+                var r = document.createRange(); r.selectNodeContents($('jsSnippet'));
+                var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            });
+        });
+
+        $('JellyStreamForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            Dashboard.showLoadingMsg();
+            save().then(function (result) {
+                Dashboard.processPluginConfigurationUpdateResult(result);
+                refreshStatus();
+            });
+            return false;
+        });
+    })();
+    </script>
+</div>
+</body>
+</html>
