@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ImageType = MediaBrowser.Model.Entities.ImageType;
 
 namespace Jellyfin.Plugin.JellyStream.Api;
 
@@ -317,8 +318,8 @@ public class JellyStreamController : ControllerBase
             OrderBy = [(ItemSortBy.DateCreated, SortOrder.Descending)]
         });
 
+        // the user query already applies their library access and parental limits
         return items
-            .Where(i => i.IsVisibleStandalone(user))
             .Select(i => new LibraryCard(
                 i.Id,
                 i.Name,
@@ -326,8 +327,28 @@ public class JellyStreamController : ControllerBase
                 i is MediaBrowser.Controller.Entities.TV.Series ? "tv" : "movie",
                 i.Genres ?? [],
                 i.CommunityRating,
-                i.DateCreated))
+                i.DateCreated,
+                ImageTag(i, ImageType.Primary),
+                ImageTag(i, ImageType.Backdrop)))
             .ToList();
+    }
+
+    /// <summary>Writes a client-side problem to the server log.</summary>
+    /// <param name="log">The message.</param>
+    /// <returns>No content.</returns>
+    [HttpPost("Client/Log")]
+    public ActionResult ClientLogMessage([FromBody] ClientLog log)
+    {
+        var message = log?.Message ?? string.Empty;
+        _logger.LogWarning("JellyStream web client: {Message}", message.Length > 6000 ? message[..6000] : message);
+        return NoContent();
+    }
+
+    // a stable value that changes when the image does, so image URLs can be cached by the browser
+    private static string? ImageTag(BaseItem item, ImageType type)
+    {
+        var info = item.GetImageInfo(type, 0);
+        return info is null ? null : info.DateModified.Ticks.ToString("x", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>Details for a title you don't have, shaped like a Jellyfin item for the expand panel.</summary>
@@ -579,7 +600,11 @@ public class JellyStreamController : ControllerBase
                 status = "missing";
             }
 
-            cards.Add(new TitleCard(t.Id, type, t.DisplayName, t.Year, Image(t.PosterPath, "w342"), Image(t.BackdropPath, "w780"), status, itemId));
+            var owned = itemId is null ? null : _libraryManager.GetItemById(itemId.Value);
+            cards.Add(new TitleCard(
+                t.Id, type, t.DisplayName, t.Year, Image(t.PosterPath, "w342"), Image(t.BackdropPath, "w780"), status, itemId,
+                owned is null ? null : ImageTag(owned, ImageType.Primary),
+                owned is null ? null : ImageTag(owned, ImageType.Backdrop)));
         }
 
         return cards;

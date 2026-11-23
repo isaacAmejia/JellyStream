@@ -9,6 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
+  const VERSION = '1.10.0';
   const FONT = '"Manrope", "SF Pro Display", "Inter", system-ui, sans-serif';
 
   // ---------------------------------------------------------------- helpers
@@ -19,11 +20,19 @@
   const userId = () => window.ApiClient?.getCurrentUserId?.();
   const serverId = () => window.ApiClient?.serverId?.() || '';
   const visible = (el) => !!el && el.offsetParent !== null && !el.closest('.hide');
-  const serviceKey = () => {
+  // Service pages live inside Jellyfin's own home screen and are kept in the browser history entry's
+  // state, not in the route. Changing the route (#/home?jellystream=...) made Jellyfin's classic layout
+  // build a second, hidden copy of the home screen for every service, and opening a title from that
+  // copy is what left people on a stale home screen. Old #/home?jellystream= links still work.
+  const onHome = () => {
     const h = location.hash || '';
-    if (!/^#!?\/home(\.html)?(?:[?/]|$)/i.test(h)) return null;
-    const q = h.split('?')[1] || '';
-    return new URLSearchParams(q).get(PARAM);
+    return h === '' || h === '#/' || /^#!?\/home(\.html)?(?:[?/]|$)/i.test(h);
+  };
+  const serviceKey = () => {
+    if (!onHome()) return null;
+    const st = history.state;
+    if (st && typeof st === 'object' && 'jellystream' in st) return st.jellystream || null;
+    return new URLSearchParams((location.hash || '').split('?')[1] || '').get(PARAM);
   };
 
   const lite = () => {
@@ -66,6 +75,7 @@
         .js-view .jst-t10 { background: none !important; -webkit-text-fill-color: #e50914 !important; filter: none !important; }`,
     },
     disney: {
+      rankShape: 'landscape',
       c1: '#f9f9f9', c2: '#0063e5', num: 'glass',
       base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #2b3a66 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
       shape: 'landscape', caption: 'none',
@@ -106,6 +116,7 @@
         .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 0 34px rgba(43,92,255,.6) !important; }`,
     },
     prime: {
+      rankShape: 'landscape',
       c1: '#1a98ff', c2: '#0f79af', numA: '#1a98ff', numB: '#8fdcff', num: 'solid',
       base: '#0f171e', bg: '#0f171e', shape: 'landscape', caption: 'below',
       nav: 'rail', tabs: ['Home', 'TV Shows', 'Movies'],
@@ -129,6 +140,7 @@
         .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 16px 34px rgba(0,0,0,.6) !important; }`,
     },
     hulu: {
+      rankShape: 'landscape',
       c1: '#1ce783', c2: '#0f9d5a', numA: '#1a1d29', numB: '#1ce783', num: 'outline',
       base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #1d3b37 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
       shape: 'landscape', caption: 'none',
@@ -150,6 +162,7 @@
         .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px #1ce783, 0 24px 40px rgba(0,0,0,.7) !important; }`,
     },
     apple: {
+      rankShape: 'landscape',
       c1: '#f5f5f7', c2: '#86868b', num: 'glass',
       base: '#000', bg: '#000', shape: 'portrait', caption: 'none',
       nav: 'glass', tabs: ['Home', 'TV Shows', 'Movies'],
@@ -231,50 +244,55 @@
   };
 
   // row sizing per service: card widths, spacing, and how wide a Top 10 slot is next to its poster
+  const LAND = (w, cw) => `--js-rank-pw: ${w}; --js-rank-ph: calc(var(--js-rank-pw) * .5625); --js-rank-cw: ${cw};`;
   const LAYOUT = {
-    netflix: '--js-land-w: clamp(210px, 15.5vw, 300px); --js-gap: .16em; --js-rank-ratio: 1.62;',
-    disney: '--js-land-w: clamp(240px, 19vw, 350px); --js-gap: .6em; --js-rank-ratio: 1.16;',
-    max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-ratio: 1.5;',
-    prime: '--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; --js-rank-ratio: 1.58;',
-    hulu: '--js-land-w: clamp(260px, 21vw, 370px); --js-gap: .6em; --js-rank-ratio: 1.16;',
-    apple: '--js-port-w: clamp(140px, 11vw, 205px); --js-gap: .75em; --js-rank-ratio: 1.04;',
-    paramount: '--js-port-w: clamp(150px, 11.5vw, 210px); --js-gap: .3em; --js-rank-ratio: 1.6;',
-    peacock: '--js-land-w: clamp(250px, 20vw, 345px); --js-gap: .45em; --js-rank-ratio: 1.56;',
+    netflix: '--js-land-w: clamp(210px, 15.5vw, 300px); --js-gap: .16em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
+    disney: `--js-land-w: clamp(240px, 19vw, 350px); --js-gap: .6em; ${LAND('clamp(240px, 19vw, 340px)', 'calc(var(--js-rank-pw) * 1.12)')}`,
+    max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-cw: calc(var(--js-poster-w) * 1.5);',
+    prime: `--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; ${LAND('clamp(230px, 17vw, 310px)', 'calc(var(--js-rank-pw) + var(--js-rank-ph) * .66)')}`,
+    hulu: `--js-land-w: clamp(260px, 21vw, 370px); --js-gap: .6em; ${LAND('clamp(250px, 20vw, 350px)', 'calc(var(--js-rank-pw) + .9em)')}`,
+    apple: `--js-port-w: clamp(140px, 11vw, 205px); --js-gap: .75em; ${LAND('clamp(250px, 20vw, 360px)', 'calc(var(--js-rank-pw) + 1em)')}`,
+    paramount: '--js-port-w: clamp(150px, 11.5vw, 210px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.6);',
+    peacock: '--js-land-w: clamp(250px, 20vw, 345px); --js-gap: .45em; --js-rank-cw: calc(var(--js-poster-w) * 1.56);',
   };
 
   // each service's Top 10, drawn the way that service draws it
   const RANKS = {
-    // big gray-outlined numbers with the poster tucked in
+    // Netflix: huge black numerals outlined in gray, the poster tucked against each one
     netflix: `
       .js-rank-num { font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif; font-weight: 900; }
       .js-rank-poster { border-radius: 4px !important; }`,
-    // the rank sits on the art, bottom left, over a soft shadow; framed tiles
+    // Disney+: wide tiles with a frosted edge; the rank stands over the tile's lower left
     disney: `
-      .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: .04em !important; font-size: calc(var(--js-poster-w) * .74) !important; font-weight: 800 !important; letter-spacing: -.05em !important; color: #f9f9f9 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 6px 22px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.6); }
-      .js-rank-poster { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), inset 0 0 0 3px rgba(249,249,249,.1) !important; }`,
-    // tall, thin white numerals
+      .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: -.1em !important; font-size: calc(var(--js-rank-ph) * .9) !important; font-weight: 800 !important; letter-spacing: -.04em !important; color: #f9f9f9 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 6px 24px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.7); }
+      .js-rank-poster { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), inset 0 0 0 3px rgba(249,249,249,.1) !important; }
+      .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: scale(1.05) !important; box-shadow: 0 30px 40px -12px rgba(0,0,0,.8), inset 0 0 0 4px rgba(249,249,249,.85) !important; }`,
+    // HBO Max: tall, light numerals beside the poster
     max: `
       .js-rank-num { font-weight: 200 !important; letter-spacing: -.07em !important; color: #fff !important; -webkit-text-stroke: 0 !important; bottom: -.08em !important; opacity: .95; }
       .js-rank-poster { border-radius: 6px !important; }`,
-    // numbers fading from white into Prime blue
+    // Prime Video: wide tiles, big numerals fading from white into Prime blue behind them
     prime: `
-      .js-rank-num { color: transparent !important; -webkit-text-stroke: 0 !important; background: linear-gradient(180deg, #ffffff 15%, #1a98ff 95%); -webkit-background-clip: text; background-clip: text; font-weight: 800 !important; }
+      .js-rank-num { font-size: calc(var(--js-rank-ph) * 1.08) !important; bottom: -.12em !important; color: transparent !important; -webkit-text-stroke: 0 !important; background: linear-gradient(180deg, #ffffff 20%, #1a98ff 100%); -webkit-background-clip: text; background-clip: text; font-weight: 800 !important; }
       .js-rank-poster { border-radius: 8px !important; }`,
-    // green-outlined rank over the corner of the art
+    // Hulu: wide tiles, the rank in Hulu green leading the title underneath
     hulu: `
-      .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: .02em !important; font-size: calc(var(--js-poster-w) * .8) !important; font-weight: 900 !important; letter-spacing: -.05em !important; color: #0b0c0f !important; -webkit-text-stroke: 3px #1ce783 !important; text-shadow: 0 8px 24px rgba(0,0,0,.7); }
+      .js-rank-num { display: none !important; }
+      .js-rank-card .js-rank-cap { display: flex !important; }
+      .js-rank-cap b { color: #1ce783; font-size: 1.9em; font-weight: 900; }
+      .js-rank-cap .cardText { color: #f9f9f9 !important; font-weight: 600; }
       .js-rank-poster { border-radius: 8px !important; }`,
-    // Apple TV's charts: no giant numerals, the rank leads the caption under a rounded poster
+    // Apple TV: a chart of wide tiles, the rank leading the caption under each
     apple: `
       .js-rank-num { display: none !important; }
       .js-rank-card .js-rank-cap { display: flex !important; }
-      .js-rank-cap b { color: #f5f5f7; }
+      .js-rank-cap b { color: #f5f5f7; font-size: 1.6em; }
       .js-rank-poster { border-radius: 12px !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 26px rgba(0,0,0,.6) !important; }`,
-    // dark numerals outlined in Paramount blue, with a glow
+    // Paramount+: dark numerals outlined in Paramount blue, glowing
     paramount: `
       .js-rank-num { color: #000a1f !important; -webkit-text-stroke: 3px #3d8bff !important; font-weight: 800 !important; filter: drop-shadow(0 0 14px rgba(0,100,255,.55)); }
       .js-rank-poster { border-radius: 4px !important; box-shadow: inset 0 -3px 0 #0064ff, -8px 0 18px rgba(0,0,0,.5) !important; }`,
-    // numerals in the six feather colors
+    // Peacock: numerals in the six feather colors
     peacock: `
       .js-rank-num { color: transparent !important; -webkit-text-stroke: 0 !important; background: linear-gradient(160deg, #ffb000 0%, #ff6d00 22%, #e5007e 45%, #6f2da8 65%, #0063db 82%, #00b14f 100%); -webkit-background-clip: text; background-clip: text; font-weight: 800 !important; }
       .js-rank-poster { border-radius: 8px !important; }`,
@@ -375,6 +393,7 @@
   css.textContent = `
     /* service tiles: landscape glass cards. The backdrop is what's trending on that service right now,
        washed in the service's color, with the logo and name on a frosted strip. */
+    .js-services .js-svc-card { width: clamp(230px, 21vw, 380px) !important; min-width: 0 !important; flex: 0 0 auto !important; }
     .js-services .js-svc-card .cardScalable { background: transparent !important; box-shadow: none !important; }
     .js-services .js-svc-card .cardImageContainer {
       position: absolute !important;
@@ -712,7 +731,7 @@
     .js-intro.out { opacity: 0; pointer-events: none; }
     .js-intro-logo {
       position: relative; z-index: 2;
-      width: min(26vmin, 220px); height: min(26vmin, 220px);
+      width: min(30vmin, 250px); height: min(30vmin, 250px);
       border-radius: 22%; object-fit: cover;
       box-shadow: 0 20px 60px rgba(0,0,0,.6);
       animation: js-intro-pop 1.1s cubic-bezier(.2,.9,.25,1) both;
@@ -732,65 +751,93 @@
     @keyframes js-intro-draw { from { width: 0; } to { width: min(30vmin, 260px); } }
     @keyframes js-intro-burst { 0% { transform: translate(0,0) scale(.2); opacity: 0; } 50% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } }
     @keyframes js-intro-unblur { from { filter: blur(30px); opacity: 0; transform: scale(1.15); } to { filter: blur(0); opacity: 1; transform: scale(1); } }
-    /* netflix: red ribbons of light stretching out from the logo */
-    .js-intro-netflix .js-intro-fx {
-      background: repeating-linear-gradient(90deg, transparent 0 2.2vw, rgba(229,9,20,.85) 2.2vw 2.6vw, transparent 2.6vw 4vw, rgba(178,7,16,.7) 4vw 4.3vw);
-      animation: js-intro-ribbons 1.3s cubic-bezier(.6,0,.2,1) .15s both;
-      -webkit-mask-image: radial-gradient(60% 45% at 50% 50%, #000 0%, transparent 75%);
-      mask-image: radial-gradient(60% 45% at 50% 50%, #000 0%, transparent 75%);
+    /* netflix: ribbons of red light rush out of the logo, then everything zooms through it */
+    @keyframes js-intro-zoom { 0% { transform: scale(1); opacity: 1; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(5); opacity: 0; } }
+    .js-intro-netflix .js-intro-fx::before {
+      content: ""; position: absolute; inset: 0;
+      background: repeating-linear-gradient(90deg,
+        transparent 0 1.6vw, #e50914 1.6vw 2.1vw, transparent 2.1vw 3vw, #ff3d6e 3vw 3.25vw,
+        transparent 3.25vw 4.2vw, #b20710 4.2vw 4.9vw, transparent 4.9vw 5.6vw, #ff7aa0 5.6vw 5.8vw);
+      filter: blur(1px) drop-shadow(0 0 12px rgba(229,9,20,.9));
+      animation: js-intro-ribbons 1.5s cubic-bezier(.6,0,.2,1) .1s both;
+      -webkit-mask-image: radial-gradient(55% 60% at 50% 50%, #000 0%, transparent 80%);
+      mask-image: radial-gradient(55% 60% at 50% 50%, #000 0%, transparent 80%);
     }
-    /* disney+ and hulu: a glowing arc swinging over the logo */
+    .js-intro-netflix .js-intro-logo { animation: js-intro-pop .7s cubic-bezier(.2,.9,.25,1) both, js-intro-zoom 1.9s cubic-bezier(.7,0,.3,1) .1s both; }
+    /* disney+: a glowing arc swings over the logo through a field of sparkles */
+    @keyframes js-intro-twinkle { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+    .js-intro-disney { background: radial-gradient(80% 70% at 50% 40%, #0b3a8c 0%, #040d2e 60%, #01040f 100%) !important; }
+    .js-intro-disney .js-intro-fx::after, .js-intro-paramount .js-intro-fx::after {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        radial-gradient(1.5px 1.5px at 12% 22%, #fff, transparent), radial-gradient(1px 1px at 28% 72%, #fff, transparent),
+        radial-gradient(2px 2px at 42% 14%, #bfe6ff, transparent), radial-gradient(1px 1px at 63% 80%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 78% 30%, #fff, transparent), radial-gradient(2px 2px at 88% 64%, #bfe6ff, transparent),
+        radial-gradient(1px 1px at 52% 46%, #fff, transparent), radial-gradient(1.5px 1.5px at 8% 84%, #fff, transparent);
+      animation: js-intro-twinkle 1.2s ease-in-out infinite;
+    }
     .js-intro-disney .js-intro-fx::before, .js-intro-hulu .js-intro-fx::before {
       content: ""; position: absolute; left: 50%; top: 50%;
-      width: min(52vmin, 460px); height: min(52vmin, 460px); margin: calc(min(52vmin, 460px) / -2) 0 0 calc(min(52vmin, 460px) / -2);
-      border-radius: 50%; border: 3px solid transparent; border-top-color: var(--js-intro-c1);
-      filter: drop-shadow(0 0 12px var(--js-intro-c1)) drop-shadow(0 0 30px var(--js-intro-c1));
-      animation: js-intro-arc 1.2s cubic-bezier(.2,.9,.25,1) both;
+      width: min(60vmin, 520px); height: min(60vmin, 520px); margin: calc(min(60vmin, 520px) / -2) 0 0 calc(min(60vmin, 520px) / -2);
+      border-radius: 50%; border: 4px solid transparent; border-top-color: var(--js-intro-c1);
+      filter: drop-shadow(0 0 10px var(--js-intro-c1)) drop-shadow(0 0 28px var(--js-intro-c1)) drop-shadow(0 0 60px var(--js-intro-c1));
+      animation: js-intro-arc 1.3s cubic-bezier(.2,.9,.25,1) both;
     }
-    /* hbo max: blue rings pulsing out */
+    /* hulu: a sweep of hulu green wipes across before the logo lands */
+    @keyframes js-intro-wipe { 0% { transform: translateX(-100%); } 45% { transform: translateX(0); } 100% { transform: translateX(100%); } }
+    .js-intro-hulu .js-intro-fx::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, #1ce783 35%, #0f9d5a 65%, transparent);
+      animation: js-intro-wipe 1.1s cubic-bezier(.7,0,.3,1) both;
+    }
+    .js-intro-hulu .js-intro-logo { animation-delay: .35s; }
+    /* hbo max: deep blue light pulsing out in rings */
+    .js-intro-max { background: radial-gradient(70% 60% at 50% 50%, #1238c4 0%, #071a63 45%, #020b2e 100%) !important; }
     .js-intro-max .js-intro-fx::before, .js-intro-max .js-intro-fx::after {
       content: ""; position: absolute; left: 50%; top: 50%; width: 40vmin; height: 40vmin; margin: -20vmin 0 0 -20vmin;
-      border-radius: 50%; border: 2px solid rgba(43,92,255,.9); box-shadow: 0 0 40px rgba(43,92,255,.6);
-      animation: js-intro-ring 1.6s ease-out infinite;
+      border-radius: 50%; border: 3px solid rgba(140,170,255,.95); box-shadow: 0 0 40px rgba(43,92,255,.9), inset 0 0 30px rgba(43,92,255,.6);
+      animation: js-intro-ring 1.4s ease-out infinite;
     }
-    .js-intro-max .js-intro-fx::after { animation-delay: .5s; }
-    /* prime video: the smile line drawing under the logo */
+    .js-intro-max .js-intro-fx::after { animation-delay: .45s; }
+    /* prime video: the smile draws itself under the logo */
+    .js-intro-prime { background: radial-gradient(70% 60% at 50% 45%, #13324d 0%, #0f171e 70%) !important; }
     .js-intro-prime .js-intro-fx::before {
-      content: ""; position: absolute; left: 50%; top: calc(50% + min(16vmin, 135px)); transform: translateX(-50%);
-      height: min(5vmin, 40px); width: 0; border-bottom: 5px solid #1a98ff; border-radius: 0 0 50% 50%;
-      filter: drop-shadow(0 0 10px rgba(26,152,255,.8));
-      animation: js-intro-draw .9s cubic-bezier(.6,0,.2,1) .35s both;
+      content: ""; position: absolute; left: 50%; top: calc(50% + min(17vmin, 145px)); transform: translateX(-50%);
+      height: min(6vmin, 48px); width: 0; border-bottom: 6px solid #1a98ff; border-radius: 0 0 50% 50%;
+      filter: drop-shadow(0 0 12px rgba(26,152,255,1));
+      animation: js-intro-draw .8s cubic-bezier(.6,0,.2,1) .3s both;
     }
-    /* apple tv: glass sheen and a blur-to-sharp reveal */
-    .js-intro-apple .js-intro-logo, .js-intro-apple .js-intro-name { animation: js-intro-unblur 1.1s cubic-bezier(.2,.9,.25,1) both; }
+    /* apple tv: the logo resolves out of a blur, then a glass highlight crosses it */
+    .js-intro-apple .js-intro-logo, .js-intro-apple .js-intro-name { animation: js-intro-unblur 1s cubic-bezier(.2,.9,.25,1) both; }
     .js-intro-apple .js-intro-fx::before {
-      content: ""; position: absolute; top: 0; bottom: 0; width: 30%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
-      animation: js-intro-sweep 1.4s ease-in-out .3s both;
+      content: ""; position: absolute; top: 0; bottom: 0; width: 26%; z-index: 3;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.38), transparent);
+      animation: js-intro-sweep 1.2s ease-in-out .5s both;
     }
-    /* paramount+: a ring of stars turning around the logo */
+    /* paramount+: a ring of stars turns around the logo against a starry night */
+    .js-intro-paramount { background: radial-gradient(75% 65% at 50% 45%, #0b3fae 0%, #001a4d 50%, #000a1f 100%) !important; }
     .js-intro-paramount .js-intro-fx::before {
       content: ""; position: absolute; left: 50%; top: 50%;
-      width: min(48vmin, 420px); height: min(48vmin, 420px); margin: calc(min(48vmin, 420px) / -2) 0 0 calc(min(48vmin, 420px) / -2);
+      width: min(52vmin, 450px); height: min(52vmin, 450px); margin: calc(min(52vmin, 450px) / -2) 0 0 calc(min(52vmin, 450px) / -2);
       border-radius: 50%;
-      background: repeating-conic-gradient(from 0deg, #fff 0 1.2deg, transparent 1.2deg 14deg);
-      -webkit-mask-image: radial-gradient(closest-side, transparent 88%, #000 90%, #000 96%, transparent 98%);
-      mask-image: radial-gradient(closest-side, transparent 88%, #000 90%, #000 96%, transparent 98%);
-      filter: drop-shadow(0 0 8px #7fb2ff);
-      animation: js-intro-spin 6s linear infinite, js-intro-pop 1s ease both;
+      background: repeating-conic-gradient(from 0deg, #fff 0 1.6deg, transparent 1.6deg 14deg);
+      -webkit-mask-image: radial-gradient(closest-side, transparent 86%, #000 88%, #000 96%, transparent 98%);
+      mask-image: radial-gradient(closest-side, transparent 86%, #000 88%, #000 96%, transparent 98%);
+      filter: drop-shadow(0 0 10px #7fb2ff);
+      animation: js-intro-spin 3s linear infinite, js-intro-pop .9s ease both;
     }
-    /* peacock: colored feathers bursting out */
+    /* peacock: the six feathers fan out from the logo */
     .js-intro-peacock .js-intro-fx i {
-      position: absolute; left: 50%; top: 50%; width: 5vmin; height: 5vmin; margin: -2.5vmin 0 0 -2.5vmin;
-      border-radius: 50%; animation: js-intro-burst 1.3s cubic-bezier(.2,.9,.25,1) .2s both;
+      position: absolute; left: 50%; top: 50%; width: 7vmin; height: 7vmin; margin: -3.5vmin 0 0 -3.5vmin;
+      border-radius: 50%; box-shadow: 0 0 24px currentColor;
+      animation: js-intro-burst 1.3s cubic-bezier(.2,.9,.25,1) .15s both;
     }
-    /* anything else: a sheen in the service's color */
+    /* anything else: a sweep of light in the service's color */
     .js-intro-generic .js-intro-fx::before {
       content: ""; position: absolute; top: 0; bottom: 0; width: 35%;
-      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--js-intro-c1) 35%, transparent), transparent);
-      animation: js-intro-sweep 1.3s ease-in-out .2s both;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--js-intro-c1) 60%, transparent), transparent);
+      animation: js-intro-sweep 1.2s ease-in-out .15s both;
     }
-    html.js-lite .js-intro-fx { display: none; }
     @media (prefers-reduced-motion: reduce) { .js-intro-fx { display: none; } .js-intro-logo, .js-intro-name { animation: none; } }
 
     /* each service sizes and spaces its rows its own way (vars set per brand) */
@@ -822,7 +869,7 @@
       left: 0; bottom: -.11em;
       z-index: 0;
       font-family: var(--js-num-font, inherit);
-      font-size: calc(var(--js-poster-w) * 1.42);
+      font-size: calc(var(--js-rank-ph, calc(var(--js-poster-w) * 1.5)) * .95);
       font-weight: 900;
       line-height: 1;
       letter-spacing: -.09em;
@@ -836,7 +883,7 @@
     .js-rank-poster {
       position: absolute !important;
       top: 0; bottom: 0; right: 0; left: auto !important;
-      width: var(--js-poster-w) !important;
+      width: var(--js-rank-pw, var(--js-poster-w)) !important;
       height: 100% !important;
       z-index: 1;
       background-size: cover;
@@ -846,7 +893,7 @@
     }
     .js-rank-card .js-badge { z-index: 3; }
     .js-rank-card .cardFooter { display: none !important; }
-    .js-rank-cap { align-items: baseline; gap: .45em; padding: .55em .1em 0 calc(100% - var(--js-poster-w)); text-align: left; }
+    .js-rank-cap { align-items: baseline; gap: .45em; padding: .55em .1em 0 calc(100% - var(--js-rank-pw, var(--js-poster-w))); text-align: left; }
     .js-rank-cap b { font-size: 1.5em; font-weight: 700; line-height: 1; }
     .js-rank-cap .cardText { padding: 0 !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255,255,255,.75); }
     .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: scale(1.04); }
@@ -1017,8 +1064,11 @@
   });
 
   // ---------------------------------------------------------------- cards
-  const imgUrl = (id) => window.ApiClient.getImageUrl(id, { type: 'Primary', maxHeight: 480, quality: 90 });
-  const wideUrl = (id) => `${window.ApiClient.getImageUrl(id, { type: 'Backdrop', maxWidth: 720, quality: 85 })}|${imgUrl(id)}`;
+  // With the image's tag in the address Jellyfin lets the browser keep it, so posters come straight
+  // from the cache after the first visit; sizes match what the rows actually show.
+  const imgUrl = (id, tag) => window.ApiClient.getImageUrl(id, { type: 'Primary', fillHeight: 420, quality: 82, ...(tag ? { tag } : {}) });
+  const backdropUrl = (id, tag) => window.ApiClient.getImageUrl(id, { type: 'Backdrop', fillWidth: 640, quality: 80, ...(tag ? { tag } : {}) });
+  const wideUrl = (id, tags = {}) => (tags.backdrop ? `${backdropUrl(id, tags.backdrop)}|` : '') + imgUrl(id, tags.primary);
 
   // the look of the open service (cards are built after applyBrand runs)
   const look = () => {
@@ -1050,7 +1100,7 @@
       id: it.Id,
       name: it.Name,
       sub: it.Year || '',
-      img: l.shape === 'landscape' ? wideUrl(it.Id) : imgUrl(it.Id),
+      img: l.shape === 'landscape' ? wideUrl(it.Id, { backdrop: it.BackdropTag, primary: it.PrimaryTag }) : imgUrl(it.Id, it.PrimaryTag),
       href: detailsHref(it.Id),
       type: it.Type === 'tv' ? 'Series' : 'Movie',
       cls: 'js-lib',
@@ -1067,18 +1117,23 @@
 
   // Top 10 card: a big rank numeral with the poster tucked against it, styled per service
   // inline !important beats any theme rule that sizes .card / .cardScalable / .cardImageContainer
-  const RANK_CARD_STYLE = 'width:calc(var(--js-poster-w, 150px) * var(--js-rank-ratio, 1.62)) !important;min-width:calc(var(--js-poster-w, 150px) * var(--js-rank-ratio, 1.62)) !important;max-width:none !important;flex:0 0 auto !important;';
-  const RANK_BOX_STYLE = 'position:relative !important;width:100% !important;height:calc(var(--js-poster-w, 150px) * 1.5) !important;padding:0 !important;overflow:visible !important;';
-  const RANK_POSTER_STYLE = 'position:absolute !important;top:0 !important;bottom:0 !important;right:0 !important;left:auto !important;width:var(--js-poster-w, 150px) !important;height:100% !important;';
+  // sizes come from per-service variables: --js-rank-pw/-ph (the art) and --js-rank-cw (the whole slot)
+  const RANK_CARD_STYLE = 'width:var(--js-rank-cw, calc(var(--js-poster-w, 150px) * 1.62)) !important;min-width:var(--js-rank-cw, calc(var(--js-poster-w, 150px) * 1.62)) !important;max-width:none !important;flex:0 0 auto !important;';
+  const RANK_BOX_STYLE = 'position:relative !important;width:100% !important;height:var(--js-rank-ph, calc(var(--js-poster-w, 150px) * 1.5)) !important;padding:0 !important;overflow:visible !important;';
+  const RANK_POSTER_STYLE = 'position:absolute !important;top:0 !important;bottom:0 !important;right:0 !important;left:auto !important;width:var(--js-rank-pw, var(--js-poster-w, 150px)) !important;height:100% !important;';
   const rankCard = (t, i) => {
     const owned = !!t.ItemId;
+    const land = look().rankShape === 'landscape';
+    const art = land
+      ? (owned ? `${wideUrl(t.ItemId, { backdrop: t.BackdropTag, primary: t.PrimaryTag })}|${t.Backdrop || ''}` : `${t.Backdrop || ''}|${t.Poster || ''}`)
+      : (owned ? `${imgUrl(t.ItemId, t.PrimaryTag)}|${t.Poster || ''}` : (t.Poster || ''));
     const status = owned ? '' : (t.Status === 'available' ? 'missing' : t.Status);
     return `
-    <div class="card js-card js-rank-card${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
+    <div class="card js-card js-rank-card${land ? ' js-rank-land' : ''}${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
       <div class="cardBox">
         <div class="cardScalable js-rank-box" style="${RANK_BOX_STYLE}">
           <span class="js-rank-num" aria-hidden="true">${i + 1}</span>
-          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(owned ? `${imgUrl(t.ItemId)}|${t.Poster || ''}` : (t.Poster || ''))}"></a>
+          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(art)}"></a>
           ${owned ? (t.Status === 'partial' ? BADGES.partial : '') : (BADGES[status] || BADGES.missing)}
         </div>
         <div class="cardFooter js-rank-cap"><b>${i + 1}</b><span class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></span></div>
@@ -1104,7 +1159,7 @@
     if (t.ItemId) {
       return card({
         id: t.ItemId, name: t.Name, sub: t.Year || '',
-        img: landscape ? wideUrl(t.ItemId) : imgUrl(t.ItemId),
+        img: landscape ? wideUrl(t.ItemId, { backdrop: t.BackdropTag, primary: t.PrimaryTag }) : imgUrl(t.ItemId, t.PrimaryTag),
         href: detailsHref(t.ItemId), type: t.Type === 'tv' ? 'Series' : 'Movie',
         badge: t.Status === 'partial' ? BADGES.partial : '',
         cls: wide ? 'js-lib' : '', shape: landscape ? 'landscape' : 'portrait', caption,
@@ -1375,7 +1430,7 @@
     const feathers = k === 'peacock'
       ? ['#ffb000', '#ff6d00', '#e5007e', '#6f2da8', '#0063db', '#00b14f'].map((c, i) => {
         const a = (-150 + i * 24) * Math.PI / 180;
-        return `<i style="background:${c};--dx:${Math.round(Math.cos(a) * 30)}vmin;--dy:${Math.round(Math.sin(a) * 30)}vmin;animation-delay:${0.15 + i * 0.05}s"></i>`;
+        return `<i style="background:${c};color:${c};--dx:${Math.round(Math.cos(a) * 30)}vmin;--dy:${Math.round(Math.sin(a) * 30)}vmin;animation-delay:${0.15 + i * 0.05}s"></i>`;
       }).join('')
       : '';
     el.innerHTML = `<div class="js-intro-fx">${feathers}</div>${svc.Logo
@@ -1387,13 +1442,13 @@
     const done = () => {
       if (ended) return;
       ended = true;
-      const wait = Math.max(0, 1000 - (performance.now() - started));
+      const wait = Math.max(0, 1600 - (performance.now() - started));
       setTimeout(() => {
         el.classList.add('out');
         setTimeout(() => el.remove(), 400);
       }, wait);
     };
-    setTimeout(done, 2100); // a couple of seconds at most, even if the page is still loading
+    setTimeout(done, 2200); // about two seconds at most, even if the page is still loading
     return done;
   };
 
@@ -1656,8 +1711,45 @@
     } catch { /* fall through to the link */ }
     if (!sent) location.hash = href;
     setTimeout(() => { if (!isDetails()) location.hash = href; }, 500);
-    // last resort: the address changed but nothing drew the details page
-    setTimeout(() => { if (isDetails() && !detailsShown()) location.reload(); }, 5000);
+    traceOpen();
+  };
+
+  // Records what the page did after a title was clicked. If the details page never shows, the record
+  // goes to the browser console and the Jellyfin server log (so it can be diagnosed), then the page
+  // reloads straight into the title as a last resort.
+  const traceOpen = () => {
+    const t0 = performance.now();
+    const log = [];
+    const at = () => Math.round(performance.now() - t0);
+    const snap = (label) => log.push({
+      t: at(), label,
+      hash: (location.hash || '').slice(0, 48),
+      pages: [...document.querySelectorAll('.mainAnimatedPages > *, .skinBody > [data-role="page"]')]
+        .map((p) => `${p.id || p.className.split(' ')[0] || p.tagName}${p.classList.contains('hide') ? '(hidden)' : ''}`).join(' '),
+      details: detailsShown(),
+      view: !!document.querySelector('.js-view'),
+    });
+    const onErr = (e) => log.push({ t: at(), error: String(e?.message || e?.reason?.stack || e?.reason?.message || e?.reason || e).slice(0, 400) });
+    addEventListener('error', onErr);
+    addEventListener('unhandledrejection', onErr);
+    snap('click');
+    setTimeout(() => snap('0.3s'), 300);
+    setTimeout(() => snap('1s'), 1000);
+    setTimeout(() => {
+      snap('2.5s');
+      removeEventListener('error', onErr);
+      removeEventListener('unhandledrejection', onErr);
+      if (!isDetails() || detailsShown()) return;
+      const text = `open title failed (client ${VERSION}, layout ${document.documentElement.className.match(/layout-\S+/g)?.join(' ') || '?'}): ${JSON.stringify(log)}`;
+      console.warn('[JellyStream]', text);
+      let reloaded = false;
+      const reload = () => { if (!reloaded) { reloaded = true; location.reload(); } };
+      try {
+        window.ApiClient.ajax({ type: 'POST', url: api('Client/Log'), data: JSON.stringify({ Message: text }), contentType: 'application/json' })
+          .then(reload, reload);
+      } catch { /* ignore */ }
+      setTimeout(reload, 800);
+    }, 2500);
   };
 
   // clicks: service tiles, back button, and titles you don't have
@@ -1731,16 +1823,28 @@
   });
   const clearNames = () => document.querySelectorAll('.js-logo, .js-hero img').forEach((el) => { el.style.viewTransitionName = ''; });
 
+  // open / switch / close without touching Jellyfin's route
   const navigate = (to) => {
-    if (to.back) history.back();
-    else if (to.replace) location.replace(to.href);
-    else location.hash = to.href;
+    const base = history.state && typeof history.state === 'object' ? history.state : {};
+    if (to.key) {
+      const st = { ...base, jellystream: to.key, jsPushed: to.replace ? base.jsPushed : true };
+      if (to.replace) history.replaceState(st, ''); else history.pushState(st, '');
+    } else if (base.jsPushed && base.jellystream) {
+      history.back();
+      return;
+    } else if (new URLSearchParams((location.hash || '').split('?')[1] || '').get(PARAM)) {
+      location.hash = '#/home'; // an old-style link: go to the plain home route
+      return;
+    } else {
+      history.replaceState({ ...base, jellystream: null, jsPushed: false }, '');
+    }
+    sync();
   };
 
   // to: { href, key (service opening, or null for home), from (element to morph), fromKey (service being left), back, replace }
   const go = (to) => {
     if (!canMorph()) {
-      try { navigate(to); } catch { location.hash = to.href; }
+      navigate(to);
       return;
     }
     clearNames();
@@ -1778,27 +1882,21 @@
     const heroImg = document.querySelector('.js-view .js-hero img');
 
     if (a.classList.contains('js-back') || a.getAttribute('href') === '#/home') {
-      go({ href: '#/home', key: null, from: heroImg, fromKey: current, back: state.cameFromHome });
-      state.cameFromHome = false;
+      go({ key: null, from: heroImg, fromKey: current });
       return;
     }
     const key = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get(PARAM);
     if (!key || key === current) return;
-    if (current) {
-      // switching services: replace, so Back still goes home
-      go({ href: a.getAttribute('href'), key, from: null, replace: true });
-    } else {
-      state.cameFromHome = true;
-      try { location.hash = a.getAttribute('href'); } catch { /* ignore */ }
-    }
+    // switching services replaces the entry, so Back still goes home; opening one adds an entry
+    if (current) go({ key, from: null, replace: true });
+    else navigate({ key });
   }, true);
 
   // ---------------------------------------------------------------- main loop
   let busy = false;
   const sync = async () => {
     if (busy || !window.ApiClient || !userId()) return;
-    const h = location.hash || '';
-    if (!/^#!?\/home/i.test(h) && h !== '' && h !== '#/') {
+    if (!onHome()) {
       teardown();
       return;
     }

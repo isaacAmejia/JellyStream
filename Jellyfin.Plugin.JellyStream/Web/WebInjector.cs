@@ -31,7 +31,8 @@ public class TransformPayload
 /// </summary>
 public partial class WebInjector : IHostedService
 {
-    private const string Tag = "<script plugin=\"JellyStream\" defer src=\"../JellyStream/client.js\"></script>";
+    // the version in the address makes browsers fetch the new script after every update
+    private static readonly string Tag = $"<script plugin=\"JellyStream\" defer src=\"../JellyStream/client.js?v={typeof(WebInjector).Assembly.GetName().Version}\"></script>";
     private static readonly Guid TransformId = Guid.Parse("8f1d4a52-6b6c-4bb4-9a3e-2f5c0e7d9a11");
 
     private readonly IApplicationPaths _paths;

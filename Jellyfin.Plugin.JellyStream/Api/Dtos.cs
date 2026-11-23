@@ -51,7 +51,9 @@ public record ClientConfig(
 /// <param name="Backdrop">Backdrop URL.</param>
 /// <param name="Status">"available", "partial", "requested" or "missing".</param>
 /// <param name="ItemId">Jellyfin item id when in the library.</param>
-public record TitleCard(int TmdbId, string Type, string Name, int? Year, string? Poster, string? Backdrop, string Status, Guid? ItemId);
+/// <param name="PrimaryTag">Cache tag of the library item's poster.</param>
+/// <param name="BackdropTag">Cache tag of the library item's backdrop.</param>
+public record TitleCard(int TmdbId, string Type, string Name, int? Year, string? Poster, string? Backdrop, string Status, Guid? ItemId, string? PrimaryTag = null, string? BackdropTag = null);
 
 /// <summary>A library title on a service.</summary>
 /// <param name="Id">Jellyfin item id.</param>
@@ -61,7 +63,13 @@ public record TitleCard(int TmdbId, string Type, string Name, int? Year, string?
 /// <param name="Genres">Genres.</param>
 /// <param name="Rating">Community rating.</param>
 /// <param name="Added">Date added.</param>
-public record LibraryCard(Guid Id, string Name, int? Year, string Type, IReadOnlyList<string> Genres, float? Rating, DateTime Added);
+/// <param name="PrimaryTag">Cache tag of the poster (lets the browser keep it).</param>
+/// <param name="BackdropTag">Cache tag of the backdrop.</param>
+public record LibraryCard(Guid Id, string Name, int? Year, string Type, IReadOnlyList<string> Genres, float? Rating, DateTime Added, string? PrimaryTag, string? BackdropTag);
+
+/// <summary>A message from the web client for the server log.</summary>
+/// <param name="Message">What happened.</param>
+public record ClientLog(string Message);
 
 /// <summary>Details for a title you don't have, using Jellyfin's item field names.</summary>
 /// <param name="Name">Title.</param>
