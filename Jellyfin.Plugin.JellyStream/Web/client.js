@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.8';
+  const VERSION = '1.22.9';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1367,9 +1367,9 @@
     .js-services a.js-jf-landing .js-sw-logo, .js-services a.js-jf-landing .js-sw-name { visibility: hidden !important; }
     .js-jf-hole { position: absolute; inset: 0; z-index: 0; display: block; }
     .js-jf-bloom { position: absolute; left: 50%; top: 45%; width: 90vmin; height: 90vmin; margin: -45vmin; border-radius: 50%; pointer-events: none; opacity: 0;
-      background: radial-gradient(closest-side, rgba(120,80,210,.2), rgba(0,140,210,.07) 55%, transparent); }
+      background: radial-gradient(closest-side, rgba(120,80,210,.28), rgba(0,140,210,.1) 55%, transparent); }
     html.js-lite .js-jf-bloom { display: none; }
-    .js-jf-logo { position: relative; z-index: 1; width: clamp(140px, 28vmin, 250px); margin-top: -3vmin; will-change: transform; }
+    .js-jf-logo { position: relative; z-index: 1; width: clamp(160px, 32vmin, 300px); margin-top: -3vmin; will-change: transform; }
     .js-jf-push { transform: scale(.95); }
     .js-jf-svg { display: block; width: 100%; height: auto; overflow: visible; }
     .js-jf .jf-trace { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round; stroke-linecap: round; opacity: 0; }
@@ -1380,13 +1380,35 @@
       color: #fff; letter-spacing: -.01em; white-space: nowrap; opacity: 0; -webkit-font-smoothing: antialiased;
       -webkit-mask-image: linear-gradient(90deg, #000 42%, transparent 58%); mask-image: linear-gradient(90deg, #000 42%, transparent 58%);
       -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-position: 100% 0; mask-position: 100% 0; }
-    .js-jf.go .jf-trace { animation: js-jf-trace 1.05s cubic-bezier(.65,0,.35,1) .15s forwards, js-jf-trace-off .6s ease 1.2s forwards; }
-    .js-jf.go .jf-fill { animation: js-jf-on .7s ease-out 1.1s forwards; }
-    .js-jf.go .jf-core { animation: js-jf-core .9s cubic-bezier(.2,.8,.2,1) 1.28s forwards; }
-    .js-jf.go .jf-sweep { animation: js-jf-sweep 1.4s cubic-bezier(.45,0,.25,1) 1.8s forwards; }
-    .js-jf.go .js-jf-bloom { animation: js-jf-on 1.8s ease-out 1.15s forwards; }
-    .js-jf.go .js-jf-push { animation: js-jf-push 4s linear forwards; }
-    .js-jf.go .js-jf-name { animation: js-jf-name 1.2s cubic-bezier(.4,0,.2,1) 1.55s forwards; }
+    .js-jf.go .jf-trace { animation: js-jf-trace calc(1.05s * var(--jf-k, 1)) cubic-bezier(.65,0,.35,1) calc(0.15s * var(--jf-k, 1)) forwards, js-jf-trace-off calc(0.6s * var(--jf-k, 1)) ease calc(1.2s * var(--jf-k, 1)) forwards; }
+    .js-jf.go .jf-fill { animation: js-jf-on calc(0.7s * var(--jf-k, 1)) ease-out calc(1.1s * var(--jf-k, 1)) forwards; }
+    .js-jf.go .jf-core { animation: js-jf-core calc(0.9s * var(--jf-k, 1)) cubic-bezier(.2,.8,.2,1) calc(1.28s * var(--jf-k, 1)) forwards; }
+    .js-jf.go .jf-sweep { animation: js-jf-sweep calc(1.4s * var(--jf-k, 1)) cubic-bezier(.45,0,.25,1) calc(1.8s * var(--jf-k, 1)) forwards; }
+    .js-jf.go .js-jf-bloom { animation: js-jf-bloom calc(1.9s * var(--jf-k, 1)) cubic-bezier(.2,.8,.2,1) calc(1.15s * var(--jf-k, 1)) forwards; }
+    .js-jf.go .js-jf-push { animation: js-jf-push calc(4s * var(--jf-k, 1)) linear forwards; }
+    .js-jf.go .js-jf-name { animation: js-jf-name calc(1.2s * var(--jf-k, 1)) cubic-bezier(.4,0,.2,1) calc(1.55s * var(--jf-k, 1)) forwards; }
+    /* light chatter: specks wander, then pull together into the logo as the voices converge */
+    .js-jf-chatter { position: absolute; left: 50%; top: 55%; width: 0; height: 0; pointer-events: none; }
+    .js-jf-chatter i { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: var(--c); opacity: 0;
+      box-shadow: 0 0 8px 1px var(--c); transform: translate(var(--x), var(--y)); }
+    html.js-lite .js-jf-chatter i { box-shadow: none; width: 4px; height: 4px; }
+    .js-jf.go .js-jf-chatter i { animation: js-jf-chatter calc(1.15s * var(--jf-k, 1)) cubic-bezier(.5,0,.8,.3) var(--d) forwards; }
+    @keyframes js-jf-chatter { 0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(.6); } 25% { opacity: .9; }
+      55% { opacity: .9; transform: translate(var(--mx), var(--my)) scale(1); } 92% { opacity: 1; } 100% { opacity: 0; transform: translate(0, 0) scale(1.6); } }
+    /* slow beams of light turning behind the logo once it lands */
+    .js-jf-rays { position: absolute; left: 50%; top: 55%; width: 420%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(0deg) scale(.6); pointer-events: none; opacity: 0;
+      background: repeating-conic-gradient(from 0deg, rgba(170,140,255,.16) 0deg 2.2deg, transparent 2.2deg 13deg, rgba(0,164,220,.12) 13deg 14.6deg, transparent 14.6deg 24deg);
+      -webkit-mask: radial-gradient(closest-side, #000 8%, rgba(0,0,0,.5) 30%, transparent 70%); mask: radial-gradient(closest-side, #000 8%, rgba(0,0,0,.5) 30%, transparent 70%); }
+    html.js-lite .js-jf-rays { display: none; }
+    .js-jf.go .js-jf-rays { animation: js-jf-rays calc(4.2s * var(--jf-k, 1)) cubic-bezier(.2,.7,.3,1) calc(1.15s * var(--jf-k, 1)) forwards; }
+    @keyframes js-jf-rays { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(.6); } 25% { opacity: 1; } 100% { opacity: .85; transform: translate(-50%, -50%) rotate(14deg) scale(1); } }
+    .js-jf.flying .js-jf-rays, .js-jf.diving .js-jf-rays { opacity: 0 !important; transition: opacity .3s ease; }
+    /* the flare when it all lands */
+    .js-jf-flare { position: absolute; left: 50%; top: 55%; width: 260%; height: 260%; transform: translate(-50%, -50%) scale(.2); border-radius: 50%; pointer-events: none; opacity: 0;
+      background: radial-gradient(closest-side, rgba(255,255,255,.55), rgba(170,140,255,.28) 25%, rgba(0,164,220,.1) 55%, transparent 72%); }
+    .js-jf.go .js-jf-flare { animation: js-jf-flare calc(1.3s * var(--jf-k, 1)) cubic-bezier(.1,.7,.2,1) calc(1.18s * var(--jf-k, 1)) forwards; }
+    @keyframes js-jf-flare { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); } }
+    @keyframes js-jf-bloom { 0% { opacity: 0; transform: scale(.7); } 100% { opacity: 1; transform: scale(1); } }
     .js-jf.diving .js-jf-name, .js-jf.diving .js-jf-bloom { opacity: 0 !important; transition: opacity .2s ease; }
     .js-jf.diving .jf-core { opacity: 0 !important; transition: opacity .3s ease; }
     @keyframes js-jf-trace { 0% { opacity: 0; stroke-dashoffset: 1; } 10% { opacity: 1; } 100% { opacity: 1; stroke-dashoffset: 0; } }
@@ -2501,7 +2523,7 @@
   // logo with a cinematic swell, a glint crosses it, the name settles in from wide tracking (HBO), and then you
   // dive through the logo's centre into the home screen (Netflix). The picture and the score start together on
   // one clock, so slow devices can't pull them apart.
-  const JF_T = { floor: 3000, dive: 1000 };
+  const JF_T = { floor: 3200, dive: 1000 };
   const jfCtx = () => {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -2514,30 +2536,33 @@
     if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
   }, { capture: true, passive: true }));
 
-  // The score, theatre style: a cloud of voices wanders and converges into one huge D chord as the logo lands,
-  // over a sub-bass swell and a saturated low boom, in a big hall. The way out is a deep rush and a landing thump.
-  const jfScore = (ac, t, part) => {
+  // The score, theatre style: a cloud of voices chatters across the speakers, then converges into one huge D chord
+  // as the logo lands, over a rising rumble, a sub-bass swell and a saturated boom, followed by a slow brass-like
+  // swell in a big hall. The way out is a deep rush and a landing thump. k stretches it for slower devices.
+  const jfScore = (ac, t, part, k = 1, T = JF_T) => {
     try {
       const comp = ac.createDynamicsCompressor();
-      comp.threshold.value = -20; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = .01; comp.release.value = .4;
-      const master = ac.createGain(); master.gain.value = .7;
+      comp.threshold.value = -22; comp.knee.value = 14; comp.ratio.value = 4.5; comp.attack.value = .008; comp.release.value = .5;
+      const master = ac.createGain(); master.gain.value = .75;
       comp.connect(master); master.connect(ac.destination);
       if (!jfScore.ir || jfScore.ir.sampleRate !== ac.sampleRate) {
-        const len = Math.floor(ac.sampleRate * 3.8);
+        const len = Math.floor(ac.sampleRate * 4.5);
         const ir = ac.createBuffer(2, len, ac.sampleRate);
         for (let c = 0; c < 2; c++) {
           const d = ir.getChannelData(c);
-          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4);
         }
         jfScore.ir = ir;
       }
       const verb = ac.createConvolver(); verb.buffer = jfScore.ir;
-      const wet = ac.createGain(); wet.gain.value = .5;
+      const wet = ac.createGain(); wet.gain.value = .55;
       verb.connect(wet); wet.connect(comp);
-      const bus = (dry = 1, rev = 1) => {
+      const bus = (dry = 1, rev = 1, pan = 0) => {
         const g = ac.createGain();
-        const d = ac.createGain(); d.gain.value = dry; g.connect(d); d.connect(comp);
-        const r = ac.createGain(); r.gain.value = rev; g.connect(r); r.connect(verb);
+        let head = g;
+        if (pan && ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p); head = p; }
+        const d = ac.createGain(); d.gain.value = dry; head.connect(d); d.connect(comp);
+        const r = ac.createGain(); r.gain.value = rev; head.connect(r); r.connect(verb);
         return g;
       };
       const ramp = (param, pts) => {
@@ -2550,10 +2575,10 @@
         for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
         const n = ac.createBufferSource(); n.buffer = b; return n;
       };
-      const drive = (k) => {
+      const drive = (amt) => {
         const ws = ac.createWaveShaper();
         const c = new Float32Array(1024);
-        for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); }
+        for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(amt * x) / Math.tanh(amt); }
         ws.curve = c; return ws;
       };
       const osc = (type, freqPts, at, end, gainPts, dest) => {
@@ -2564,56 +2589,90 @@
         return o;
       };
       if (part === 'in') {
-        const land = t + 1.2;
-        const end = t + 4.4;
-        // the voices: wandering, then gliding onto the chord as the light finishes tracing the logo
+        const land = t + 1.2 * k;
+        const end = land + 3.6;
+        // the chatter: voices wandering on their own, spread across the room, gliding together onto the chord
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .5;
-        ramp(lp.frequency, [[t, 350], [land, 3800], [end, 700]]);
-        const voices = bus(.8, .9); lp.connect(voices);
-        const chord = [36.71, 55, 73.42, 110, 146.83, 220, 293.66, 369.99, 440, 587.33, 880, 1174.66];
-        for (let i = 0; i < 24; i++) {
+        ramp(lp.frequency, [[t, 380], [land, 4200], [land + .8, 5200], [end, 600]]);
+        const chord = [36.71, 55, 73.42, 110, 146.83, 220, 293.66, 369.99, 440, 587.33, 739.99, 880, 1174.66, 1760];
+        const n = 32;
+        lp.connect(bus(.75, .95));
+        for (let i = 0; i < n; i++) {
           const f = chord[i % chord.length];
-          const from = 170 + Math.random() * 260;
-          const wob = from * (.85 + Math.random() * .3);
-          const v = osc('sawtooth', [[t, from], [t + .5, wob], [land - .02, f]], t, end,
-            [[t, .0001], [land - .1, .02], [land + .35, .03], [land + 1.6, .022], [end, .0001]], lp);
-          v.detune.value = (Math.random() - .5) * 14;
+          const pan = ((i * 7) % n) / n * 1.6 - .8; // spread, then everything meets in the middle as the chord lands
+          const vb = ac.createStereoPanner ? ac.createStereoPanner() : null;
+          if (vb) { vb.pan.setValueAtTime(pan, t); vb.pan.linearRampToValueAtTime(pan * .25, land); vb.connect(lp); }
+          const from = 160 + Math.random() * 320;
+          const w1 = from * (.8 + Math.random() * .4);
+          const w2 = w1 * (.85 + Math.random() * .3);
+          const vo = osc('sawtooth', [[t, from], [t + .35 * k, w1], [t + .75 * k, w2], [land - .03, f]], t, end,
+            [[t, .0001], [t + .3 * k, .008], [land - .1, .02], [land + .6, .032], [land + 2, .022], [end, .0001]], vb || lp);
+          vo.detune.value = (Math.random() - .5) * 16;
         }
-        // sub-bass swell under it (D1)
+        // a timpani-like rumble rolling up into the landing
+        const rum = noise(1.6 * k); const rl = ac.createBiquadFilter(); rl.type = 'lowpass'; rl.Q.value = 6;
+        ramp(rl.frequency, [[land - .9 * k, 55], [land, 140]]);
+        const rg = ac.createGain(); ramp(rg.gain, [[land - .9 * k, .0001], [land - .02, .5], [land + .15, .0001]]);
+        rum.connect(rl); rl.connect(rg); rg.connect(bus(1, .6)); rum.start(land - .9 * k); rum.stop(land + .2);
+        // sub-bass swell (D1 and D2)
         const sub = bus(1, .25);
-        osc('sine', 36.71, t, end, [[t, .0001], [land, .25], [land + .4, .42], [end, .0001]], sub);
-        osc('triangle', 73.42, t, end, [[t, .0001], [land + .3, .12], [end, .0001]], sub);
-        // the boom as the logo lands: a saturated drop with a low thud of air
-        const boom = drive(2.5); const bg = bus(1, .5); boom.connect(bg);
-        osc('sine', [[land, 90], [land + .9, 30]], land, land + 2.6, [[land, .0001], [land + .015, .8], [land + 2.4, .0001]], boom);
-        const thud = noise(.8); const tl = ac.createBiquadFilter(); tl.type = 'lowpass'; tl.frequency.value = 180;
-        const tg = ac.createGain(); ramp(tg.gain, [[land, .0001], [land + .01, .6], [land + .7, .0001]]);
-        thud.connect(tl); tl.connect(tg); tg.connect(bg); thud.start(land); thud.stop(land + .8);
-        // a faint air of light during the trace
-        const air = noise(1.4); const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.6;
-        ramp(bp.frequency, [[t, 300], [land, 2200]]);
+        osc('sine', 36.71, t, end, [[t, .0001], [land, .3], [land + .6, .5], [end, .0001]], sub);
+        osc('triangle', 73.42, t, end, [[t, .0001], [land + .4, .15], [end, .0001]], sub);
+        // the landing: a saturated boom, a thud of air, and a crash of light (bright noise in the hall)
+        const boom = drive(3); const bg = bus(1, .6); boom.connect(bg);
+        osc('sine', [[land, 100], [land + 1.1, 28]], land, land + 3, [[land, .0001], [land + .012, .95], [land + 2.8, .0001]], boom);
+        const thud = noise(.9); const tl = ac.createBiquadFilter(); tl.type = 'lowpass'; tl.frequency.value = 200;
+        const tg = ac.createGain(); ramp(tg.gain, [[land, .0001], [land + .01, .7], [land + .8, .0001]]);
+        thud.connect(tl); tl.connect(tg); tg.connect(bg); thud.start(land); thud.stop(land + .9);
+        const crash = noise(2.6); const ch = ac.createBiquadFilter(); ch.type = 'highpass'; ch.frequency.value = 3500;
+        const cg = ac.createGain(); ramp(cg.gain, [[land, .0001], [land + .02, .07], [land + 2.4, .0001]]);
+        crash.connect(ch); ch.connect(cg); cg.connect(bus(.4, 1.2)); crash.start(land); crash.stop(land + 2.6);
+        // brass: a slow, broad swell on the chord after the hit
+        const br = ac.createBiquadFilter(); br.type = 'lowpass'; br.Q.value = 2;
+        ramp(br.frequency, [[land + .1, 300], [land + .9, 2600], [end, 500]]);
+        br.connect(bus(.9, .9));
+        [146.83, 220, 293.66, 369.99, 440].forEach((f, i) => {
+          [-7, 7].forEach((c) => {
+            const o = osc('sawtooth', f, land + .1, end, [[land + .1, .0001], [land + .9, .03 / (1 + i * .2)], [land + 2.2, .024 / (1 + i * .2)], [end, .0001]], br);
+            o.detune.value = c;
+          });
+        });
+        // the air of light during the trace
+        const air = noise(1.6 * k); const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.6;
+        ramp(bp.frequency, [[t, 300], [land, 2400]]);
         const ag = ac.createGain(); ramp(ag.gain, [[t, .0001], [land - .05, .05], [land + .1, .0001]]);
         air.connect(bp); bp.connect(ag); ag.connect(bus(.6, 1)); air.start(t); air.stop(land + .15);
       } else {
         // the flight to the home screen: a deep rush down, and a soft landing
-        const end = t + JF_T.dive / 1000;
-        const n = noise(1.6); const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
-        ramp(lp.frequency, [[t, 1400], [end, 140]]);
-        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [t + .25, .22], [end + .2, .0001]]);
+        const end = t + T.dive / 1000;
+        const n = noise(T.dive / 1000 + .6); const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
+        ramp(lp.frequency, [[t, 1500], [end, 140]]);
+        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [t + .25, .24], [end + .2, .0001]]);
         n.connect(lp); lp.connect(ng); ng.connect(bus(1, .7)); n.start(t); n.stop(end + .3);
-        const low = drive(1.8); low.connect(bus(1, .5));
-        osc('sine', [[t, 70], [end, 34]], t, end + 1.2, [[t, .0001], [t + .3, .35], [end + 1.1, .0001]], low);
-        osc('sine', [[end - .02, 120], [end + .3, 45]], end - .02, end + .9, [[end - .02, .0001], [end, .45], [end + .8, .0001]], low);
+        const low = drive(2); low.connect(bus(1, .5));
+        osc('sine', [[t, 72], [end, 34]], t, end + 1.2, [[t, .0001], [t + .3, .38], [end + 1.1, .0001]], low);
+        osc('sine', [[end - .02, 120], [end + .3, 45]], end - .02, end + .9, [[end - .02, .0001], [end, .5], [end + .8, .0001]], low);
       }
     } catch { /* no audio: the picture still runs */ }
   };
 
   const playJfIntro = () => {
     const g = `jsjfi${++jfSeq}`;
+    const k = lite() ? 1.6 : 1.3; // unhurried, and slower still on small devices like a Raspberry Pi
+    const T = { floor: JF_T.floor * k, dive: JF_T.dive * (lite() ? 1.5 : 1.3) };
+    const chatter = Array.from({ length: lite() ? 18 : 30 }, (_, i) => {
+      const a = Math.random() * Math.PI * 2;
+      const r = 26 + Math.random() * 34;
+      const b = a + (Math.random() - .5) * 1.4;
+      const r2 = r * (.45 + Math.random() * .3);
+      const c = ['#c08cff', '#5fd0ff', '#ffffff', '#aa5cc3', '#00a4dc'][i % 5];
+      return `<i style="--x:${(Math.cos(a) * r).toFixed(1)}vmin;--y:${(Math.sin(a) * r).toFixed(1)}vmin;--mx:${(Math.cos(b) * r2).toFixed(1)}vmin;--my:${(Math.sin(b) * r2).toFixed(1)}vmin;--c:${c};--d:${(Math.random() * .05 * k).toFixed(2)}s"></i>`;
+    }).join('');
     const el = document.createElement('div');
     el.className = 'js-intro js-jf';
+    el.style.setProperty('--jf-k', k);
     el.innerHTML = `<div class="js-jf-black"></div><div class="js-jf-bloom"></div>
-      <div class="js-jf-logo"><div class="js-jf-push">
+      <div class="js-jf-logo"><div class="js-jf-chatter">${chatter}</div><div class="js-jf-rays"></div><div class="js-jf-flare"></div><div class="js-jf-push">
         <svg class="js-jf-svg" viewBox="0 0 512 512" aria-hidden="true"><defs>
           <linearGradient id="${g}" x1="110.25" y1="213.3" x2="496.14" y2="436.09" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient>
           <linearGradient id="${g}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
@@ -2632,7 +2691,7 @@
       if (started || !el.isConnected) return;
       started = performance.now();
       el.classList.add('go');
-      if (ac && ac.state === 'running') jfScore(ac, ac.currentTime + .02, 'in');
+      if (ac && ac.state === 'running') jfScore(ac, ac.currentTime + .02, 'in', k, T);
     };
     // start once the black screen is actually on screen (and the audio is awake), never more than a moment late
     const onScreen = () => requestAnimationFrame(() => requestAnimationFrame(begin));
@@ -2659,7 +2718,7 @@
       const gy = ir.top + ir.height * (70 / 672);
       const ls = (ir.width * (512 / 672)) / lr.width;
       const ns = nr.width / mr.width;
-      const D = JF_T.dive;
+      const D = T.dive;
       pill.classList.add('js-jf-landing');
       el.classList.add('flying');
       const fly = (node, r, x, y, sc) => node.animate([
@@ -2684,7 +2743,7 @@
     };
     const exit = () => {
       if (!el.isConnected) return;
-      if (ac && ac.state === 'running') jfScore(ac, ac.currentTime + .02, 'out');
+      if (ac && ac.state === 'running') jfScore(ac, ac.currentTime + .02, 'out', k, T);
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
         el.classList.add('out');
         setTimeout(() => el.remove(), 450);
@@ -2722,10 +2781,10 @@
       place(1);
       el.classList.add('diving');
       homeSections()?.animate?.([{ transform: 'scale(1.1)', opacity: .5 }, { transform: 'none', opacity: 1 }],
-        { duration: JF_T.dive + 300, easing: 'cubic-bezier(.2,.7,.2,1)' });
+        { duration: T.dive + 300, easing: 'cubic-bezier(.2,.7,.2,1)' });
       const t1 = performance.now();
       const step = (now) => {
-        const p = Math.min(1, (now - t1) / JF_T.dive);
+        const p = Math.min(1, (now - t1) / T.dive);
         place(Math.pow(max, p * p * (3 - 2 * p) * p)); // slow at first, then rushing through
         if (p < 1) requestAnimationFrame(step); else el.remove();
       };
@@ -2735,10 +2794,10 @@
     const done = () => {
       if (ended) return;
       ended = true;
-      const later = () => setTimeout(exit, Math.max(0, JF_T.floor - (performance.now() - started)));
+      const later = () => setTimeout(exit, Math.max(0, T.floor - (performance.now() - started)));
       if (started) later(); else setTimeout(later, 520);
     };
-    setTimeout(done, JF_T.floor + 600); // never stuck, even if the page is still loading
+    setTimeout(done, T.floor + 600); // never stuck, even if the page is still loading
     return done;
   };
 
