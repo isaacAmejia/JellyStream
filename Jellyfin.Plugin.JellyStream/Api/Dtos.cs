@@ -74,7 +74,8 @@ public record TitleCard(int TmdbId, string Type, string Name, int? Year, string?
 /// <param name="LogoTag">Cache tag of the title logo.</param>
 /// <param name="ThumbTag">Cache tag of the landscape thumb (usually art with the title on it).</param>
 /// <param name="LastAdded">When something was last added to it (a show's newest episode), for "New Episode" badges.</param>
-public record LibraryCard(Guid Id, string Name, int? Year, string Type, IReadOnlyList<string> Genres, float? Rating, DateTime Added, string? PrimaryTag, string? BackdropTag, string? LogoTag, string? ThumbTag, DateTime? LastAdded = null);
+/// <param name="Certification">Age rating (e.g. "TV-14", "PG-13").</param>
+public record LibraryCard(Guid Id, string Name, int? Year, string Type, IReadOnlyList<string> Genres, float? Rating, DateTime Added, string? PrimaryTag, string? BackdropTag, string? LogoTag, string? ThumbTag, DateTime? LastAdded = null, string? Certification = null);
 
 /// <summary>A message from the web client for the server log.</summary>
 /// <param name="Message">What happened.</param>

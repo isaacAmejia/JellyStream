@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.18.2.0"
+version: "1.19.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,5 +14,8 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Phones: swiping sideways on a service page or the services row no longer flips Jellyfin to another
-  tab underneath (which left a blank screen). Rows still scroll normally.
+  Every service's banner now rotates through its top titles (dots, slow drift, swipe on phones;
+  pauses while you're on it). Disney+ page redone after the Disney+ apps: full-width banner under
+  Disney's top pill tabs on TV, rounded poster card on phones, teal corner Top 10 numbers, cards
+  that open wide with rating, year and genres, New Episode / Recently Added tags, and a wide
+  Continue Watching row with progress bars.

@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.18.2';
+  const VERSION = '1.19.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -213,25 +213,16 @@
         .js-view .jst-t10 { background: none !important; -webkit-text-fill-color: #e50914 !important; filter: none !important; }`,
     },
     disney: {
-      rankShape: 'landscape',
-      c1: '#f9f9f9', c2: '#0063e5', num: 'glass',
-      base: '#1a1d29', bg: 'radial-gradient(130% 60% at 50% -5%, #2b3a66 0%, transparent 55%), linear-gradient(180deg, #1a1d29 0%, #14172a 100%)',
-      shape: 'landscape', caption: 'overlay',
+      // the 2025 Disney+ app: slate-blue TV pages under a full-bleed banner, near-black on phones
+      c1: '#f9f9f9', c2: '#0063e5', num: 'wedge',
+      base: '#1b1f33', bg: 'radial-gradient(120% 45% at 50% 0%, #20307a 0%, transparent 60%), linear-gradient(180deg, #1b1f33 0%, #232843 55%, #2a3051 100%)',
+      basePhone: '#16161d', bgPhone: 'radial-gradient(130% 35% at 50% 0%, #2a2440 0%, transparent 70%), #16161d',
+      shape: 'portrait', caption: 'none',
+      focusExpand: true, badges: true, cardMeta: true, cwLandscape: true, bleed: true, rankGutter: 0.06,
       nav: 'pill', tabs: ['For You', 'Series', 'Movies'],
       font: '"Avenir Next", Avenir, "Nunito Sans", "Inter", sans-serif',
-      labels: { tagMovie: 'FEATURED', tagTv: 'FEATURED', play: 'PLAY', info: '', request: 'REQUEST' },
-      css: `
-        .js-bb { height: min(50vh, 520px) !important; margin: 1em 3.3% 1.6em !important; border-radius: 10px; box-shadow: 0 26px 40px -20px rgba(0,0,0,.8), 0 0 0 1px rgba(249,249,249,.1); }
-        .js-bb-tag { color: #cacaca; letter-spacing: .2em; font-size: .75em; font-weight: 700; }
-        .js-bb-title { font-weight: 700 !important; }
-        .js-bb-btn { border-radius: 4px !important; letter-spacing: .15em; text-transform: uppercase; font-weight: 700 !important; padding: .7em 2em !important; }
-        .js-bb-btn.js-primary { background: #f9f9f9 !important; color: #0e0b14 !important; }
-        .js-bb-btn.js-secondary { width: 2.9em; padding: 0 !important; border-radius: 50% !important; background: rgba(0,0,0,.6) !important; border: 2px solid #f9f9f9 !important; color: #f9f9f9 !important; }
-        .js-view .sectionTitle { font-weight: 600 !important; font-size: 1.2em !important; color: #f9f9f9 !important; }
-        .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), 0 16px 10px -10px rgba(0,0,0,.73), inset 0 0 0 3px rgba(249,249,249,.1) !important; transition: transform .25s cubic-bezier(.25,.46,.45,.94), box-shadow .25s ease; }
-        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.05); box-shadow: 0 40px 58px -16px rgba(0,0,0,.8), 0 30px 22px -10px rgba(0,0,0,.72), inset 0 0 0 4px rgba(249,249,249,.8) !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 4px rgba(249,249,249,.8), 0 24px 40px rgba(0,0,0,.7) !important; }`,
+      labels: { tagMovie: '', tagTv: '', play: 'DETAILS', info: null, request: 'REQUEST' },
+      css: '',
     },
     max: {
       c1: '#ffffff', c2: '#2b5cff', numA: '#ffffff', numB: '#8aa0ff', num: 'solid',
@@ -385,7 +376,7 @@
   const LAND = (w, cw) => `--js-rank-pw: ${w}; --js-rank-ph: calc(var(--js-rank-pw) * .5625); --js-rank-cw: ${cw};`;
   const LAYOUT = {
     netflix: '--js-port-w: clamp(170px, 14.6vw, 300px); --js-poster-w: clamp(160px, 13.6vw, 280px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
-    disney: `--js-land-w: clamp(240px, 19vw, 350px); --js-gap: .6em; ${LAND('clamp(240px, 19vw, 340px)', 'calc(var(--js-rank-pw) * 1.12)')}`,
+    disney: '--js-port-w: clamp(180px, 15.4vw, 320px); --js-poster-w: clamp(170px, 14.6vw, 300px); --js-wedge: var(--js-poster-w); --js-gap: .5em; --js-rank-cw: calc(var(--js-poster-w) * 1.06); --js-rank-pw: var(--js-poster-w); --js-rank-ph: calc(var(--js-poster-w) * 1.5); --js-land-w: clamp(250px, 19vw, 380px);',
     max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-cw: calc(var(--js-poster-w) * 1.5);',
     prime: `--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; ${LAND('clamp(230px, 17vw, 310px)', 'calc(var(--js-rank-pw) + var(--js-rank-ph) * .66)')}`,
     hulu: `--js-land-w: clamp(260px, 21vw, 370px); --js-gap: .6em; ${LAND('clamp(250px, 20vw, 350px)', 'calc(var(--js-rank-pw) + .9em)')}`,
@@ -400,11 +391,16 @@
     netflix: `
       .js-rank-num { font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif !important; font-weight: 700 !important; color: var(--js-base, #11142a) !important; -webkit-text-stroke: 3px rgba(255,255,255,.92) !important; letter-spacing: -.06em !important; }
       .js-rank-poster { border-radius: 8px !important; box-shadow: none !important; }`,
-    // Disney+: wide tiles with a frosted edge; the rank stands over the tile's lower left
+    // Disney+: portrait art, the rank in a teal quarter-circle tucked into the top-left corner
     disney: `
-      .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: -.1em !important; font-size: calc(var(--js-rank-ph) * .9) !important; font-weight: 800 !important; letter-spacing: -.04em !important; color: #f9f9f9 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 6px 24px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.7); }
-      .js-rank-poster { border-radius: 8px !important; box-shadow: 0 26px 30px -10px rgba(0,0,0,.69), inset 0 0 0 3px rgba(249,249,249,.1) !important; }
-      .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: scale(1.05) !important; box-shadow: 0 30px 40px -12px rgba(0,0,0,.8), inset 0 0 0 4px rgba(249,249,249,.85) !important; }`,
+      .js-rank-num { z-index: 3 !important; top: 0 !important; left: calc(100% - var(--js-rank-pw)) !important; bottom: auto !important; right: auto !important;
+        width: calc(var(--js-wedge) * .46); height: calc(var(--js-wedge) * .4); box-sizing: border-box; padding: .06em 0 0 .2em;
+        border-top-left-radius: 12px; background: radial-gradient(120% 120% at 0 0, rgba(8,96,120,.95) 0 68%, rgba(8,96,120,0) 69%);
+        font-family: "Avenir Next", Avenir, "Nunito Sans", sans-serif !important; font-size: calc(var(--js-wedge) * .27) !important;
+        font-weight: 800 !important; letter-spacing: -.04em !important; line-height: 1 !important;
+        color: #3ce8f2 !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; }
+      .js-rank-card .cardBox { margin: 0 !important; }
+      .js-rank-poster { border-radius: 12px !important; box-shadow: none !important; }`,
     // HBO Max: tall, light numerals beside the poster
     max: `
       .js-rank-num { font-weight: 200 !important; letter-spacing: -.07em !important; color: #fff !important; -webkit-text-stroke: 0 !important; bottom: -.08em !important; opacity: .95; }
@@ -441,11 +437,8 @@
     netflix: `
       .js-tlogo { max-width: 46% !important; max-height: 34% !important; left: 5% !important; bottom: 8% !important; }`,
     disney: `
-      .js-tlogo { left: 50% !important; transform: translateX(-50%); object-position: center bottom !important; max-width: 66% !important; max-height: 40% !important; bottom: 11% !important; }
-      .js-tshade { background: linear-gradient(0deg, rgba(0,0,0,.5), transparent 55%) !important; }
-      .js-rank-poster .js-tlogo { left: auto !important; right: 6% !important; transform: none !important; object-position: right bottom !important; max-width: 55% !important; }
-      .js-rank-poster .js-ovl { text-align: right !important; }
-      .js-view .js-ovl { text-align: center; background: linear-gradient(0deg, rgba(0,0,0,.65), transparent) !important; }`,
+      .js-tlogo { left: 7% !important; right: auto !important; transform: none; object-position: left bottom !important; max-width: 52% !important; max-height: 34% !important; bottom: 8% !important; }
+      .js-tshade { background: linear-gradient(0deg, rgba(0,0,0,.55), transparent 50%) !important; }`,
     max: `
       .js-view .js-section .sectionTitle { font-size: 1.3em !important; letter-spacing: -.015em; }`,
     prime: `
@@ -474,6 +467,12 @@
   const NF = 'html[data-js-brand="netflix"]';
   const NF_TV = `${NF}:not(.js-phone)`;
   const NF_PH = `${NF}.js-phone`;
+  // services whose selected title opens wide (shared movement and framing)
+  const FX = 'html:is([data-js-brand="netflix"],[data-js-brand="disney"])';
+  const FX_TV = `${FX}:not(.js-phone)`;
+  const DS = 'html[data-js-brand="disney"]';
+  const DS_TV = `${DS}:not(.js-phone)`;
+  const DS_PH = `${DS}.js-phone`;
   const NETFLIX_CSS = `
     /* header: Jellyfin's tabs become Netflix's top navigation */
     ${NF}.js-service-open .skinHeader { background: linear-gradient(180deg, rgba(8,10,22,.88) 0%, rgba(8,10,22,.35) 70%, transparent 100%) !important; box-shadow: none !important; }
@@ -496,25 +495,25 @@
     ${NF_PH} .js-hdr-mark img { height: 1.9em; }
 
     /* TV / desktop: the selected title opens wide, framed in white, with badges and its details below */
-    ${NF_TV} .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w) !important; min-width: var(--js-port-w) !important; }
-    ${NF_TV} .js-view .js-lib.overflowPortraitCard, ${NF_TV} .js-view .js-rank-card { transition: width .28s cubic-bezier(.2,.9,.25,1), min-width .28s cubic-bezier(.2,.9,.25,1); }
-    ${NF_TV} .js-view .js-rank-poster { transition: width .28s cubic-bezier(.2,.9,.25,1), box-shadow .2s ease !important; }
-    ${NF_TV} .js-view .js-open .cardImageContainer, ${NF_TV} .js-view .js-rank-card.js-open .js-rank-poster {
+    ${FX_TV} .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w) !important; min-width: var(--js-port-w) !important; }
+    ${FX_TV} .js-view .js-lib.overflowPortraitCard, ${FX_TV} .js-view .js-rank-card { transition: width .28s cubic-bezier(.2,.9,.25,1), min-width .28s cubic-bezier(.2,.9,.25,1); }
+    ${FX_TV} .js-view .js-rank-poster { transition: width .28s cubic-bezier(.2,.9,.25,1), box-shadow .2s ease !important; }
+    ${FX_TV} .js-view .js-open .cardImageContainer, ${FX_TV} .js-view .js-rank-card.js-open .js-rank-poster {
       border-radius: 12px !important; box-shadow: 0 0 0 3px #fff, 0 18px 40px rgba(0,0,0,.6) !important; transform: none !important; }
-    ${NF_TV} .js-view .js-lib:not(.js-open):is(:hover) .cardImageContainer { transform: none !important; }
+    ${FX_TV} .js-view .js-lib:not(.js-open):is(:hover) .cardImageContainer { transform: none !important; }
     .js-nf-wide { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
     /* no theme frames: plain artwork like Netflix */
-    ${NF} .js-view .card, ${NF} .js-view .cardBox, ${NF} .js-view .cardScalable { border: 0 !important; outline: 0 !important; box-shadow: none !important; background: transparent !important; }
-    ${NF} .js-view .card:not(.js-open) .cardImageContainer, ${NF} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border: 0 !important; outline: 0 !important; box-shadow: none !important; }
-    ${NF_TV} .js-view .card:not(.js-open) .cardImageContainer, ${NF_TV} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border-radius: 6px !important; }
+    ${FX} .js-view .card, ${FX} .js-view .cardBox, ${FX} .js-view .cardScalable { border: 0 !important; outline: 0 !important; box-shadow: none !important; background: transparent !important; }
+    ${FX} .js-view .card:not(.js-open) .cardImageContainer, ${FX} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border: 0 !important; outline: 0 !important; box-shadow: none !important; }
+    ${FX_TV} .js-view .card:not(.js-open) .cardImageContainer, ${FX_TV} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border-radius: 6px !important; }
     /* movement: nothing scales; the open card only widens while the row slides. The spacer lets the last titles reach the left edge too */
-    ${NF_TV} .js-view .js-lib .cardImageContainer, ${NF_TV} .js-view .js-rank-card .js-rank-poster,
-    ${NF_TV} .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer,
-    ${NF_TV} .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: none !important; }
-    ${NF_TV} .js-view .js-scroller { scroll-behavior: smooth; }
-    ${NF_TV} .js-view .js-scroller > .itemsContainer::after { content: ""; flex: 0 0 62vw; }
-    ${NF_TV}.js-nf-card-open #__jf_library_focus_ring__ { opacity: 0 !important; }
-    ${NF}.js-service-open #__jf_library_focus_ring__ { border-color: #fff !important; box-shadow: 0 0 0 1px rgba(0,0,0,.5) !important; border-radius: 12px !important; }
+    ${FX_TV} .js-view .js-lib .cardImageContainer, ${FX_TV} .js-view .js-rank-card .js-rank-poster,
+    ${FX_TV} .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer,
+    ${FX_TV} .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: none !important; }
+    ${FX_TV} .js-view .js-scroller { scroll-behavior: smooth; }
+    ${FX_TV} .js-view .js-scroller > .itemsContainer::after { content: ""; flex: 0 0 62vw; }
+    ${FX_TV}.js-nf-card-open #__jf_library_focus_ring__ { opacity: 0 !important; }
+    ${FX}.js-service-open #__jf_library_focus_ring__ { border-color: #fff !important; box-shadow: 0 0 0 1px rgba(0,0,0,.5) !important; border-radius: 12px !important; }
     .js-nf-info { padding: .1em 3.3% .4em; max-width: min(62%, 900px); min-height: 4.4em; opacity: 0; transition: opacity .2s ease; font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif; }
     .js-nf-info.on { opacity: 1; }
     .js-nf-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .1em .5em; font-weight: 700; font-size: .95em; color: #fff; }
@@ -555,7 +554,7 @@
     ${NF_PH} .js-bb-art { display: none !important; }
     ${NF_PH} .js-bb-poster { display: block !important; position: absolute; inset: 0; background-size: cover; background-position: center top; }
     ${NF_PH} .js-bb-shade { background: linear-gradient(0deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 32%, transparent 52%) !important; }
-    ${NF_PH} .js-bb-content { left: 6% !important; right: 6% !important; width: auto !important; bottom: 4% !important; align-items: center; text-align: center; gap: .75em !important; }
+    ${NF_PH} .js-bb-content { left: 6% !important; right: 6% !important; width: auto !important; bottom: calc(2.5% + 1.4em) !important; align-items: center; text-align: center; gap: .75em !important; }
     ${NF_PH} .js-bb-tag, ${NF_PH} .js-bb-rank, ${NF_PH} .js-bb-overview { display: none !important; }
     ${NF_PH} .js-bb-title { font-size: 2.3em !important; text-align: center; text-transform: none !important; }
     ${NF_PH} .js-bb-logo { max-width: 82%; max-height: 18vh; margin: 0 auto; object-position: center bottom; }
@@ -565,6 +564,101 @@
     ${NF_PH} .js-bb-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: .6em; width: 100%; margin: 0 !important; }
     ${NF_PH} .js-bb-btn { width: 100% !important; height: 2.9em !important; border-radius: 8px !important; font-size: 1.02em !important; padding: 0 .5em !important; }
     ${NF_PH} .js-bb-btn.js-secondary { background: rgba(109,109,110,.55) !important; }
+  `;
+
+  const DISNEY_CSS = `
+    /* header: no bar; on TV Jellyfin's tabs become Disney's pill group at the top, on phones a chip row */
+    ${DS}.js-service-open .skinHeader { background: linear-gradient(180deg, rgba(8,10,22,.6) 0%, transparent 100%) !important; box-shadow: none !important; }
+    ${DS}.js-service-open .headerTabs, ${DS}.js-service-open .sectionTabs { background: none !important; border: 0 !important; box-shadow: none !important; }
+    ${DS}.js-service-open .headerTabs .emby-tab-button::before, ${DS}.js-service-open .headerTabs .emby-tab-button::after { display: none !important; }
+    ${DS_TV}.js-service-open .headerTabs { display: flex !important; justify-content: center !important; }
+    ${DS_TV}.js-service-open .headerTabs .emby-tabs-slider {
+      display: inline-flex !important; gap: .15em; padding: .3em !important; border-radius: 999px !important;
+      background: rgba(125,140,205,.32) !important; border: 1px solid rgba(255,255,255,.14) !important;
+      -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+    ${DS_TV}.js-service-open .headerTabs .emby-tab-button {
+      font-family: "Avenir Next", Avenir, "Nunito Sans", sans-serif !important; font-weight: 600 !important; font-size: 1em !important;
+      color: #fff !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+      border-radius: 999px !important; padding: .55em 1.5em !important; margin: 0 !important; }
+    ${DS_TV}.js-service-open .headerTabs .emby-tab-button-active,
+    ${DS_TV}.js-service-open .headerTabs .emby-tab-button:is(:hover, :focus-visible) { background: rgba(170,185,255,.45) !important; }
+    ${DS_PH}.js-service-open .headerTabs .emby-tab-button {
+      font-weight: 600 !important; color: #fff !important; background: rgba(255,255,255,.05) !important;
+      border: 1px solid rgba(255,255,255,.24) !important; border-radius: 999px !important; box-shadow: none !important;
+      padding: .55em 1.3em !important; margin: 0 .5em 0 0 !important; }
+    ${DS_PH}.js-service-open .headerTabs .emby-tab-button-active { background: rgba(255,255,255,.2) !important; }
+    ${DS}.js-service-open #__jf_library_focus_ring__ { border-radius: 14px !important; }
+
+    /* TV banner: full width under the header, art on the right fading into the page on the left */
+    ${DS_TV} .js-bb { height: 86vh !important; min-height: 460px; margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+    ${DS_TV} .js-bb-art { left: 26% !important; background-position: center 22% !important; }
+    ${DS_TV} .js-bb-shade { background:
+      linear-gradient(90deg, var(--js-base) 0%, var(--js-base) 26%, color-mix(in srgb, var(--js-base) 55%, transparent) 40%, transparent 62%),
+      linear-gradient(0deg, var(--js-base) 0%, color-mix(in srgb, var(--js-base) 60%, transparent) 22%, transparent 45%) !important; }
+    ${DS_TV} .js-bb-content { left: 4.5% !important; bottom: 31% !important; width: min(34%, 560px) !important; gap: .75em !important; }
+    ${DS_TV} .js-bb-dots { bottom: 25%; }
+    ${DS_TV} .js-rows { position: relative; z-index: 2; margin-top: -21vh; }
+    ${DS_TV} .js-bb .js-hero { top: 6em; }
+    ${DS} .js-bb-tag { display: none !important; }
+    ${DS} .js-bb-rank { order: -1; align-self: flex-start; background: #f4f4f4; color: #111; font: 600 .8em/1 "Avenir Next", Avenir, sans-serif; padding: .4em .7em; border-radius: 6px; }
+    ${DS} .js-bb-rank::before { display: none !important; }
+    ${DS} .js-bb-title { font-weight: 800 !important; }
+    ${DS} .js-bb-meta { display: block !important; font-size: .95em; font-weight: 500; color: rgba(255,255,255,.92); }
+    ${DS} .js-bb-overview { -webkit-line-clamp: 2 !important; font-size: 1em !important; font-weight: 600; }
+    ${DS} .js-bb-btn .material-icons { display: none; }
+    ${DS} .js-bb-btn.js-primary { background: rgba(255,255,255,.16) !important; color: #fff !important; border-radius: 999px !important;
+      height: 2.7em !important; padding: 0 1.7em !important; font: 700 .9em/1 "Avenir Next", Avenir, sans-serif !important; letter-spacing: .08em; }
+    ${DS} .js-bb-btn.js-primary:is(:hover, :focus, :focus-visible) { background: #f2f3f7 !important; color: #10131f !important; transform: none; }
+
+    /* phone banner: a big rounded poster card, logo and details centered at the bottom; tap it to open */
+    ${DS_PH} .js-bb { height: auto !important; min-height: 0 !important; aspect-ratio: .7; margin: .6em 6.5% 1.8em !important; border-radius: 16px !important;
+      border: 1px solid rgba(255,255,255,.16); box-shadow: 0 18px 40px rgba(0,0,0,.5) !important; }
+    ${DS_PH} .js-bb-art { display: none !important; }
+    ${DS_PH} .js-bb-poster { display: block !important; position: absolute; inset: 0; background-size: cover; background-position: center top; }
+    ${DS_PH} .js-bb-shade { background: linear-gradient(0deg, rgba(12,12,18,.94) 0%, rgba(12,12,18,.35) 30%, transparent 52%) !important; }
+    ${DS_PH} .js-bb-content { left: 6% !important; right: 6% !important; width: auto !important; bottom: 6% !important; align-items: center; text-align: center; gap: .55em !important; }
+    ${DS_PH} .js-bb-rank { align-self: center; }
+    ${DS_PH} .js-bb-title { font-size: 2.1em !important; text-align: center; }
+    ${DS_PH} .js-bb-logo { max-width: 78%; max-height: 16vh; margin: 0 auto; object-position: center bottom; }
+    ${DS_PH} .js-bb-overview, ${DS_PH} .js-bb-actions { display: none !important; }
+    ${DS_PH} .js-bb-slide:not(:has(.js-bb-link)) .js-bb-actions { display: flex !important; }
+    ${DS_PH} .js-bb-dots { bottom: 1.6%; }
+    ${DS_PH} .js-bb .js-hero { top: .7em; right: 4%; }
+
+    /* rows */
+    ${DS} .js-view .sectionTitle { font-family: "Avenir Next", Avenir, "Nunito Sans", sans-serif !important; font-weight: 600 !important; font-size: 1.22em !important; color: #f2f3f7 !important; letter-spacing: 0 !important; }
+    ${DS} .js-view .js-section .sectionTitle::before { display: none !important; }
+    ${DS_TV} .js-view .card:not(.js-open) .cardImageContainer, ${DS_TV} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border-radius: 12px !important; }
+    ${DS_TV} .js-view .js-open .cardImageContainer, ${DS_TV} .js-view .js-rank-card.js-open .js-rank-poster {
+      border-radius: 14px !important; box-shadow: 0 0 0 3px #fff, 0 0 26px rgba(255,255,255,.25), 0 18px 40px rgba(0,0,0,.55) !important; }
+    ${DS} .js-dmeta { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 2.4em .5em .6em; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font: 600 .72em/1.2 "Avenir Next", Avenir, sans-serif; color: #fff; background: linear-gradient(0deg, rgba(12,14,26,.85), transparent); border-radius: 0 0 inherit inherit; pointer-events: none; }
+    ${DS} .js-cert { display: inline-block; padding: .08em .38em; margin-right: .45em; border-radius: 3px; background: rgba(150,170,225,.35); font-weight: 700; font-style: normal; }
+    ${DS_TV} .js-open .js-dmeta { display: none; }
+    ${DS} .js-nf-pb { bottom: 2.9em !important; top: auto !important; background: #f4f4f4 !important; color: #111 !important; border-radius: 5px !important;
+      font: 600 .64em/1 "Avenir Next", Avenir, sans-serif !important; padding: .35em .6em !important; display: block !important; }
+    ${DS} .js-nf-pb b, ${DS} .js-nf-top, ${DS} .js-nf-ob { display: none !important; }
+    ${DS} .js-nf-info { min-height: 2em; padding-top: .45em; font-family: "Avenir Next", Avenir, sans-serif; }
+    ${DS} .js-nf-meta { font-weight: 600; font-size: .9em; gap: .2em; }
+    ${DS} .js-nf-ov { display: none; }
+
+    /* Continue Watching: wide stills with a progress bar */
+    .js-prog { display: none; }
+    ${DS} .js-cw .js-prog { display: block; position: absolute; left: 6%; right: 6%; bottom: 8%; height: 4px; border-radius: 2px; background: rgba(255,255,255,.28); z-index: 2; }
+    ${DS} .js-cw .js-prog i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #0a7cff, #34c8f2); }
+    ${DS} .js-cw .cardImageContainer { border-radius: 12px !important; }
+    ${DS_TV} .js-cw .cardFooter { display: none !important; }
+    ${DS} .js-cw .cardText { text-align: left !important; }
+    ${DS} .js-cw .cardText-first { font-weight: 700 !important; color: #f2f3f7 !important; }
+
+    /* phones: Disney's sizes (posters about a quarter of the screen, Top 10 cards two-thirds) */
+    ${DS_PH} .js-view { --js-poster-w: 66vw; --js-wedge: 66vw; --js-rank-cw: 70vw; --js-rank-pw: 66vw; --js-rank-ph: calc(66vw * 1.5); --js-port-w: 29.6vw; --js-gap: 1.15vw; }
+    ${DS_PH} .js-view .emby-scroller.js-scroller { padding-left: 4.2vw !important; padding-right: 4.2vw !important; }
+    ${DS_PH} .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w) !important; min-width: var(--js-port-w) !important; }
+    ${DS_PH} .js-view .js-lib .cardImageContainer, ${DS_PH} .js-view .js-rank-poster { border-radius: 10px !important; }
+    ${DS_PH} .js-view .js-rank-card .js-dmeta { font-size: 1em; }
+    ${DS_PH} .js-view .sectionTitle { font-size: 1.4em !important; }
+    ${DS_PH} .js-cw .overflowBackdropCard { width: 60vw !important; min-width: 60vw !important; }
   `;
 
   const brandKeyFor = (svc) => {
@@ -591,7 +685,7 @@
       const rules = (b.css + (RANKS[k] || '') + (ROWS[k] || '')).replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
         `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
       return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} ${LAYOUT[k] || ''} }`;
-    }).join('\n') + NETFLIX_CSS;
+    }).join('\n') + NETFLIX_CSS + DISNEY_CSS;
     return el;
   })();
 
@@ -870,6 +964,21 @@
       transition: opacity .6s ease;
     }
     .js-bb-art.on { opacity: 1; }
+    .js-bb-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility 0s linear .9s; }
+    .js-bb-slide.on { opacity: 1; visibility: visible; transition: opacity .9s ease; z-index: 1; }
+    .js-bb-slide.on .js-bb-art.on, .js-bb-slide.on .js-bb-poster { animation: js-bb-drift 9s ease-out both; }
+    @keyframes js-bb-drift { from { transform: scale(1.07) translate3d(1.2%, .6%, 0); } to { transform: scale(1) translate3d(0, 0, 0); } }
+    html.js-lite .js-bb-slide, html.js-lite .js-bb-slide.on { transition: none; }
+    html.js-lite .js-bb-slide .js-bb-art, html.js-lite .js-bb-slide .js-bb-poster { animation: none !important; }
+    @media (prefers-reduced-motion: reduce) { .js-bb-slide .js-bb-art, .js-bb-slide .js-bb-poster { animation: none !important; } }
+    .js-bb-link { position: absolute; inset: 0; z-index: 1; }
+    .js-bb-content { z-index: 2; }
+    .js-bb-meta:empty, .js-bb-meta { display: none; }
+    .js-bb-dots { position: absolute; z-index: 3; left: 0; right: 0; bottom: 4%; display: flex; justify-content: center; gap: .55em; pointer-events: auto; }
+    .js-bb-dot { width: .5em; height: .5em; border-radius: 50%; background: rgba(255,255,255,.4); cursor: pointer; transition: background .3s ease, transform .3s ease; }
+    .js-bb-dot.on { background: #fff; transform: scale(1.25); }
+    .js-bb .js-hero { z-index: 4; }
+    html.js-phone .js-bb-dots { bottom: .8em; }
     .js-bb-shade {
       position: absolute; inset: 0;
       background:
@@ -1484,6 +1593,14 @@
     ].join('');
     return `${poster}${corner}${pills ? `<span class="js-nf-ob">${pills}</span>` : ''}`;
   };
+  // Disney+-style line at the bottom of a card: rating box, year, first genre
+  const cardMeta = (lib, year) => {
+    if (!look().cardMeta) return '';
+    const cert = lib?.Certification;
+    const text = [lib?.Year || year, lib?.Genres?.[0]].filter(Boolean).join(' • ');
+    if (!cert && !text) return '';
+    return `<span class="js-dmeta">${cert ? `<b class="js-cert">${esc(cert)}</b>` : ''}${esc(text)}</span>`;
+  };
   // what a card opens into when selected (services with focusExpand): wide art plus the title's logo
   const wideAttrs = (id, tags, fallback = '') => {
     if (!look().focusExpand || !id) return fallback ? `data-wide="${esc(fallback)}"` : '';
@@ -1530,7 +1647,7 @@
       shape: l.shape,
       caption: l.caption,
       attrs: l.shape === 'portrait' ? wideAttrs(it.Id, it) : '',
-      extra: badgesFor(it.Id, false),
+      extra: badgesFor(it.Id, false) + cardMeta(it),
     });
   };
 
@@ -1556,7 +1673,8 @@
     const onArt = land ? titleOnArt({ name: t.Name, shape: 'landscape', caption: look().rankCaption || 'overlay', logo: w?.logo, titled: w?.titled }) : '';
     const status = owned ? '' : (t.Status === 'available' ? 'missing' : t.Status);
     const opens = land ? '' : (owned ? wideAttrs(t.ItemId, t, t.Backdrop || '') : (look().focusExpand && t.Backdrop ? `data-wide="${esc(`${t.Backdrop}|${t.Poster || ''}`)}"` : ''));
-    const rankPills = look().badges ? (owned ? badgesFor(t.ItemId, true) : '') : '';
+    const rankPills = (look().badges ? (owned ? badgesFor(t.ItemId, true) : '') : '')
+      + cardMeta(owned ? state.lib?.get(normId(t.ItemId)) : null, t.Year);
     return `
     <div class="card js-card js-rank-card${land ? ' js-rank-land' : ''}${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${opens} ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
       <div class="cardBox">
@@ -1692,6 +1810,9 @@
   };
   const metaLine = (d) => {
     const tv = /^(series|tv)$/i.test(d.Type || '');
+    if (document.documentElement.dataset.jsBrand === 'disney') {
+      return `${d.OfficialRating ? `<b class="js-cert">${esc(d.OfficialRating)}</b>` : ''}<span>${esc([d.ProductionYear, (d.Genres || []).slice(0, 2).join(', ')].filter(Boolean).join(' • '))}</span>`;
+    }
     const parts = [tv ? 'Show' : 'Movie'];
     if (d.Genres?.[0]) parts.push(d.Genres[0]);
     if (d.ProductionYear) parts.push(d.ProductionYear);
@@ -1733,7 +1854,7 @@
     document.documentElement.classList.add('js-nf-card-open');
     if (card.classList.contains('js-rank-card')) {
       card.style.setProperty('--js-rank-pw', `calc(var(--js-poster-w, 150px) * ${WIDE})`);
-      card.style.setProperty('--js-rank-cw', `calc(var(--js-poster-w, 150px) * ${WIDE + 0.62})`);
+      card.style.setProperty('--js-rank-cw', `calc(var(--js-poster-w, 150px) * ${WIDE + (look().rankGutter ?? 0.62)})`);
     } else {
       // lock the artwork's height in pixels first, so widening only ever changes the width
       const padder = card.querySelector('.cardPadder');
@@ -2037,7 +2158,7 @@
       cfg.ShowPopularMissing ? safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Missing?type=movie&limit=20`)) : [],
       cfg.ShowPopularMissing ? safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Missing?type=tv&limit=20`)) : [],
       cfg.ShowContinueWatching
-        ? safe(window.ApiClient.getResumableItems(userId(), { Limit: 40, Recursive: true, Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary', MediaTypes: 'Video' }).then((r) => r.Items || []))
+        ? safe(window.ApiClient.getResumableItems(userId(), { Limit: 40, Recursive: true, Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', MediaTypes: 'Video' }).then((r) => r.Items || []))
         : [],
     ]);
     const data = { at: Date.now(), topMovies, topShows, library, missMovies, missShows, resume };
@@ -2301,9 +2422,39 @@
     if (cfg.ShowContinueWatching) {
       const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
       const resume = data.resume.filter((it) => onService.has(norm(it.Id)) || onService.has(norm(it.SeriesId)));
+      const wide = look().cwLandscape;
+      const left = (it) => {
+        const m = Math.round(Math.max(0, (it.RunTimeTicks || 0) - (it.UserData?.PlaybackPositionTicks || 0)) / 6e8);
+        return m <= 0 ? '' : m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''} remaining` : `${m}m remaining`;
+      };
+      // episodes: the episode's own still; movies: thumb art, else a backdrop
+      const still = (it) => {
+        const A = window.ApiClient;
+        const o = (type, tag, id = it.Id) => A.getImageUrl(id, { type, fillWidth: 640, quality: 80, ...(tag ? { tag } : {}) });
+        const urls = [];
+        if (it.Type === 'Episode' && it.ImageTags?.Primary) urls.push(o('Primary', it.ImageTags.Primary));
+        if (it.ImageTags?.Thumb) urls.push(o('Thumb', it.ImageTags.Thumb));
+        if (it.ParentThumbItemId && it.ParentThumbImageTag) urls.push(o('Thumb', it.ParentThumbImageTag, it.ParentThumbItemId));
+        if (it.BackdropImageTags?.[0]) urls.push(o('Backdrop', it.BackdropImageTags[0]));
+        if (it.ParentBackdropItemId && it.ParentBackdropImageTags?.[0]) urls.push(o('Backdrop', it.ParentBackdropImageTags[0], it.ParentBackdropItemId));
+        urls.push(imgUrl(it.SeriesId || it.Id));
+        return urls.join('|');
+      };
       head.push(section({
         title: 'Continue Watching',
-        cards: resume.map((it) => card({
+        cls: wide ? 'js-cw' : '',
+        cards: resume.map((it) => card(wide ? {
+          id: it.Id,
+          name: it.SeriesName || it.Name,
+          sub: [left(it), it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'}` : ''].filter(Boolean).join(' · '),
+          img: still(it),
+          href: detailsHref(it.Id),
+          type: it.Type,
+          shape: 'landscape',
+          caption: 'below',
+          titled: true,
+          extra: `<span class="js-prog"><i style="width:${Math.min(100, Math.max(2, Math.round(it.UserData?.PlayedPercentage || 0)))}%"></i></span>`,
+        } : {
           id: it.Id,
           name: it.SeriesName || it.Name,
           sub: it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'} · ${it.Name}` : (it.ProductionYear || ''),
@@ -2356,69 +2507,167 @@
   };
 
   // the #1 title on the service, presented the way that service's app does
-  const renderBillboard = (view, svc, data) => {
-    const hero = view.querySelector('.js-hero');
-    if (!hero || view.querySelector('.js-bb')) return;
+  // The banner: the service's top titles, one after another (every 8 s, with dots), the art drifting
+  // slowly. Pauses while you're on it (mouse, focus or JellyNav's selection); swipe it on phones.
+  const BB_SLIDES = 6;
+  const BB_EVERY = 8000;
+  const bbPicks = (data) => {
+    const shows = uniqueTop(data.topShows), movies = uniqueTop(data.topMovies);
+    const out = [];
+    for (let i = 0; out.length < BB_SLIDES && (i < shows.length || i < movies.length); i++) {
+      for (const [list, kind] of [[shows, 'tv'], [movies, 'movie']]) {
+        const t = list[i];
+        if (t && (t.Backdrop || t.ItemId) && out.length < BB_SLIDES) out.push({ t, n: i + 1, kind });
+      }
+    }
+    return out;
+  };
+  const bbSlide = ({ t: pick, n, kind }) => {
     const l = look();
-    const pick = [data.topShows[0], data.topMovies[0]].filter(Boolean)
-      .sort((a, b) => (b.ItemId ? 1 : 0) - (a.ItemId ? 1 : 0))[0] || data.topMovies[0] || data.topShows[0];
-    const bb = document.createElement('section');
-    bb.className = 'js-bb';
-    if (!pick) {
-      bb.innerHTML = `<div class="js-bb-shade"></div>`;
-      bb.style.height = '9em';
-      bb.style.minHeight = '0';
-    } else {
-      const isTv = pick.Type === 'tv';
-      const rank = data.topShows[0] === pick ? 'TV Shows' : 'Movies';
-      const when = state.cfg.TopSource === 'day' ? 'Today' : state.cfg.TopSource === 'week' ? 'This Week' : '';
-      const owned = !!pick.ItemId;
-      // phones show the title's poster (portrait) instead of the wide backdrop
-      const poster = owned
-        ? window.ApiClient.getImageUrl(pick.ItemId, { type: 'Primary', fillHeight: 1000, quality: 85, ...(pick.PrimaryTag ? { tag: pick.PrimaryTag } : {}) })
-          + (pick.Poster ? `|${pick.Poster.replace('/w342/', '/w780/')}` : '')
-        : (pick.Poster || '').replace('/w342/', '/w780/');
-      bb.innerHTML = `
+    const isTv = pick.Type === 'tv';
+    const when = state.cfg.TopSource === 'day' ? 'Today' : state.cfg.TopSource === 'week' ? 'This Week' : '';
+    const owned = !!pick.ItemId;
+    const lib = owned ? state.lib?.get(normId(pick.ItemId)) : null;
+    // phones show the title's poster (portrait) instead of the wide backdrop
+    const poster = owned
+      ? window.ApiClient.getImageUrl(pick.ItemId, { type: 'Primary', fillHeight: 1000, quality: 85, ...(pick.PrimaryTag ? { tag: pick.PrimaryTag } : {}) })
+        + (pick.Poster ? `|${pick.Poster.replace('/w342/', '/w780/')}` : '')
+      : (pick.Poster || '').replace('/w342/', '/w780/');
+    const big = owned && pick.BackdropTag
+      ? `${window.ApiClient.getImageUrl(pick.ItemId, { type: 'Backdrop', fillWidth: 1600, quality: 85, tag: pick.BackdropTag })}|${(pick.Backdrop || '').replace('/w780/', '/w1280/')}`
+      : (pick.Backdrop || '').replace('/w780/', '/w1280/');
+    const meta = [lib?.Certification ? `<b class="js-cert">${esc(lib.Certification)}</b>` : '', [pick.Year || lib?.Year, (lib?.Genres || []).slice(0, 2).join(', ')].filter(Boolean).map(esc).join(' • ')].join(' ');
+    const href = owned ? detailsHref(pick.ItemId) : '';
+    return `
+      <div class="js-bb-slide" data-type="${pick.Type}" data-tmdb="${pick.TmdbId}" data-art="${esc(big)}">
         <div class="js-bb-art"></div>
         <div class="js-bb-poster js-img" data-src="${esc(poster)}"></div>
         <div class="js-bb-shade"></div>
+        ${owned ? `<a class="js-bb-link" href="${esc(href)}" data-id="${esc(pick.ItemId)}" tabindex="-1" aria-hidden="true"></a>` : ''}
         <div class="js-bb-content">
           <div class="js-bb-tag">${esc(isTv ? l.labels.tagTv : l.labels.tagMovie)}</div>
           <h2 class="js-bb-title">${owned && pick.LogoTag
             ? `<img class="js-bb-logo" src="${esc(logoUrl(pick.ItemId, pick.LogoTag))}" alt="${esc(pick.Name)}">`
             : esc(pick.Name)}</h2>
-          <div class="js-bb-rank">#1 in ${rank}${when ? ` ${when}` : ''}</div>
+          <div class="js-bb-rank">#${n} in ${kind === 'tv' ? 'TV Shows' : 'Movies'}${when ? ` ${when}` : ''}</div>
           <div class="js-bb-tags">${esc(isTv ? 'Show' : 'Movie')}</div>
+          <div class="js-bb-meta">${meta}</div>
           <p class="js-bb-overview"></p>
           <div class="js-bb-actions">
             ${owned
-              ? `<a class="js-bb-btn js-primary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">play_arrow</span>${esc(l.labels.play)}</a>`
+              ? `<a class="js-bb-btn js-primary" href="${esc(href)}" data-id="${esc(pick.ItemId)}"><span class="material-icons">play_arrow</span>${esc(l.labels.play)}</a>`
               : `<button type="button" class="js-bb-btn js-primary js-bb-request" data-jstmdb="${pick.TmdbId}" data-jstype="${pick.Type}"><span class="material-icons">add</span>${esc(l.labels.request)}</button>`}
             ${owned && l.labels.info
-              ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}"><span class="material-icons">info</span>${esc(l.labels.info)}</a>`
-              : owned ? `<a class="js-bb-btn js-secondary" href="${esc(detailsHref(pick.ItemId))}" data-id="${esc(pick.ItemId)}" aria-label="Details"><span class="material-icons">add</span></a>` : ''}
+              ? `<a class="js-bb-btn js-secondary" href="${esc(href)}" data-id="${esc(pick.ItemId)}"><span class="material-icons">info</span>${esc(l.labels.info)}</a>`
+              : owned && l.labels.info !== null ? `<a class="js-bb-btn js-secondary" href="${esc(href)}" data-id="${esc(pick.ItemId)}" aria-label="Details"><span class="material-icons">add</span></a>` : ''}
           </div>
-        </div>`;
-      const art = bb.querySelector('.js-bb-art');
-      const big = (pick.Backdrop || '').replace('/w780/', '/w1280/');
-      if (big) {
-        const img = new Image();
-        img.onload = () => { art.style.backgroundImage = `url("${big}")`; art.classList.add('on'); };
-        img.src = big;
+        </div>
+      </div>`;
+  };
+  // fill a slide in the first time it shows: big art, overview, genres
+  const bbFill = (slide) => {
+    if (slide.dataset.filled) return;
+    slide.dataset.filled = '1';
+    const art = slide.querySelector('.js-bb-art');
+    const urls = (slide.dataset.art || '').split('|').filter(Boolean);
+    const tryNext = () => {
+      const u = urls.shift();
+      if (!u) return;
+      const img = new Image();
+      img.onload = () => { art.style.backgroundImage = `url("${u}")`; art.classList.add('on'); };
+      img.onerror = tryNext;
+      img.src = u;
+    };
+    tryNext();
+    const posterEl = slide.querySelector('.js-bb-poster');
+    if (posterEl) posterEl.style.backgroundImage = bgOf(posterEl.dataset.src);
+    const isTv = slide.dataset.type === 'tv';
+    getJSON(`Details?type=${slide.dataset.type}&tmdbId=${slide.dataset.tmdb}`).then((d) => {
+      const p = slide.querySelector('.js-bb-overview');
+      if (p && d?.Overview) p.textContent = d.Overview;
+      const tags = slide.querySelector('.js-bb-tags');
+      if (tags && d?.Genres?.length) {
+        tags.innerHTML = [isTv ? 'Show' : 'Movie', ...d.Genres.slice(0, 3)].map((x, i) => `<span${i ? '' : ' class="js-strong"'}>${esc(x)}</span>`).join('<i>•</i>');
       }
-      getJSON(`Details?type=${pick.Type}&tmdbId=${pick.TmdbId}`).then((d) => {
-        const p = bb.querySelector('.js-bb-overview');
-        if (p && d?.Overview) p.textContent = d.Overview;
-        const tags = bb.querySelector('.js-bb-tags');
-        if (tags && d?.Genres?.length) {
-          tags.innerHTML = [isTv ? 'Show' : 'Movie', ...d.Genres.slice(0, 3)].map((x, i) => `<span${i ? '' : ' class="js-strong"'}>${esc(x)}</span>`).join('<i>•</i>');
-        }
-      }).catch(() => {});
-      const posterEl = bb.querySelector('.js-bb-poster');
-      if (posterEl) posterEl.style.backgroundImage = bgOf(posterEl.dataset.src);
+      const meta = slide.querySelector('.js-bb-meta');
+      if (meta && !meta.textContent.trim() && d) {
+        meta.textContent = [d.ProductionYear, (d.Genres || []).slice(0, 2).join(', ')].filter(Boolean).join(' • ');
+      }
+    }).catch(() => {});
+  };
+  const bbShow = (bb, i) => {
+    const slides = [...bb.querySelectorAll('.js-bb-slide')];
+    if (!slides.length) return;
+    const n = ((i % slides.length) + slides.length) % slides.length;
+    slides.forEach((s, k) => {
+      const on = k === n;
+      s.classList.toggle('on', on);
+      s.toggleAttribute('inert', !on); // hidden slides' buttons stay out of reach (and out of JellyNav's way)
+    });
+    bb.querySelectorAll('.js-bb-dot').forEach((d, k) => d.classList.toggle('on', k === n));
+    bb.dataset.slide = n;
+    bbFill(slides[n]);
+    if (slides[(n + 1) % slides.length]) bbFill(slides[(n + 1) % slides.length]); // ready before it's due
+  };
+  const bbBusy = (bb) => {
+    if (document.hidden || document.documentElement.classList.contains('js-intro-on')) return true;
+    if (bb.matches(':hover') || bb.contains(document.activeElement)) return true;
+    const ring = document.getElementById('__jf_library_focus_ring__');
+    if (ring && ring.style.display !== 'none' && ring.style.opacity !== '0') {
+      const r = ring.getBoundingClientRect(), b = bb.getBoundingClientRect();
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      if (r.width && x > b.left && x < b.right && y > b.top && y < b.bottom) return true;
+    }
+    const b = bb.getBoundingClientRect();
+    return b.bottom < 0 || b.top > innerHeight; // scrolled away: no point changing it
+  };
+  const renderBillboard = (view, svc, data) => {
+    const hero = view.querySelector('.js-hero');
+    if (!hero || view.querySelector('.js-bb')) return;
+    const picks = bbPicks(data);
+    const bb = document.createElement('section');
+    bb.className = 'js-bb';
+    if (!picks.length) {
+      bb.innerHTML = `<div class="js-bb-shade"></div>`;
+      bb.style.height = '9em';
+      bb.style.minHeight = '0';
+    } else {
+      bb.innerHTML = picks.map(bbSlide).join('')
+        + (picks.length > 1 ? `<div class="js-bb-dots" aria-hidden="true">${picks.map((_, i) => `<span class="js-bb-dot" data-i="${i}"></span>`).join('')}</div>` : '');
+      bbShow(bb, 0);
+      if (picks.length > 1) {
+        const go = (d) => { bbShow(bb, +bb.dataset.slide + d); bb.dataset.due = Date.now() + BB_EVERY; };
+        bb.dataset.due = Date.now() + BB_EVERY;
+        const timer = setInterval(() => {
+          if (!bb.isConnected) { clearInterval(timer); return; }
+          if (bbBusy(bb)) { bb.dataset.due = Date.now() + BB_EVERY; return; }
+          if (Date.now() >= +bb.dataset.due) go(1);
+        }, 500);
+        bb.addEventListener('click', (e) => {
+          const dot = e.target.closest('.js-bb-dot');
+          if (dot) { e.preventDefault(); bbShow(bb, +dot.dataset.i); bb.dataset.due = Date.now() + BB_EVERY; }
+        });
+        // phones: swipe the banner to change title (taps still open it)
+        let sx = null, sy = null;
+        bb.addEventListener('touchstart', (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+        bb.addEventListener('touchend', (e) => {
+          const t = e.changedTouches[0];
+          if (sx == null || !t) return;
+          const dx = t.clientX - sx, dy = t.clientY - sy;
+          sx = null;
+          if (Math.abs(dx) > 45 && Math.abs(dy) < 60) go(dx < 0 ? 1 : -1);
+        }, { passive: true });
+      }
     }
     hero.replaceWith(bb);
     bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
+    // services whose banner runs under the header: pull it up to the top of the page
+    if (look().bleed && !isPhone()) {
+      requestAnimationFrame(() => {
+        const top = bb.getBoundingClientRect().top + scrollY;
+        if (top > 0) bb.style.marginTop = `-${Math.round(top)}px`;
+      });
+    }
   };
 
   // the service's logo in Jellyfin's header (right on TV/desktop, after the title on phones)
