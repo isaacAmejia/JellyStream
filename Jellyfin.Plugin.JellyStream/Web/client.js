@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.17.1';
+  const VERSION = '1.17.2';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -70,6 +70,29 @@
         jellystream: { view: !!document.querySelector('.js-view'), open: document.documentElement.classList.contains('js-service-open'), intro: !!document.querySelector('.js-intro') },
         routerPending: !!router?.promiseShow,
         scrollY: Math.round(scrollY),
+      });
+      rowReport();
+    };
+    // the first Top 10 row on a service page: sizes and the inline styles/variables behind them
+    const rowReport = () => {
+      const row = document.querySelector('.js-view .js-rank-card')?.parentElement;
+      if (!row) return;
+      const css = (el, v) => getComputedStyle(el).getPropertyValue(v).trim();
+      const sc = row.closest('.js-scroller');
+      add('snap', 'top 10 row', {
+        version: VERSION,
+        viewport: `${innerWidth}x${innerHeight} dpr ${devicePixelRatio}`,
+        html: document.documentElement.className,
+        brand: document.documentElement.dataset.jsBrand,
+        vars: ['--js-poster-w', '--js-rank-cw', '--js-rank-pw', '--js-rank-ph', '--js-port-w'].map((v) => `${v}=${css(row, v)}`).join(' '),
+        scroller: sc ? `${describe(sc)} w=${Math.round(sc.clientWidth)} sw=${sc.scrollWidth} sl=${Math.round(sc.scrollLeft)} ${getComputedStyle(sc).overflowX}` : 'none',
+        row: `${describe(row)} display=${getComputedStyle(row).display} w=${Math.round(row.getBoundingClientRect().width)}`,
+        cards: [...row.children].slice(0, 12).map((c) => {
+          const r = c.getBoundingClientRect();
+          const cs = getComputedStyle(c);
+          return `${describe(c)} x=${Math.round(r.left)} w=${Math.round(r.width)} cw=${cs.width} min=${cs.minWidth} max=${cs.maxWidth} flex=${cs.flex} inline="${(c.getAttribute('style') || '').slice(0, 260)}"`;
+        }),
+        scripts: [...document.scripts].map((x) => x.src.split('/').slice(-2).join('/')).filter(Boolean).slice(-25),
       });
     };
     // other scripts' errors and Jellyfin's router/view logging
