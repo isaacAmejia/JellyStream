@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.9';
+  const VERSION = '1.22.10';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1389,12 +1389,16 @@
     .js-jf.go .js-jf-name { animation: js-jf-name calc(1.2s * var(--jf-k, 1)) cubic-bezier(.4,0,.2,1) calc(1.55s * var(--jf-k, 1)) forwards; }
     /* light chatter: specks wander, then pull together into the logo as the voices converge */
     .js-jf-chatter { position: absolute; left: 50%; top: 55%; width: 0; height: 0; pointer-events: none; }
-    .js-jf-chatter i { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: var(--c); opacity: 0;
-      box-shadow: 0 0 8px 1px var(--c); transform: translate(var(--x), var(--y)); }
-    html.js-lite .js-jf-chatter i { box-shadow: none; width: 4px; height: 4px; }
-    .js-jf.go .js-jf-chatter i { animation: js-jf-chatter calc(1.15s * var(--jf-k, 1)) cubic-bezier(.5,0,.8,.3) var(--d) forwards; }
-    @keyframes js-jf-chatter { 0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(.6); } 25% { opacity: .9; }
-      55% { opacity: .9; transform: translate(var(--mx), var(--my)) scale(1); } 92% { opacity: 1; } 100% { opacity: 0; transform: translate(0, 0) scale(1.6); } }
+    .js-jf-chatter i { position: absolute; width: 12px; height: 12px; margin: -6px; border-radius: 50%; opacity: 0; will-change: transform, opacity;
+      background: radial-gradient(circle, #fff 0 14%, var(--c) 26%, transparent 70%); transform: translate(var(--x), var(--y)); }
+
+    .js-jf.go .js-jf-chatter i { animation: js-jf-chatter calc(1.15s * var(--jf-k, 1)) linear var(--d) forwards; }
+    @keyframes js-jf-chatter {
+      0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(.5); animation-timing-function: cubic-bezier(.35,0,.65,1); }
+      20% { opacity: .85; }
+      55% { opacity: .9; transform: translate(var(--mx), var(--my)) scale(.9); animation-timing-function: cubic-bezier(.6,0,.9,.6); }
+      94% { opacity: 1; }
+      100% { opacity: 0; transform: translate(0, 0) scale(.6); } }
     /* slow beams of light turning behind the logo once it lands */
     .js-jf-rays { position: absolute; left: 50%; top: 55%; width: 420%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(0deg) scale(.6); pointer-events: none; opacity: 0;
       background: repeating-conic-gradient(from 0deg, rgba(170,140,255,.16) 0deg 2.2deg, transparent 2.2deg 13deg, rgba(0,164,220,.12) 13deg 14.6deg, transparent 14.6deg 24deg);
@@ -2593,7 +2597,7 @@
         const end = land + 3.6;
         // the chatter: voices wandering on their own, spread across the room, gliding together onto the chord
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .5;
-        ramp(lp.frequency, [[t, 380], [land, 4200], [land + .8, 5200], [end, 600]]);
+        ramp(lp.frequency, [[t, 1600], [land, 4200], [land + .8, 5200], [end, 600]]);
         const chord = [36.71, 55, 73.42, 110, 146.83, 220, 293.66, 369.99, 440, 587.33, 739.99, 880, 1174.66, 1760];
         const n = 32;
         lp.connect(bus(.75, .95));
@@ -2602,12 +2606,16 @@
           const pan = ((i * 7) % n) / n * 1.6 - .8; // spread, then everything meets in the middle as the chord lands
           const vb = ac.createStereoPanner ? ac.createStereoPanner() : null;
           if (vb) { vb.pan.setValueAtTime(pan, t); vb.pan.linearRampToValueAtTime(pan * .25, land); vb.connect(lp); }
-          const from = 160 + Math.random() * 320;
-          const w1 = from * (.8 + Math.random() * .4);
-          const w2 = w1 * (.85 + Math.random() * .3);
-          const vo = osc('sawtooth', [[t, from], [t + .35 * k, w1], [t + .75 * k, w2], [land - .03, f]], t, end,
-            [[t, .0001], [t + .3 * k, .008], [land - .1, .02], [land + .6, .032], [land + 2, .022], [end, .0001]], vb || lp);
+          const from = 200 + Math.random() * 500;
+          const w = [1, 2, 3].map(() => from * (.7 + Math.random() * .6));
+          const vo = osc('sawtooth', [[t, from], [t + .28 * k, w[0]], [t + .56 * k, w[1]], [t + .84 * k, w[2]], [land - .03, f]], t, end,
+            [[t, .0001], [t + .12 * k, .022], [land - .1, .03], [land + .6, .034], [land + 2, .022], [end, .0001]], vb || lp);
           vo.detune.value = (Math.random() - .5) * 16;
+          // each voice chatters on its own: a quick, uneven wobble that settles as the chord lands
+          const lfo = ac.createOscillator(); lfo.type = i % 2 ? 'sine' : 'triangle'; lfo.frequency.value = 3 + Math.random() * 6;
+          const depth = ac.createGain();
+          depth.gain.setValueAtTime(from * .035, t); depth.gain.linearRampToValueAtTime(from * .02, land - .25); depth.gain.linearRampToValueAtTime(0, land);
+          lfo.connect(depth); depth.connect(vo.frequency); lfo.start(t); lfo.stop(land + .05);
         }
         // a timpani-like rumble rolling up into the landing
         const rum = noise(1.6 * k); const rl = ac.createBiquadFilter(); rl.type = 'lowpass'; rl.Q.value = 6;
@@ -2625,7 +2633,7 @@
         const tg = ac.createGain(); ramp(tg.gain, [[land, .0001], [land + .01, .7], [land + .8, .0001]]);
         thud.connect(tl); tl.connect(tg); tg.connect(bg); thud.start(land); thud.stop(land + .9);
         const crash = noise(2.6); const ch = ac.createBiquadFilter(); ch.type = 'highpass'; ch.frequency.value = 3500;
-        const cg = ac.createGain(); ramp(cg.gain, [[land, .0001], [land + .02, .07], [land + 2.4, .0001]]);
+        const cg = ac.createGain(); ramp(cg.gain, [[land, .0001], [land + .02, .035], [land + 2, .0001]]);
         crash.connect(ch); ch.connect(cg); cg.connect(bus(.4, 1.2)); crash.start(land); crash.stop(land + 2.6);
         // brass: a slow, broad swell on the chord after the hit
         const br = ac.createBiquadFilter(); br.type = 'lowpass'; br.Q.value = 2;
@@ -2643,15 +2651,13 @@
         const ag = ac.createGain(); ramp(ag.gain, [[t, .0001], [land - .05, .05], [land + .1, .0001]]);
         air.connect(bp); bp.connect(ag); ag.connect(bus(.6, 1)); air.start(t); air.stop(land + .15);
       } else {
-        // the flight to the home screen: a deep rush down, and a soft landing
+        // the flight to the home screen: a deep, smooth rush
         const end = t + T.dive / 1000;
         const n = noise(T.dive / 1000 + .6); const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
         ramp(lp.frequency, [[t, 1500], [end, 140]]);
-        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [t + .25, .24], [end + .2, .0001]]);
+        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [t + .3, .18], [end + .35, .0001]]);
         n.connect(lp); lp.connect(ng); ng.connect(bus(1, .7)); n.start(t); n.stop(end + .3);
-        const low = drive(2); low.connect(bus(1, .5));
-        osc('sine', [[t, 72], [end, 34]], t, end + 1.2, [[t, .0001], [t + .3, .38], [end + 1.1, .0001]], low);
-        osc('sine', [[end - .02, 120], [end + .3, 45]], end - .02, end + .9, [[end - .02, .0001], [end, .5], [end + .8, .0001]], low);
+        osc('sine', [[t, 66], [end, 40]], t, end + 1, [[t, .0001], [t + .35, .22], [end + .9, .0001]], bus(1, .5));
       }
     } catch { /* no audio: the picture still runs */ }
   };
@@ -2660,7 +2666,7 @@
     const g = `jsjfi${++jfSeq}`;
     const k = lite() ? 1.6 : 1.3; // unhurried, and slower still on small devices like a Raspberry Pi
     const T = { floor: JF_T.floor * k, dive: JF_T.dive * (lite() ? 1.5 : 1.3) };
-    const chatter = Array.from({ length: lite() ? 18 : 30 }, (_, i) => {
+    const chatter = Array.from({ length: lite() ? 16 : 26 }, (_, i) => {
       const a = Math.random() * Math.PI * 2;
       const r = 26 + Math.random() * 34;
       const b = a + (Math.random() - .5) * 1.4;
