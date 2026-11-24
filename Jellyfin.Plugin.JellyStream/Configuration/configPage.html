@@ -578,7 +578,8 @@
         }
         page.addEventListener('click', function (e) {
             var btn = e.target.closest('[data-act^="intro-"]');
-            if (!btn) return;
+            // the hidden file picker's own click must go through, or the file browser never opens
+            if (!btn || btn.getAttribute('data-act') === 'intro-file') return;
             e.preventDefault();
             var row = btn.closest('.js-intro-row');
             var key = row.getAttribute('data-key');

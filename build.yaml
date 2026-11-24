@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.14.0.0"
+version: "1.14.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,4 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Intro videos: upload one per service in Settings > 5. Intros. It plays full screen with sound and
-  no player controls while the service opens, preloaded on the home screen. Press Back, Enter or
-  click to skip. Services without a video keep the built-in animation.
+  Fixes the intro upload button not opening the file browser.
