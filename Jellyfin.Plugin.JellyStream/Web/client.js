@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.20.0';
+  const VERSION = '1.20.1';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1065,6 +1065,9 @@
     .js-bb-dot.on { background: #fff; transform: scale(1.25); }
     .js-bb .js-hero { z-index: 4; }
     .js-bb-new { display: none; }
+    html.js-phone.js-service-open, html.js-phone.js-service-open body { overflow-x: hidden !important; overscroll-behavior-x: none; }
+    html.js-phone .js-view, html.js-phone .js-services { touch-action: pan-y pinch-zoom; }
+    html.js-phone .js-view .js-scroller, html.js-phone .js-services .js-scroller { touch-action: pan-x pan-y pinch-zoom; overscroll-behavior-x: contain; }
     html[data-js-brand="prime"] .js-bb-new { display: block; }
     html.js-phone .js-bb-dots { bottom: .8em; }
     .js-bb-shade {
@@ -1866,9 +1869,34 @@
   // unless it starts on one of its own scroll rows. Swiping our rows or page then switched tabs
   // underneath the service page and left the screen blank. Keep our touches to ourselves; scrolling
   // and taps are untouched (nothing is prevented, the event just doesn't reach Jellyfin's swipe watcher).
+  // Every stage of the gesture is kept in (some tab-swipe watchers only look at the end, or use
+  // pointer events), and the banner's own swipe is handled right here, since nothing below sees it.
+  const OURS = '.js-view, .js-services, .js-switcher';
+  let swipe = null;
+  const ours = (e) => !!e.target?.closest?.(OURS);
   addEventListener('touchstart', (e) => {
-    if (e.target?.closest?.('.js-view, .js-services, .js-switcher')) e.stopPropagation();
+    if (!ours(e)) { swipe = null; return; }
+    e.stopPropagation();
+    const t = e.touches[0];
+    const bb = e.target.closest('.js-bb');
+    swipe = t ? { x: t.clientX, y: t.clientY, bb } : null;
   }, { capture: true, passive: true });
+  for (const type of ['touchmove', 'touchcancel']) {
+    addEventListener(type, (e) => { if (ours(e)) e.stopPropagation(); }, { capture: true, passive: true });
+  }
+  addEventListener('touchend', (e) => {
+    if (!ours(e)) return;
+    e.stopPropagation();
+    const t = e.changedTouches[0];
+    if (swipe?.bb && t) {
+      const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+      if (Math.abs(dx) > 45 && Math.abs(dy) < 60) swipe.bb.dispatchEvent(new CustomEvent('js-swipe', { detail: dx < 0 ? 1 : -1 }));
+    }
+    swipe = null;
+  }, { capture: true, passive: true });
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {
+    addEventListener(type, (e) => { if (e.pointerType === 'touch' && ours(e)) e.stopPropagation(); }, { capture: true, passive: true });
+  }
 
   // Shift + mouse wheel scrolls a row sideways (trackpads scroll sideways on their own)
   document.addEventListener('wheel', (e) => {
@@ -2826,16 +2854,8 @@
           const dot = e.target.closest('.js-bb-dot');
           if (dot) { e.preventDefault(); bbShow(bb, +dot.dataset.i); bb.dataset.due = Date.now() + BB_EVERY; }
         });
-        // phones: swipe the banner to change title (taps still open it)
-        let sx = null, sy = null;
-        bb.addEventListener('touchstart', (e) => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
-        bb.addEventListener('touchend', (e) => {
-          const t = e.changedTouches[0];
-          if (sx == null || !t) return;
-          const dx = t.clientX - sx, dy = t.clientY - sy;
-          sx = null;
-          if (Math.abs(dx) > 45 && Math.abs(dy) < 60) go(dx < 0 ? 1 : -1);
-        }, { passive: true });
+        // phones: swipe the banner to change title (taps still open it); see the touch handling above
+        bb.addEventListener('js-swipe', (e) => go(e.detail));
       }
     }
     hero.replaceWith(bb);

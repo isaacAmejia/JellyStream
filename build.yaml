@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.20.0.0"
+version: "1.20.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,8 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Prime Video page redone after the Prime Video apps. On TV the banner shows whatever title is
-  selected (art, "#1" line, genre / length / year / rating, description, Included with Prime), with
-  the selected row held just under it; with a mouse, hovering a card does the same. Prime's centered
-  tab bar, wide titled cards with white corner labels, light Top 10 numerals, and on phones dark
-  chips, portrait posters and outlined Top 10 numbers.
+  Phones: sideways swipes on service pages and the services row are fully kept away from other
+  scripts' tab swiping (start, move, end and pointer events), the page itself can no longer slide
+  sideways, and swiping the banner to change titles works again.
