@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.2';
+  const VERSION = '1.22.3';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -168,7 +168,20 @@
 
   // Jellyfin itself counts as the main streaming service: a pill of its own, an intro of its own,
   // and the Home tab opens whichever one (a service or Jellyfin) you picked last on this device
-  const JF_LOGO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-80 -70 672 672"><circle cx="256" cy="266" r="336" fill="#101018"/><defs><linearGradient id="g" x1="110.25" y1="213.3" x2="496.14" y2="436.09" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient></defs><path d="M256,201.62c-20.44,0-86.23,119.29-76.2,139.43s142.48,19.92,152.4,0S276.47,201.63,256,201.62Z" fill="url(#g)"/><path d="M256,23.3c-61.56,0-259.82,359.43-229.59,420.1s429.34,60,459.24,0S317.61,23.3,256,23.3ZM406.51,390.76c-19.59,39.33-281.08,39.77-300.89,0S215.71,115.48,256.06,115.48,426.1,351.42,406.51,390.76Z" fill="url(#g)"/></svg>');
+  // the Jellyfin icon (jellyfin-ux icon-transparent): outer arch + inner triangle, purple to blue.
+  // Each shape gets its own gradient (iPhones dropped the inner one when they shared it).
+  const JF_OUT = 'M256,23.3c-61.56,0-259.82,359.43-229.59,420.1s429.34,60,459.24,0S317.61,23.3,256,23.3ZM406.51,390.76c-19.59,39.33-281.08,39.77-300.89,0S215.71,115.48,256.06,115.48,426.1,351.42,406.51,390.76Z';
+  const JF_IN = 'M256,201.62c-20.44,0-86.23,119.29-76.2,139.43s142.48,19.92,152.4,0S276.47,201.63,256,201.62Z';
+  let jfSeq = 0;
+  const jfSvg = (cls = '', bg = true) => {
+    const id = `jsjf${++jfSeq}`;
+    const grad = (n) => `<linearGradient id="${id}${n}" x1="110.25" y1="213.3" x2="496.14" y2="436.09" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient>`;
+    return `<svg class="${cls}" xmlns="http://www.w3.org/2000/svg" viewBox="${bg ? '-80 -70 672 672' : '0 0 512 512'}" aria-hidden="true"><defs>${grad('a')}${grad('b')}</defs>`
+      + (bg ? '<circle cx="256" cy="266" r="336" fill="#101018"/>' : '')
+      + `<path class="jf-out" fill-rule="evenodd" fill="url(#${id}a)" stroke="url(#${id}a)" stroke-width="0" pathLength="1" d="${JF_OUT}"/>`
+      + `<path class="jf-in" fill="url(#${id}b)" d="${JF_IN}"/></svg>`;
+  };
+  const JF_LOGO = 'data:image/svg+xml,' + encodeURIComponent(jfSvg().replace(/jsjf\d+/g, 'g'));
   const jellyfin = () => ({
     Key: 'jellyfin', Name: 'Jellyfin', Logo: JF_LOGO, Accent: '#00a4dc', Movies: 0, Shows: 0,
     IntroVersion: state.cfg?.JellyfinIntroVersion || null, MobileIntroVersion: state.cfg?.JellyfinMobileIntroVersion || null,
@@ -1344,6 +1357,28 @@
       animation: js-intro-burst 1.3s cubic-bezier(.2,.9,.25,1) .15s both;
     }
     /* anything else: a sweep of light in the service's color */
+    /* Jellyfin: a purple-blue glow blooms, the arch draws itself and fills, the inner triangle pops in, the name follows */
+    .js-intro-jellyfin .js-intro-fx { position: absolute; inset: 0; overflow: hidden; }
+    .js-intro-jellyfin .js-intro-fx::before { content: ""; position: absolute; left: 50%; top: 46%; width: 120vmax; height: 120vmax; transform: translate(-50%, -50%) scale(.2);
+      background: radial-gradient(closest-side, rgba(170,92,195,.38), rgba(0,164,220,.22) 45%, transparent 70%); opacity: 0;
+      animation: js-jf-glow 1.9s cubic-bezier(.2,.8,.2,1) .05s both; }
+    .js-intro-jellyfin .js-intro-fx::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 50% 46%, transparent 40%, rgba(0,0,0,.55) 100%); }
+    .js-jf-stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2.4vmin; animation: js-jf-settle 1.9s cubic-bezier(.2,.8,.2,1) both; }
+    .js-jf-mark { width: min(34vmin, 260px); height: auto; overflow: visible; filter: drop-shadow(0 0 2.4vmin rgba(0,164,220,.35)); }
+    .js-jf-mark .jf-out { fill-opacity: 0; stroke-width: 7; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round;
+      animation: js-jf-draw .8s cubic-bezier(.6,0,.3,1) .1s forwards, js-jf-fill .45s ease .7s forwards; }
+    .js-jf-mark .jf-in { transform-origin: 256px 290px; transform: scale(0); animation: js-jf-pop .55s cubic-bezier(.3,1.6,.5,1) .85s forwards; }
+    .js-jf-word { font: 600 min(9vmin, 64px)/1 "Quicksand", "Nunito", "Avenir Next", "Segoe UI", sans-serif; letter-spacing: .02em; color: #fff;
+      opacity: 0; transform: translateY(1.2vmin); animation: js-jf-word .55s ease 1.05s forwards; }
+    @keyframes js-jf-glow { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); } 45% { opacity: 1; } 100% { opacity: .75; transform: translate(-50%, -50%) scale(1); } }
+    @keyframes js-jf-draw { to { stroke-dashoffset: 0; } }
+    @keyframes js-jf-fill { to { fill-opacity: 1; stroke-width: 0; } }
+    @keyframes js-jf-pop { to { transform: scale(1); } }
+    @keyframes js-jf-word { to { opacity: 1; transform: none; } }
+    @keyframes js-jf-settle { 0% { transform: scale(.94); } 100% { transform: scale(1); } }
+    html.js-lite .js-intro-jellyfin .js-jf-mark { filter: none; }
+    @media (prefers-reduced-motion: reduce) { .js-jf-mark .jf-out, .js-jf-mark .jf-in, .js-jf-word { animation: none !important; fill-opacity: 1; transform: none; opacity: 1; stroke-dashoffset: 0; } }
+    .js-switcher svg.js-sw-logo { display: block; }
     .js-intro-generic .js-intro-fx::before {
       content: ""; position: absolute; top: 0; bottom: 0; width: 35%;
       background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--js-intro-c1) 60%, transparent), transparent);
@@ -2441,7 +2476,7 @@
   // the built-in animation, shown until the page is ready (about two seconds)
   const playIntroAnim = (svc) => {
     document.querySelector('.js-intro')?.remove();
-    const k = brandKeyFor(svc) || 'generic';
+    const k = svc.Key === 'jellyfin' ? 'jellyfin' : (brandKeyFor(svc) || 'generic');
     const b = BRANDS[k] || {};
     const el = document.createElement('div');
     el.className = `js-intro js-intro-${k}`;
@@ -2453,22 +2488,25 @@
         return `<i style="background:${c};color:${c};--dx:${Math.round(Math.cos(a) * 30)}vmin;--dy:${Math.round(Math.sin(a) * 30)}vmin;animation-delay:${0.15 + i * 0.05}s"></i>`;
       }).join('')
       : '';
-    el.innerHTML = `<div class="js-intro-fx">${feathers}</div>${svc.Logo
+    el.innerHTML = k === 'jellyfin'
+      ? `<div class="js-intro-fx"></div><div class="js-jf-stage">${jfSvg('js-jf-mark', false)}<div class="js-jf-word">jellyfin</div></div>`
+      : `<div class="js-intro-fx">${feathers}</div>${svc.Logo
       ? `<img class="js-intro-logo" src="${esc(svc.Logo)}" alt="">`
       : `<div class="js-intro-name">${esc(svc.Name)}</div>`}`;
+    if (k === 'jellyfin') el.style.setProperty('--js-intro-bg', '#07070d');
     document.body.appendChild(el);
     const started = performance.now();
     let ended = false;
     const done = () => {
       if (ended) return;
       ended = true;
-      const wait = Math.max(0, 1600 - (performance.now() - started));
+      const wait = Math.max(0, (k === 'jellyfin' ? 1950 : 1600) - (performance.now() - started));
       setTimeout(() => {
         el.classList.add('out');
         setTimeout(() => el.remove(), 400);
       }, wait);
     };
-    setTimeout(done, 2200); // about two seconds at most, even if the page is still loading
+    setTimeout(done, k === 'jellyfin' ? 2300 : 2200); // about two seconds at most, even if the page is still loading
     return done;
   };
 
@@ -2487,7 +2525,7 @@
       <div class="cardBox" style="${SW_FIT}">
         <div class="cardScalable" style="${SW_FIT}">
           <a class="cardImageContainer cardContent itemAction js-sw-tab" style="${SW_TAB}" href="${esc(href)}" aria-label="${esc(name)}">
-            ${icon ? `<span class="material-icons js-sw-icon">${icon}</span>` : logo ? `<img class="js-sw-logo" src="${esc(logo)}" alt="" loading="lazy">` : `<span class="js-sw-dot"></span>`}
+            ${icon ? `<span class="material-icons js-sw-icon">${icon}</span>` : logo === JF_LOGO ? jfSvg('js-sw-logo') : logo ? `<img class="js-sw-logo" src="${esc(logo)}" alt="" loading="lazy">` : `<span class="js-sw-dot"></span>`}
             <span class="js-sw-name" style="${SW_TEXT}">${esc(name)}</span>
           </a>
         </div>
