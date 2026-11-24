@@ -173,6 +173,21 @@ public class SeerrClient
         return result;
     }
 
+    /// <summary>Searches movies and shows by name (cached for a day).</summary>
+    /// <param name="query">The name.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Matching movies and shows, best first.</returns>
+    public Task<List<SeerrTitle>> SearchAsync(string query, CancellationToken ct) =>
+        Cached($"search:{query.ToLowerInvariant()}", TimeSpan.FromHours(24), async () =>
+        {
+            using var client = CreateClient();
+            // Seerr rejects some reserved characters unless they're escaped twice over
+            var q = Uri.EscapeDataString(query).Replace("!", "%21", StringComparison.Ordinal).Replace("'", "%27", StringComparison.Ordinal)
+                .Replace("(", "%28", StringComparison.Ordinal).Replace(")", "%29", StringComparison.Ordinal).Replace("*", "%2A", StringComparison.Ordinal);
+            var page = await client.GetFromJsonAsync<SeerrPage>($"api/v1/search?query={q}&page=1", JsonOptions, ct).ConfigureAwait(false);
+            return page?.Results?.Where(t => t.MediaType is "movie" or "tv").ToList() ?? [];
+        });
+
     /// <summary>Requests a title with Seerr's default settings.</summary>
     /// <param name="type">"movie" or "tv".</param>
     /// <param name="tmdbId">TMDB id.</param>

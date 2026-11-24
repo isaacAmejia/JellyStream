@@ -73,6 +73,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets what the Top lists rank by: "week" (trending this week), "day" (trending today) or "popular".</summary>
     public string TopSource { get; set; } = "week";
 
+    /// <summary>Gets or sets a value indicating whether Netflix's Top 10 uses Netflix's own published weekly list (falls back to trending).</summary>
+    public bool OfficialNetflixTop10 { get; set; } = true;
+
     /// <summary>Gets or sets how many pages (20 titles each) of trending titles are checked per type.</summary>
     public int TrendingPages { get; set; } = 10;
 

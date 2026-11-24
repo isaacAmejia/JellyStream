@@ -18,6 +18,7 @@ namespace Jellyfin.Plugin.JellyStream.Catalog;
 public class TrendingService
 {
     private readonly SeerrClient _seerr;
+    private readonly NetflixTop10 _netflix;
     private readonly ILogger<TrendingService> _logger;
     private readonly ConcurrentDictionary<string, TrendingList> _lists = new();
     private readonly ConcurrentDictionary<string, Task> _building = new();
@@ -26,10 +27,12 @@ public class TrendingService
     /// Initializes a new instance of the <see cref="TrendingService"/> class.
     /// </summary>
     /// <param name="seerr">Seerr client.</param>
+    /// <param name="netflix">Netflix's official Top 10.</param>
     /// <param name="logger">Logger.</param>
-    public TrendingService(SeerrClient seerr, ILogger<TrendingService> logger)
+    public TrendingService(SeerrClient seerr, NetflixTop10 netflix, ILogger<TrendingService> logger)
     {
         _seerr = seerr;
+        _netflix = netflix;
         _logger = logger;
         if (Plugin.Instance is not null)
         {
@@ -64,9 +67,35 @@ public class TrendingService
             .ToList();
     }
 
+    /// <summary>
+    /// Gets a service's Top list: the service's own published ranking where there is one (Netflix),
+    /// followed by what's trending on it; null when neither is ready.
+    /// </summary>
+    /// <param name="type">"movie" or "tv".</param>
+    /// <param name="service">The service.</param>
+    /// <returns>Titles, best first, or null.</returns>
+    public List<SeerrTitle>? GetTop(string type, ServiceEntry service)
+    {
+        var official = NetflixTop10.IsNetflix(service) ? _netflix.Get(type, service) : null;
+        var trending = Config.TopSource is "day" or "week" ? GetOnService(type, Config.TopSource, service) : null;
+        if (official is null)
+        {
+            return trending;
+        }
+
+        var ids = official.Select(t => t.Id).ToHashSet();
+        return official.Concat((trending ?? []).Where(t => !ids.Contains(t.Id))).ToList();
+    }
+
     /// <summary>Builds the lists in the background (at startup).</summary>
     public void Warm()
     {
+        var netflix = Config.Services.FirstOrDefault(s => s.Enabled && NetflixTop10.IsNetflix(s));
+        if (netflix is not null)
+        {
+            _netflix.Warm(netflix);
+        }
+
         if (!SeerrClient.IsConfigured || Config.TopSource == "popular")
         {
             return;

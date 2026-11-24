@@ -185,9 +185,9 @@ public class JellyStreamController : ControllerBase
         type = NormalizeType(type);
         var count = Math.Clamp(config.TopCount, 1, 20);
         var cards = new List<TitleCard>();
-        if (config.TopSource is "day" or "week" && SeerrClient.IsConfigured)
+        if (SeerrClient.IsConfigured)
         {
-            var trending = _trending.GetOnService(type, config.TopSource, service);
+            var trending = _trending.GetTop(type, service);
             if (trending is not null)
             {
                 cards = ToCards(trending, type);
@@ -226,12 +226,9 @@ public class JellyStreamController : ControllerBase
         foreach (var s in config.Services.Where(s => s.Enabled && s.ProviderIds.Length > 0))
         {
             SeerrTitle? pick = null;
-            if (config.TopSource is "day" or "week")
-            {
-                pick = (_trending.GetOnService("movie", config.TopSource, s) ?? [])
-                    .Concat(_trending.GetOnService("tv", config.TopSource, s) ?? [])
-                    .FirstOrDefault(t => !string.IsNullOrEmpty(t.BackdropPath));
-            }
+            pick = (_trending.GetTop("tv", s) ?? [])
+                .Concat(_trending.GetTop("movie", s) ?? [])
+                .FirstOrDefault(t => !string.IsNullOrEmpty(t.BackdropPath));
 
             if (pick is null)
             {
@@ -280,8 +277,9 @@ public class JellyStreamController : ControllerBase
         var cards = await PopularCardsAsync(service, type, 3, ct).ConfigureAwait(false);
 
         // leave out what the Top row already shows
-        var inTop = Config.TopSource is "day" or "week"
-            ? (_trending.GetOnService(type, Config.TopSource, service) ?? []).Take(count).Select(t => t.Id).ToHashSet()
+        var top = _trending.GetTop(type, service);
+        var inTop = top is not null
+            ? top.Take(count).Select(t => t.Id).ToHashSet()
             : cards.Take(count).Select(c => c.TmdbId).ToHashSet();
         return cards
             .Where(c => c.ItemId is null && !inTop.Contains(c.TmdbId))

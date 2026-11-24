@@ -202,6 +202,10 @@
                         </select>
                         <div class="fieldDescription">Trending uses TMDB's daily/weekly trending list, filtered to each service. If a service has fewer trending titles than the list length, popular titles fill the rest.</div>
                     </div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsOfficialNetflix" /><span>Netflix: use Netflix's official Top 10</span></label>
+                        <div class="fieldDescription checkboxFieldDescription">Netflix's own weekly Top 10 for your region, published each Tuesday. Falls back to the setting above if it can't be loaded. Other services don't publish theirs.</div>
+                    </div>
                     <div class="js-row">
                         <div class="inputContainer">
                             <label class="inputLabel" for="jsTopCount">Top list length</label>
@@ -486,6 +490,7 @@
             $('jsDiagnostics').checked = !!config.Diagnostics;
             $('jsTopCount').value = config.TopCount;
             $('jsTopSource').value = config.TopSource || 'week';
+            $('jsOfficialNetflix').checked = config.OfficialNetflixTop10 !== false;
             $('jsTrendingPages').value = config.TrendingPages || 10;
             $('jsGenreRows').value = config.GenreRows;
             $('jsShowContinue').checked = config.ShowContinueWatching;
@@ -518,6 +523,7 @@
             config.Diagnostics = $('jsDiagnostics').checked;
             config.TopCount = num('jsTopCount', 10, 1, 20);
             config.TopSource = $('jsTopSource').value;
+            config.OfficialNetflixTop10 = $('jsOfficialNetflix').checked;
             config.TrendingPages = num('jsTrendingPages', 10, 1, 25);
             config.GenreRows = num('jsGenreRows', 6, 0, 20);
             config.ShowContinueWatching = $('jsShowContinue').checked;
