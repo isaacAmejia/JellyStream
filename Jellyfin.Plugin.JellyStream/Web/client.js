@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.4';
+  const VERSION = '1.22.5';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1358,66 +1358,80 @@
       animation: js-intro-burst 1.3s cubic-bezier(.2,.9,.25,1) .15s both;
     }
     /* anything else: a sweep of light in the service's color */
-    /* Jellyfin, in glass: the screen frosts over, a glass pane floats up over drifting purple and blue light, the
-       logo draws itself on it and lands with a glint, "Jellyfin" rises; then the glass clears onto the home screen */
+    /* Jellyfin, in liquid glass: the screen frosts over, a glass drop falls and splashes, the logo condenses out of
+       the splash as a piece of glass the light shines through, "Jellyfin" rises; then a ripple runs out from the
+       middle and clears the frost onto the home screen */
+    @property --jf-r { syntax: '<length>'; inherits: true; initial-value: 0px; }
     .js-intro-jellyfin { background: transparent !important; }
-    html:not(.js-lite) .js-intro-jellyfin { -webkit-backdrop-filter: blur(34px) saturate(150%); backdrop-filter: blur(34px) saturate(150%);
+    html:not(.js-lite) .js-intro-jellyfin { -webkit-backdrop-filter: blur(30px) saturate(150%); backdrop-filter: blur(30px) saturate(150%);
       animation: js-jf-frost .45s ease-out both; }
-    .js-intro-jellyfin .js-intro-fx { position: absolute; inset: 0; overflow: hidden; background: rgba(8,8,16,.8); animation: js-jf-tint .45s ease-out both; }
+    .js-intro-jellyfin .js-intro-fx { position: absolute; inset: 0; overflow: hidden; background: rgba(7,7,14,.78); animation: js-jf-tint .45s ease-out both; }
     html.js-lite .js-intro-jellyfin .js-intro-fx { background: #0b0b14; }
     .js-jf-blob { position: absolute; width: 75vmax; height: 75vmax; border-radius: 50%; opacity: 0; }
-    .js-jf-blob.a { left: -20vmax; top: -25vmax; background: radial-gradient(closest-side, rgba(170,92,195,.55), transparent); animation: js-jf-blob-a 2.6s cubic-bezier(.2,.8,.2,1) .05s both; }
-    .js-jf-blob.b { right: -25vmax; bottom: -30vmax; background: radial-gradient(closest-side, rgba(0,164,220,.5), transparent); animation: js-jf-blob-b 2.6s cubic-bezier(.2,.8,.2,1) .1s both; }
-    .js-jf-blob.c { left: 50%; top: 50%; width: 55vmax; height: 55vmax; margin: -27.5vmax; background: radial-gradient(closest-side, rgba(120,110,255,.28), transparent); animation: js-jf-blob-c 2.6s ease .2s both; }
-    .js-jf-pane { position: relative; z-index: 2; box-sizing: border-box; width: clamp(230px, 60vmin, 430px); aspect-ratio: 1 / 1.04; border-radius: 15%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7%; overflow: hidden; isolation: isolate;
-      background: linear-gradient(155deg, rgba(255,255,255,.17), rgba(255,255,255,.06) 42%, rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.22);
-      box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(255,255,255,.08);
-      opacity: 0; animation: js-jf-pane .8s cubic-bezier(.2,.9,.25,1) .22s both; }
-    html:not(.js-lite) .js-jf-pane { -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%); }
-    html.js-lite .js-jf-pane { background: rgba(40,40,58,.92); }
-    .js-jf-glow { position: absolute; z-index: -1; left: 50%; top: 42%; width: 90%; height: 90%; transform: translate(-50%, -50%) scale(.3); border-radius: 50%;
-      background: radial-gradient(closest-side, rgba(170,92,195,.5), rgba(0,164,220,.25) 55%, transparent); opacity: 0;
-      animation: js-jf-glow 1.1s cubic-bezier(.2,.8,.2,1) 1.12s both; }
-    .js-jf-mark { width: 50%; height: auto; overflow: visible; margin-top: 4%; }
-    .js-jf-mark .jf-out { fill-opacity: 0; stroke-width: 10; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round; stroke-linecap: round;
-      filter: drop-shadow(0 0 8px rgba(0,164,220,.8)); animation: js-jf-draw .75s cubic-bezier(.6,0,.25,1) .45s forwards, js-jf-fill .3s ease 1.1s forwards; }
-    .js-jf-mark .jf-in { transform-origin: 256px 300px; transform: scale(0) translateY(40px); opacity: 0;
-      animation: js-jf-pop .6s cubic-bezier(.25,1.7,.45,1) 1.16s forwards; }
-    .js-jf-word { display: flex; font-family: inherit; font-weight: 600; font-size: clamp(30px, 8.4vmin, 60px); line-height: 1; letter-spacing: .01em; color: #fff;
-      text-shadow: 0 2px 14px rgba(0,0,0,.35); }
-    .js-jf-word span { display: inline-block; white-space: pre; opacity: 0; transform: translateY(.45em); filter: blur(5px); animation: js-jf-letter .55s cubic-bezier(.2,.9,.25,1) both; }
-    /* the glint across the glass when the logo lands */
-    .js-jf-sheen { position: absolute; inset: -20%; pointer-events: none; transform: translateX(-120%) rotate(18deg);
-      background: linear-gradient(90deg, transparent 38%, rgba(255,255,255,.08) 44%, rgba(255,255,255,.38) 50%, rgba(255,255,255,.08) 56%, transparent 62%);
-      animation: js-jf-sheen 1s cubic-bezier(.45,0,.2,1) 1.2s both; }
+    .js-jf-blob.a { left: -18vmax; top: -24vmax; background: radial-gradient(closest-side, rgba(170,92,195,.5), transparent); animation: js-jf-blob-a 2.6s cubic-bezier(.2,.8,.2,1) .05s both; }
+    .js-jf-blob.b { right: -24vmax; bottom: -30vmax; background: radial-gradient(closest-side, rgba(0,164,220,.45), transparent); animation: js-jf-blob-b 2.6s cubic-bezier(.2,.8,.2,1) .1s both; }
+    .js-jf-blob.c { left: 50%; top: 44%; width: 60vmin; height: 60vmin; margin: -30vmin; background: radial-gradient(closest-side, rgba(150,120,255,.35), rgba(0,164,220,.12) 60%, transparent);
+      animation: js-jf-blob-c 1.4s cubic-bezier(.2,.8,.2,1) .85s both; }
+    .js-jf-stage { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 3.2vmin; margin-top: -5vmin; }
+    /* the drop */
+    .js-jf-drop { position: absolute; left: 50%; top: calc(min(36vmin, 300px) * .55); width: 7vmin; height: 7vmin; margin: -3.5vmin; border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.95), rgba(255,255,255,.15) 26%, rgba(170,92,195,.25) 62%, rgba(0,164,220,.55));
+      box-shadow: inset 0 0 1.2vmin rgba(255,255,255,.55), inset -.6vmin -.8vmin 1.4vmin rgba(0,164,220,.5), 0 .8vmin 2.4vmin rgba(0,0,0,.35);
+      opacity: 0; animation: js-jf-drop .9s cubic-bezier(.55,0,.85,.35) .05s both; }
+    html:not(.js-lite) .js-jf-drop { -webkit-backdrop-filter: blur(4px) brightness(1.3); backdrop-filter: blur(4px) brightness(1.3); }
+    .js-jf-ripple { position: absolute; left: 50%; top: calc(min(36vmin, 300px) * .55); width: 10vmin; height: 10vmin; margin: -5vmin; border-radius: 50%;
+      border: .35vmin solid rgba(255,255,255,.7); box-shadow: 0 0 2vmin rgba(120,200,255,.6), inset 0 0 2vmin rgba(170,92,195,.5); opacity: 0;
+      animation: js-jf-ripple 1.1s cubic-bezier(.1,.7,.3,1) .86s both; }
+    .js-jf-ripple.two { animation-delay: 1s; border-width: .2vmin; }
+    /* the glass logo: frosted, tinted glass cut to the logo's shape, with lit edges and a moving shine */
+    .js-jf-glass { position: relative; width: calc(512px * var(--jf-s)); height: calc(512px * var(--jf-s)); opacity: 0;
+      animation: js-jf-form .7s cubic-bezier(.2,.9,.25,1) .88s both; }
+    .js-jf-gl { position: absolute; left: 0; top: 0; width: 512px; height: 512px; transform: scale(var(--jf-s)); transform-origin: 0 0; }
+    .js-jf-body { position: absolute; inset: 0; overflow: hidden;
+      background: linear-gradient(160deg, rgba(255,255,255,.35), transparent 38%), linear-gradient(125deg, rgba(196,110,230,.85), rgba(130,110,250,.6) 48%, rgba(0,175,235,.85)); }
+    .js-jf-body.in { background: linear-gradient(160deg, rgba(255,255,255,.5), transparent 45%), linear-gradient(125deg, rgba(225,160,250,.95), rgba(60,200,250,.9)); animation: js-jf-in .6s cubic-bezier(.25,1.6,.45,1) 1.1s both; transform-origin: 256px 330px; }
+    html:not(.js-lite) .js-jf-body { -webkit-backdrop-filter: blur(16px) saturate(220%) brightness(1.35); backdrop-filter: blur(16px) saturate(220%) brightness(1.35); }
+    html.js-lite .js-jf-body { background: linear-gradient(135deg, #aa5cc3, #00a4dc); }
+    .js-jf-shine { position: absolute; inset: -30%; transform: translateX(-90%) rotate(20deg);
+      background: linear-gradient(90deg, transparent 40%, rgba(255,255,255,.12) 46%, rgba(255,255,255,.7) 50%, rgba(255,255,255,.12) 54%, transparent 60%);
+      animation: js-jf-shine 1.1s cubic-bezier(.45,0,.2,1) 1.15s both; }
+    .js-jf-edge { position: absolute; inset: 0; width: 512px; height: 512px; overflow: visible; filter: drop-shadow(0 0 6px rgba(150,210,255,.6)); }
+    .js-jf-word { display: flex; font-family: inherit; font-weight: 600; font-size: clamp(30px, 8vmin, 64px); line-height: 1; letter-spacing: .01em; color: #fff;
+      text-shadow: 0 0 1.6vmin rgba(150,190,255,.45), 0 2px 10px rgba(0,0,0,.35); }
+    .js-jf-word span { display: inline-block; white-space: pre; opacity: 0; transform: translateY(.4em); filter: blur(6px); animation: js-jf-letter .55s cubic-bezier(.2,.9,.25,1) both; }
     @keyframes js-jf-frost { from { -webkit-backdrop-filter: blur(0) saturate(100%); backdrop-filter: blur(0) saturate(100%); } }
     @keyframes js-jf-tint { from { opacity: 0; } }
     @keyframes js-jf-blob-a { 0% { opacity: 0; transform: translate(-8vmax, -6vmax) scale(.8); } 30% { opacity: 1; } 100% { opacity: 1; transform: translate(6vmax, 5vmax) scale(1); } }
     @keyframes js-jf-blob-b { 0% { opacity: 0; transform: translate(8vmax, 6vmax) scale(.8); } 30% { opacity: 1; } 100% { opacity: 1; transform: translate(-6vmax, -4vmax) scale(1); } }
-    @keyframes js-jf-blob-c { 0% { opacity: 0; transform: scale(.5); } 50% { opacity: 1; } 100% { opacity: .8; transform: scale(1.1); } }
-    @keyframes js-jf-pane { 0% { opacity: 0; transform: translateY(6vmin) scale(.92); } 100% { opacity: 1; transform: none; } }
-    @keyframes js-jf-glow { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 35% { opacity: 1; } 100% { opacity: .55; transform: translate(-50%, -50%) scale(1); } }
-    @keyframes js-jf-draw { to { stroke-dashoffset: 0; } }
-    @keyframes js-jf-fill { to { fill-opacity: 1; stroke-width: 0; } }
-    @keyframes js-jf-pop { 0% { opacity: 0; transform: scale(0) translateY(40px); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+    @keyframes js-jf-blob-c { 0% { opacity: 0; transform: scale(.2); } 30% { opacity: 1; } 100% { opacity: .75; transform: scale(1); } }
+    @keyframes js-jf-drop {
+      0% { opacity: 0; transform: translateY(-55vh) scale(.7, 1.25); }
+      15% { opacity: 1; }
+      88% { opacity: 1; transform: translateY(0) scale(.85, 1.15); }
+      94% { opacity: 1; transform: translateY(0) scale(1.5, .6); }
+      100% { opacity: 0; transform: translateY(0) scale(2.4, .2); } }
+    @keyframes js-jf-ripple { 0% { opacity: 0; transform: scale(.3, .3); } 12% { opacity: 1; } 100% { opacity: 0; transform: scale(5.5); } }
+    @keyframes js-jf-form { 0% { opacity: 0; transform: scale(.55); filter: blur(10px); } 60% { opacity: 1; filter: none; } 100% { opacity: 1; transform: none; filter: none; } }
+    @keyframes js-jf-in { 0% { transform: scale(0); } 100% { transform: none; } }
+    @keyframes js-jf-shine { to { transform: translateX(90%) rotate(20deg); } }
     @keyframes js-jf-letter { to { opacity: 1; transform: none; filter: none; } }
-    @keyframes js-jf-sheen { to { transform: translateX(120%) rotate(18deg); } }
-    /* into the home screen: the pane lifts away and the frosted glass clears */
-    .js-intro-jellyfin.out-jf { pointer-events: none; animation: js-jf-clear .8s cubic-bezier(.4,0,.2,1) forwards; }
-    .js-intro-jellyfin.out-jf .js-intro-fx { animation: js-jf-untint .8s cubic-bezier(.4,0,.2,1) forwards; }
-    .js-intro-jellyfin.out-jf .js-jf-pane { animation: js-jf-lift .6s cubic-bezier(.5,0,.2,1) forwards; }
+    /* into the home screen: a ripple runs out from the logo and the frost clears behind it */
+    .js-intro-jellyfin.out-jf { --jf-r: 0px; pointer-events: none; animation: js-jf-iris .85s cubic-bezier(.55,0,.25,1) forwards;
+      -webkit-mask: radial-gradient(circle at 50% 44%, transparent var(--jf-r), #000 calc(var(--jf-r) + 9vmin));
+      mask: radial-gradient(circle at 50% 44%, transparent var(--jf-r), #000 calc(var(--jf-r) + 9vmin)); }
+    .js-intro-jellyfin.out-jf .js-jf-stage { animation: js-jf-melt .55s cubic-bezier(.5,0,.3,1) forwards; }
     .js-intro-jellyfin.out-jf .js-jf-word span { animation: none; opacity: 1; transform: none; filter: none; }
-    @keyframes js-jf-clear { to { -webkit-backdrop-filter: blur(0) saturate(100%); backdrop-filter: blur(0) saturate(100%); } }
-    @keyframes js-jf-untint { to { opacity: 0; } }
-    @keyframes js-jf-lift { 0% { opacity: 1; transform: none; filter: none; } 100% { opacity: 0; transform: translateY(-3vmin) scale(1.12); filter: blur(10px); } }
-    html.js-lite .js-intro-jellyfin .js-jf-mark .jf-out { filter: none; }
-    html.js-lite .js-jf-sheen, html.js-lite .js-jf-blob.c { display: none; }
+    .js-intro-jellyfin.out-jf::after { content: ""; position: absolute; left: 50%; top: 44%; width: 0; height: 0; border-radius: 50%; pointer-events: none;
+      box-shadow: 0 0 0 .4vmin rgba(255,255,255,.55), 0 0 3vmin .6vmin rgba(120,200,255,.5);
+      animation: js-jf-wave .85s cubic-bezier(.55,0,.25,1) forwards; }
+    @keyframes js-jf-iris { to { --jf-r: 160vmax; } }
+    @keyframes js-jf-wave { from { width: 0; height: 0; margin: 0; opacity: 1; } to { width: 320vmax; height: 320vmax; margin: -160vmax; opacity: .2; } }
+    @keyframes js-jf-melt { to { opacity: 0; transform: scale(1.25); filter: blur(12px); } }
+    html.js-lite .js-jf-edge { filter: none; }
+    html.js-lite .js-jf-shine, html.js-lite .js-jf-ripple.two { display: none; }
     @media (prefers-reduced-motion: reduce) {
-      .js-intro-jellyfin, .js-intro-jellyfin .js-intro-fx, .js-jf-pane, .js-jf-blob, .js-jf-glow, .js-jf-mark .jf-out, .js-jf-mark .jf-in, .js-jf-word span, .js-jf-sheen { animation: none !important; }
-      .js-jf-pane, .js-jf-blob { opacity: 1; } .js-jf-mark .jf-out { fill-opacity: 1; stroke-dashoffset: 0; stroke-width: 0; }
-      .js-jf-mark .jf-in, .js-jf-word span { opacity: 1; transform: none; filter: none; }
+      .js-intro-jellyfin, .js-intro-jellyfin .js-intro-fx, .js-jf-blob, .js-jf-drop, .js-jf-ripple, .js-jf-glass, .js-jf-body.in, .js-jf-shine, .js-jf-word span { animation: none !important; }
+      .js-jf-drop, .js-jf-ripple { display: none; } .js-jf-blob, .js-jf-glass { opacity: 1; } .js-jf-word span { opacity: 1; transform: none; filter: none; }
     }
     .js-switcher svg.js-sw-logo { display: block; }
     .js-intro-generic .js-intro-fx::before {
@@ -2556,8 +2570,15 @@
         n.connect(bp); bp.connect(g); send(g); n.start(t); n.stop(t + dur + .1);
       };
       if (part === 'in') {
-        whoosh(t0 + .15, 260, 3400, 1.05, .26); // the glass frosts over, the arch draws
-        const hit = t0 + 1.18;
+        whoosh(t0 + .05, 300, 2600, .8, .2); // the glass frosts over, the drop falls
+        const splash = t0 + .82;
+        [[700, 1900, 0], [1100, 2600, .09]].forEach(([f0, f1, d]) => { // plip
+          const o = ac.createOscillator(); o.type = 'sine';
+          o.frequency.setValueAtTime(f0, splash + d); o.frequency.exponentialRampToValueAtTime(f1, splash + d + .07);
+          const g = ac.createGain(); env(g, splash + d, d ? .12 : .3, .004, .12);
+          o.connect(g); send(g); o.start(splash + d); o.stop(splash + d + .2);
+        });
+        const hit = t0 + .98;
         // the landing: a deep sub drop with a soft click on top
         const o = ac.createOscillator(); o.type = 'sine';
         o.frequency.setValueAtTime(140, hit); o.frequency.exponentialRampToValueAtTime(42, hit + .55);
@@ -2607,9 +2628,16 @@
       : '';
     el.innerHTML = k === 'jellyfin'
       ? `<div class="js-intro-fx"><i class="js-jf-blob a"></i><i class="js-jf-blob b"></i><i class="js-jf-blob c"></i></div>
-         <div class="js-jf-pane"><div class="js-jf-glow"></div>${jfSvg('js-jf-mark', false)}
-         <div class="js-jf-word">${[...'Jellyfin'].map((ch, i) => `<span style="animation-delay:${(1.38 + i * .045).toFixed(3)}s">${ch}</span>`).join('')}</div>
-         <div class="js-jf-sheen"></div></div>`
+         <div class="js-jf-stage">
+           <i class="js-jf-drop"></i><i class="js-jf-ripple"></i><i class="js-jf-ripple two"></i>
+           <div class="js-jf-glass" style="--jf-s:${(Math.min(Math.min(innerWidth, innerHeight) * .36, 300) / 512).toFixed(4)}">
+             <div class="js-jf-gl"><div class="js-jf-body" style="clip-path:path(evenodd,'${JF_OUT}');-webkit-clip-path:path(evenodd,'${JF_OUT}')"><i class="js-jf-shine"></i></div>
+             <div class="js-jf-body in" style="clip-path:path('${JF_IN}');-webkit-clip-path:path('${JF_IN}')"><i class="js-jf-shine"></i></div>
+             <svg viewBox="0 0 512 512" class="js-jf-edge" aria-hidden="true"><defs><linearGradient id="jsjfe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".5" stop-color="#fff" stop-opacity=".15"/><stop offset="1" stop-color="#bfe9ff" stop-opacity=".7"/></linearGradient></defs>
+               <path d="${JF_OUT}" fill-rule="evenodd" fill="none" stroke="url(#jsjfe)" stroke-width="3"/><path d="${JF_IN}" fill="none" stroke="url(#jsjfe)" stroke-width="3"/></svg></div>
+           </div>
+           <div class="js-jf-word">${[...'Jellyfin'].map((ch, i) => `<span style="animation-delay:${(1.3 + i * .045).toFixed(3)}s">${ch}</span>`).join('')}</div>
+         </div>`
       : `<div class="js-intro-fx">${feathers}</div>${svc.Logo
       ? `<img class="js-intro-logo" src="${esc(svc.Logo)}" alt="">`
       : `<div class="js-intro-name">${esc(svc.Name)}</div>`}`;
@@ -2627,9 +2655,9 @@
           // the logo rushes toward you while the screen opens from the middle onto the home screen
           jfSound('out');
           el.classList.add('out-jf');
-          homeSections()?.animate?.([{ transform: 'translateY(2.5vh) scale(.99)' }, { transform: 'none' }],
-            { duration: 800, easing: 'cubic-bezier(.2,.8,.2,1)' });
-          setTimeout(() => el.remove(), 860);
+          homeSections()?.animate?.([{ transform: 'scale(.97)' }, { transform: 'none' }],
+            { duration: 900, easing: 'cubic-bezier(.2,.8,.2,1)' });
+          setTimeout(() => el.remove(), 900);
           return;
         }
         el.classList.add('out');
