@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.23.4';
+  const VERSION = '1.24.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -660,7 +660,8 @@
     ${DS} .js-nf-ov { display: none; }
 
     /* Continue Watching: wide stills with a progress bar */
-    .js-prog { display: none; }
+    .js-view .js-prog { display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.25); z-index: 2; pointer-events: none; }
+    .js-view .js-prog i { display: block; height: 100%; background: var(--js-c1, #00a4dc); }
     ${DS} .js-cw .js-prog { display: block; position: absolute; left: 6%; right: 6%; bottom: 8%; height: 4px; border-radius: 2px; background: rgba(255,255,255,.28); z-index: 2; }
     ${DS} .js-cw .js-prog i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #0a7cff, #34c8f2); }
     ${DS} .js-cw .cardImageContainer { border-radius: 12px !important; }
@@ -1107,21 +1108,23 @@
     .js-view:has(> .js-amb) > :not(.js-amb) { position: relative; z-index: 1; }
     /* TV / desktop library: the banner stays put at the top showing the selected title; the grid moves under it */
     html .js-view.js-libmode.js-libhero > .js-libview { padding-top: 0; }
-    html .js-view.js-libmode.js-libhero > .js-libview > .js-bb.js-lib-hero { position: fixed !important; top: 0 !important; left: 0; right: 0; height: 56vh !important; min-height: 0 !important;
+    html .js-view.js-libmode.js-libhero > .js-libview > .js-bb.js-lib-hero { position: fixed !important; top: 0 !important; left: 0; right: 0; height: 38vh !important; min-height: 0 !important;
       margin: 0 !important; z-index: 2; pointer-events: auto; }
     html .js-view.js-libhero .js-lib-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 22%; pointer-events: none;
       background: linear-gradient(to bottom, transparent, var(--js-base, #0b0c10)); }
     html .js-view.js-libhero .js-lib-hero .js-bb-slide { transition: opacity .5s ease; }
     html .js-view.js-libhero .js-lib-hero .js-bb-dots, html .js-view.js-libhero .js-lib-hero .js-bb-actions,
     html .js-view.js-libhero .js-lib-hero .js-bb-rank, html .js-view.js-libhero .js-lib-hero .js-hero { display: none !important; }
-    html .js-view.js-libhero .js-lib-hero .js-bb-content { top: auto !important; bottom: 14% !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-content { top: auto !important; bottom: 10% !important; gap: .35em !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-new, html .js-view.js-libhero .js-lib-hero .js-bb-tags, html .js-view.js-libhero .js-lib-hero .js-bb-tag { display: none !important; }
     html .js-view.js-libhero .js-lib-hero .js-bb-link { display: none !important; }
     html.js-lite .js-view.js-libhero .js-lib-hero .js-bb-slide, html.js-lite .js-view.js-libhero .js-lib-body .js-section { transition: none !important; }
     html.js-lite .js-view.js-libhero .js-lib-hero .js-bb-art { animation: none !important; }
-    html .js-view.js-libhero .js-lib-hero .js-bb-logo { max-height: 14vh !important; max-width: 32vw !important; }
-    html .js-view.js-libhero .js-lib-hero .js-bb-title { font-size: clamp(1.6em, 3.2vw, 2.8em) !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-logo { max-height: 9vh !important; max-width: 24vw !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-title { font-size: clamp(1.3em, 2.4vw, 2.1em) !important; margin: 0 !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-overview { font-size: .9em !important; }
     html .js-view.js-libhero .js-lib-hero .js-bb-overview { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 42em; }
-    html .js-view.js-libmode.js-libhero .js-lib-body { position: relative; z-index: 1; margin-top: 56vh; padding-bottom: 45vh; }
+    html .js-view.js-libmode.js-libhero .js-lib-body { position: relative; z-index: 1; margin-top: 38vh; padding-bottom: 55vh; }
     html .js-view.js-libhero .js-lib-body .js-section { transition: opacity .25s ease; }
     html .js-view.js-libhero .js-lib-body .js-section.js-above { opacity: 0 !important; pointer-events: none; }
     /* the way into the library, at the end of each service home */
@@ -1498,7 +1501,11 @@
     @media (min-width: 761px) {
       .js-view .js-lib.overflowBackdropCard { width: var(--js-land-w, clamp(220px, 17vw, 320px)) !important; }
       .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w, clamp(130px, 10.5vw, 200px)) !important; }
+      /* your home's sections (Continue Watching, Next Up) use wide stills, the size Jellyfin gives them */
+      .js-view .js-cw .js-card.overflowBackdropCard { width: var(--js-cw-w, clamp(260px, 21vw, 400px)) !important; min-width: 0 !important; }
     }
+    @media (max-width: 760px) { .js-view .js-cw .js-card.overflowBackdropCard { width: 70vw !important; min-width: 70vw !important; } }
+    .js-view .js-cw .js-card .cardBox { margin-left: var(--js-gap, .3em) !important; margin-right: var(--js-gap, .3em) !important; }
     .js-view .js-lib .cardBox { margin-left: var(--js-gap, .3em) !important; margin-right: var(--js-gap, .3em) !important; }
     /* themes that frame or tint every card don't get to on service pages */
     .js-view .cardBox, .js-view .cardScalable, .js-switcher .card, .js-switcher .cardBox, .js-switcher .cardScalable {
@@ -2460,13 +2467,43 @@
       }));
   };
 
+  // the user's own Jellyfin home: which sections, in what order (My Media is left to Jellyfin), plus Next Up and the
+  // latest titles from each movie / show library. Shared by every service for a few minutes.
+  const loadHomeRows = async () => {
+    if (state.homeRows && Date.now() - state.homeRows.at < 3 * 60 * 1000) return state.homeRows;
+    const A = window.ApiClient;
+    const uid = userId();
+    const opts = { Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', ImageTypeLimit: 1 };
+    const [prefs, user, views] = await Promise.all([
+      A.getDisplayPreferences?.('usersettings', uid, 'emby').catch(() => null),
+      A.getCurrentUser?.().catch(() => null),
+      A.getUserViews?.({}, uid).then((r) => r?.Items || []).catch(() => []) || [],
+    ]);
+    const cp = prefs?.CustomPrefs || {};
+    const defaults = ['smalllibrarytiles', 'resume', 'resumeaudio', 'resumebook', 'livetv', 'nextup', 'latestmedia', 'none', 'none', 'none'];
+    const order = [...new Set(defaults.map((d, i) => cp[`homesection${i}`] || d))].filter((x) => ['resume', 'nextup', 'latestmedia'].includes(x));
+    const excluded = user?.Configuration?.LatestItemsExcludes || [];
+    const libs = (views || []).filter((v) => ['movies', 'tvshows'].includes(v.CollectionType) && !excluded.includes(v.Id));
+    const [nextup, latest] = await Promise.all([
+      order.includes('nextup') && A.getNextUpEpisodes
+        ? A.getNextUpEpisodes({ UserId: uid, Limit: 60, ...opts }).then((r) => r?.Items || []).catch(() => [])
+        : [],
+      order.includes('latestmedia') && A.getLatestItems
+        ? Promise.all(libs.map((v) => A.getLatestItems({ UserId: uid, ParentId: v.Id, Limit: 60, GroupItems: true, ...opts })
+          .then((items) => ({ name: v.Name, items: items || [] })).catch(() => ({ name: v.Name, items: [] }))))
+        : [],
+    ]);
+    state.homeRows = { at: Date.now(), order: order.length ? order : ['resume', 'nextup', 'latestmedia'], nextup, latest };
+    return state.homeRows;
+  };
+
   const loadService = async (svc) => {
     const cfg = state.cfg;
     const cached = state.data.get(svc.Key);
     if (cached && Date.now() - cached.at < 5 * 60 * 1000) return cached;
 
     const safe = (p) => p.catch(() => []);
-    const [topMovies, topShows, library, missMovies, missShows, resume] = await Promise.all([
+    const [topMovies, topShows, library, missMovies, missShows, resume, home] = await Promise.all([
       safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Top?type=movie`)),
       safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Top?type=tv`)),
       safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Library?type=all`)),
@@ -2475,8 +2512,9 @@
       cfg.ShowContinueWatching
         ? safe(window.ApiClient.getResumableItems(userId(), { Limit: 40, Recursive: true, Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', MediaTypes: 'Video' }).then((r) => r.Items || []))
         : [],
+      loadHomeRows().catch(() => ({ order: ['resume', 'nextup', 'latestmedia'], nextup: [], latest: [] })),
     ]);
-    const data = { at: Date.now(), topMovies, topShows, library, missMovies, missShows, resume };
+    const data = { at: Date.now(), topMovies, topShows, library, missMovies, missShows, resume, home };
     state.data.set(svc.Key, data);
     return data;
   };
@@ -3138,7 +3176,7 @@
     libHeroTimer = setTimeout(() => libHeroShow(view, card.dataset.id, card), lite() ? 320 : 140);
   };
   // remotes: the selected line sits just under the banner; lines above it fade away
-  const LIB_LINE = 0.6;
+  const LIB_LINE = 0.42;
   const libPin = (section) => {
     const top = Math.max(0, Math.round(section.getBoundingClientRect().top + scrollY - innerHeight * LIB_LINE));
     if (Math.abs(top - scrollY) > 1) scrollTo({ top, behavior: lite() ? 'auto' : 'smooth' });
@@ -3261,79 +3299,70 @@
     const head = [];
     const body = [];
 
-    if (cfg.ShowContinueWatching) {
-      const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
-      const resume = data.resume.filter((it) => onService.has(norm(it.Id)) || onService.has(norm(it.SeriesId)));
-      const wide = look().cwLandscape;
-      const left = (it) => {
-        const m = Math.round(Math.max(0, (it.RunTimeTicks || 0) - (it.UserData?.PlaybackPositionTicks || 0)) / 6e8);
-        return m <= 0 ? '' : m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''} remaining` : `${m}m remaining`;
-      };
-      // episodes: the episode's own still; movies: thumb art, else a backdrop
-      const still = (it) => {
-        const A = window.ApiClient;
-        const o = (type, tag, id = it.Id) => A.getImageUrl(id, { type, fillWidth: 640, quality: 80, ...(tag ? { tag } : {}) });
-        const urls = [];
-        if (it.Type === 'Episode' && it.ImageTags?.Primary) urls.push(o('Primary', it.ImageTags.Primary));
-        if (it.ImageTags?.Thumb) urls.push(o('Thumb', it.ImageTags.Thumb));
-        if (it.ParentThumbItemId && it.ParentThumbImageTag) urls.push(o('Thumb', it.ParentThumbImageTag, it.ParentThumbItemId));
-        if (it.BackdropImageTags?.[0]) urls.push(o('Backdrop', it.BackdropImageTags[0]));
-        if (it.ParentBackdropItemId && it.ParentBackdropImageTags?.[0]) urls.push(o('Backdrop', it.ParentBackdropImageTags[0], it.ParentBackdropItemId));
-        urls.push(imgUrl(it.SeriesId || it.Id));
-        return urls.join('|');
-      };
-      head.push(section({
-        title: 'Continue Watching',
-        cls: wide ? 'js-cw' : '',
-        cards: resume.map((it) => card(wide ? {
-          id: it.Id,
-          name: it.SeriesName || it.Name,
-          sub: [left(it), it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'}` : ''].filter(Boolean).join(' · '),
-          img: still(it),
-          href: detailsHref(it.Id),
-          type: it.Type,
-          shape: 'landscape',
-          caption: 'below',
-          titled: true,
-          extra: `<span class="js-prog"><i style="width:${Math.min(100, Math.max(2, Math.round(it.UserData?.PlayedPercentage || 0)))}%"></i></span>`,
-        } : {
-          id: it.Id,
-          name: it.SeriesName || it.Name,
-          sub: it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'} · ${it.Name}` : (it.ProductionYear || ''),
-          img: imgUrl(it.SeriesId || it.Id),
-          href: detailsHref(it.Id),
-          type: it.Type,
-        })),
-      }));
+    // The same sections as your Jellyfin home, in your order, holding only what's on this service:
+    // Continue Watching (with how far through you are), Next Up, and the latest from each library.
+    const norm = (id) => String(id || '').replace(/-/g, '').toLowerCase();
+    const onSvc = (it) => onService.has(norm(it.Id)) || onService.has(norm(it.SeriesId));
+    const left = (it) => {
+      const m = Math.round(Math.max(0, (it.RunTimeTicks || 0) - (it.UserData?.PlaybackPositionTicks || 0)) / 6e8);
+      return m <= 0 ? '' : m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''} left` : `${m}m left`;
+    };
+    // episodes: the episode's own still; movies: thumb art, else a backdrop
+    const still = (it) => {
+      const A = window.ApiClient;
+      const o = (type, tag, id = it.Id) => A.getImageUrl(id, { type, fillWidth: 640, quality: 80, ...(tag ? { tag } : {}) });
+      const urls = [];
+      if (it.Type === 'Episode' && it.ImageTags?.Primary) urls.push(o('Primary', it.ImageTags.Primary));
+      if (it.ImageTags?.Thumb) urls.push(o('Thumb', it.ImageTags.Thumb));
+      if (it.ParentThumbItemId && it.ParentThumbImageTag) urls.push(o('Thumb', it.ParentThumbImageTag, it.ParentThumbItemId));
+      if (it.BackdropImageTags?.[0]) urls.push(o('Backdrop', it.BackdropImageTags[0]));
+      if (it.ParentBackdropItemId && it.ParentBackdropImageTags?.[0]) urls.push(o('Backdrop', it.ParentBackdropImageTags[0], it.ParentBackdropItemId));
+      urls.push(imgUrl(it.SeriesId || it.Id));
+      return urls.join('|');
+    };
+    const bar = (it) => {
+      const pct = Math.round(it.UserData?.PlayedPercentage || 0);
+      return pct > 0 && pct < 100 ? `<span class="js-prog" aria-label="${pct}% watched"><i style="width:${Math.max(3, pct)}%"></i></span>` : '';
+    };
+    const epCard = (it, sub) => card({
+      id: it.Id,
+      name: it.SeriesName || it.Name,
+      sub,
+      img: still(it),
+      href: detailsHref(it.Id),
+      type: it.Type,
+      shape: 'landscape',
+      caption: 'below',
+      titled: true,
+      extra: bar(it),
+    });
+    const se = (it) => (it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'}` : '');
+    const mine = [];
+    const home = data.home || { order: ['resume', 'nextup', 'latestmedia'], nextup: [], latest: [] };
+    for (const kind of home.order) {
+      if (kind === 'resume' && cfg.ShowContinueWatching) {
+        const list = data.resume.filter(onSvc);
+        if (list.length) mine.push(section({ title: 'Continue Watching', cls: 'js-cw', cards: list.map((it) => epCard(it, [se(it), left(it)].filter(Boolean).join(' · '))) }));
+      } else if (kind === 'nextup') {
+        const list = (home.nextup || []).filter(onSvc);
+        if (list.length) mine.push(section({ title: 'Next Up', cls: 'js-cw', cards: list.map((it) => epCard(it, [se(it), it.Name].filter(Boolean).join(' · '))) }));
+      } else if (kind === 'latestmedia') {
+        for (const lib of home.latest || []) {
+          const seen = new Set();
+          const cards = [];
+          for (const it of lib.items) {
+            const key = norm(it.SeriesId || it.Id);
+            if (seen.has(key) || !onService.has(key)) continue;
+            seen.add(key);
+            const own = state.lib.get(normId(it.SeriesId || it.Id));
+            cards.push(own ? libraryCard(own).replace('</a>', `${bar(it)}</a>`) : epCard(it, it.ProductionYear || ''));
+          }
+          if (cards.length) mine.push(section({ title: `Latest ${lib.name}`, cards }));
+        }
+      }
     }
-
-    if (cfg.ShowRecentlyAdded) {
-      body.push(section({ title: `New on ${svc.Name}`, cards: data.library.slice(0, 24).map(libraryCard) }));
-    }
-
-    // genre rows alternate between movies and shows, the way the services mix them
-    const gm = groupByGenre(movies, cfg.GenreRows);
-    const gs = groupByGenre(shows, cfg.GenreRows);
-    for (let i = 0; i < Math.max(gm.length, gs.length); i++) {
-      if (gs[i]) body.push(section({ title: `${gs[i].genre} Shows`, cards: gs[i].items.map(libraryCard), attrs: 'data-kind="tv"' }));
-      if (gm[i]) body.push(section({ title: `${gm[i].genre} Movies`, cards: gm[i].items.map(libraryCard), attrs: 'data-kind="movie"' }));
-    }
-    if (cfg.ShowPopularMissing) {
-      body.push(section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)), attrs: 'data-kind="movie"' }));
-      body.push(section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)), attrs: 'data-kind="tv"' }));
-    }
-    if (shows.length) {
-      const az = [...shows].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      body.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard), attrs: 'data-kind="tv" data-seeall="tv"' }));
-    }
-    if (movies.length) {
-      const az = [...movies].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      body.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard), attrs: 'data-kind="movie" data-seeall="movie"' }));
-    }
-
-    // the two Top 10s never sit next to each other: shows near the top, movies a few rows later
-    const filled = body.filter(Boolean);
-    rows.push(...head, topShows, ...filled.slice(0, 3), topMovies, ...filled.slice(3));
+    // the service's themed Top 10s sit among them: shows after the first section, movies a couple further down
+    rows.push(...mine.slice(0, 1), topShows, ...mine.slice(1, 3), topMovies, ...mine.slice(3));
     if (data.library.length) rows.push(browsePanel(svc, data, movies, shows));
 
     const html = rows.join('');
