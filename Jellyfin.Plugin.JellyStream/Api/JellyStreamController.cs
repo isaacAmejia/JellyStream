@@ -210,6 +210,67 @@ public class JellyStreamController : ControllerBase
         return cards.Take(count).ToList();
     }
 
+    /// <summary>For the settings page: where each service's Top 10 comes from and when it last updated.</summary>
+    /// <returns>One row per service and type.</returns>
+    [HttpGet("Admin/TopStatus")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public ActionResult<List<TopStatusRow>> GetTopStatus()
+    {
+        var config = Config;
+        var rows = new List<TopStatusRow>();
+        var count = Math.Clamp(config.TopCount, 1, 20);
+        var window = config.TopSource;
+        var trendingName = window == "day" ? "Trending today (TMDB)" : "Trending this week (TMDB)";
+        var nf = _trending.Netflix.Status();
+
+        foreach (var s in config.Services.Where(s => s.Enabled && s.ProviderIds.Length > 0))
+        {
+            foreach (var type in new[] { "movie", "tv" })
+            {
+                var label = type == "movie" ? "Movies" : "Shows";
+                string? officialNote = null;
+
+                if (NetflixTop10.IsNetflix(s) && config.OfficialNetflixTop10)
+                {
+                    var n = type == "movie" ? nf.Movies : nf.Tv;
+                    var stale = nf.WeekEnding is { } w && DateTime.UtcNow - w > TimeSpan.FromDays(10);
+                    if (nf.Updated is not null && n > 0)
+                    {
+                        var state = nf.Error is not null || stale ? "warn" : n < count ? "warn" : "ok";
+                        var detail = $"Week ending {nf.WeekEnding:MMM d}" + (stale ? " (Netflix hasn't posted a newer week)" : string.Empty)
+                            + (n < count ? $"; {count - n} filled from trending" : string.Empty);
+                        rows.Add(new TopStatusRow(s.Name, label, "Netflix official Top 10", n, nf.Updated, detail, state, nf.Error, nf.FailedAt));
+                        continue;
+                    }
+
+                    // not available: say why, then show what fills in meanwhile
+                    officialNote = nf.Error is not null ? "Netflix's list failed, using trending" : nf.Loading ? "Netflix's list is loading, using trending" : null;
+                }
+
+                if (window is "day" or "week")
+                {
+                    var t = _trending.Status(type, window);
+                    var onService = (_trending.GetOnService(type, window, s) ?? []).Count;
+                    var state = t.Built is null ? (t.Error is not null ? "error" : "waiting") : t.Error is not null || officialNote is not null || onService < count ? "warn" : "ok";
+                    var detail = string.Join("; ", new[]
+                    {
+                        officialNote,
+                        t.Built is null && t.Building ? "Building now" : null,
+                        t.Built is not null && onService < count ? $"{count - onService} filled from popular on {s.Name}" : null,
+                    }.Where(x => x is not null));
+                    rows.Add(new TopStatusRow(s.Name, label, trendingName, onService, t.Built, detail.Length > 0 ? detail : null, state,
+                        t.Error ?? (officialNote is not null ? nf.Error : null), t.Error is not null ? t.FailedAt : nf.FailedAt));
+                }
+                else
+                {
+                    rows.Add(new TopStatusRow(s.Name, label, "Most popular (TMDB, live)", count, null, officialNote ?? "Loaded fresh each time a page opens", officialNote is not null ? "warn" : "ok", officialNote is not null ? nf.Error : null, officialNote is not null ? nf.FailedAt : null));
+                }
+            }
+        }
+
+        return rows;
+    }
+
     /// <summary>The headline title (backdrop) for each service's home screen tile.</summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Service key to backdrop/title.</returns>

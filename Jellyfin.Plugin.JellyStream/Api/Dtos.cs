@@ -142,3 +142,15 @@ public record ProviderInfo(int Id, string Name, string? Logo, int Priority);
 /// <param name="Name">Title.</param>
 /// <param name="Backdrop">Backdrop URL.</param>
 public record FeaturedTitle(string Name, string Backdrop);
+
+/// <summary>How one service's Top 10 (movies or shows) is being filled, and when its source last updated.</summary>
+/// <param name="Service">Service name.</param>
+/// <param name="Type">"Movies" or "Shows".</param>
+/// <param name="Source">Where the list comes from right now.</param>
+/// <param name="Titles">Titles that source has for this service.</param>
+/// <param name="Updated">When that source last loaded successfully (UTC).</param>
+/// <param name="Detail">Extra detail (e.g. the week Netflix's list covers).</param>
+/// <param name="State">"ok", "warn", "error" or "waiting".</param>
+/// <param name="Error">The last error, if the latest attempt failed.</param>
+/// <param name="ErrorAt">When that error happened (UTC).</param>
+public record TopStatusRow(string Service, string Type, string Source, int Titles, DateTime? Updated, string? Detail, string State, string? Error, DateTime? ErrorAt);

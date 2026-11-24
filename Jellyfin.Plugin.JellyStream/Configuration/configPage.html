@@ -8,6 +8,14 @@
 <div id="JellyStreamConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox">
     <style>
+        #JellyStreamConfigPage .js-topstatus table { width: 100%; border-collapse: collapse; font-size: .92em; }
+        #JellyStreamConfigPage .js-topstatus th { text-align: left; font-weight: 600; opacity: .7; padding: .4em .5em; border-bottom: 1px solid rgba(255,255,255,.12); }
+        #JellyStreamConfigPage .js-topstatus td { padding: .45em .5em; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: top; }
+        #JellyStreamConfigPage .js-topstatus .js-dot { display: inline-block; width: .65em; height: .65em; border-radius: 50%; margin-right: .5em; vertical-align: middle; }
+        #JellyStreamConfigPage .js-topstatus .ok { background: #3fb950; } #JellyStreamConfigPage .js-topstatus .warn { background: #d29922; }
+        #JellyStreamConfigPage .js-topstatus .error { background: #f85149; } #JellyStreamConfigPage .js-topstatus .waiting { background: #8b949e; }
+        #JellyStreamConfigPage .js-topstatus small { display: block; opacity: .65; margin-top: .15em; }
+        #JellyStreamConfigPage .js-topstatus .js-err { color: #ff9b94; }
         #JellyStreamConfigPage .js-card {
             background: rgba(255,255,255,.04);
             border: 1px solid rgba(255,255,255,.08);
@@ -225,6 +233,14 @@
                     <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAsUser" /><span>Request as the matching Seerr user (their permissions and limits apply)</span></label></div>
                 </div>
 
+                <!-- Top 10 status -->
+                <div class="js-card">
+                    <h2>Top 10 status</h2>
+                    <p class="js-sub">Where each service's Top 10 comes from and when that source last updated successfully. Amber means it's working with a fallback; red means it isn't loading. Times reset when Jellyfin restarts (the lists reload within a minute or two).</p>
+                    <div id="jsTopStatus" class="js-topstatus">Loading…</div>
+                    <button is="emby-button" type="button" class="raised" id="jsTopStatusRefresh" style="margin-top:.8em"><span>Refresh</span></button>
+                </div>
+
                 <!-- 5. Intros -->
                 <div class="js-card">
                     <h2>5. Intros</h2>
@@ -407,6 +423,7 @@
             }
         });
 
+        $('jsTopStatusRefresh').addEventListener('click', function () { $('jsTopStatus').textContent = 'Loading…'; loadTopStatus(); });
         $('jsAdd').addEventListener('click', function () {
             var id = +$('jsAddPick').value;
             var p = provider(id);
@@ -542,6 +559,28 @@
         // ---- intro videos
         var intros = {};
         var fmtSize = function (n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; };
+        function ago(iso) {
+            if (!iso) return '';
+            var d = new Date(iso), m = Math.round((Date.now() - d.getTime()) / 60000);
+            var rel = m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago';
+            return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (' + rel + ')';
+        }
+
+        function loadTopStatus() {
+            var box = $('jsTopStatus');
+            return ApiClient.getJSON(api('Admin/TopStatus')).then(function (rows) {
+                if (!rows || !rows.length) { box.textContent = 'No services enabled.'; return; }
+                box.innerHTML = '<table><thead><tr><th>Service</th><th>Source</th><th>Titles</th><th>Last updated</th></tr></thead><tbody>' +
+                    rows.map(function (r) {
+                        return '<tr><td><span class="js-dot ' + esc(r.State) + '"></span>' + esc(r.Service) + ' · ' + esc(r.Type) + '</td>' +
+                            '<td>' + esc(r.Source) + (r.Detail ? '<small>' + esc(r.Detail) + '</small>' : '') +
+                            (r.Error ? '<small class="js-err">Last error ' + esc(ago(r.ErrorAt)) + ': ' + esc(r.Error) + '</small>' : '') + '</td>' +
+                            '<td>' + r.Titles + '</td>' +
+                            '<td>' + (r.Updated ? esc(ago(r.Updated)) : (r.State === 'waiting' ? 'Loading…' : '—')) + '</td></tr>';
+                    }).join('') + '</tbody></table>';
+            }, function () { box.textContent = 'Could not load the status.'; });
+        }
+
         function loadIntros() {
             return ApiClient.getJSON(api('Admin/Intros')).then(function (map) { intros = map || {}; }, function () { intros = {}; }).then(renderIntros);
         }
@@ -659,6 +698,7 @@
                 config = c;
                 fill();
                 loadIntros();
+                loadTopStatus();
                 Dashboard.hideLoadingMsg();
                 return refreshStatus().then(function () {
                     if (!config.SeerrUrl) return findSeerr(true);

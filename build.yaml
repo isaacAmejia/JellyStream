@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.18.0.0"
+version: "1.18.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Netflix's Top 10 now comes from Netflix's own published weekly Top 10 for your region, each title
-  checked against TMDB to confirm it streams on Netflix there. Falls back to trending when the list
-  can't be loaded (setting under Service pages). Other services keep the trending-based Top 10.
+  New "Top 10 status" section in the plugin settings: for every service's movie and show Top 10, where
+  it comes from right now (Netflix's official list, trending, or popular), how many titles that source
+  has, when it last updated successfully, and the last error if one failed.

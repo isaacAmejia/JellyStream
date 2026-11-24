@@ -22,6 +22,7 @@ public class TrendingService
     private readonly ILogger<TrendingService> _logger;
     private readonly ConcurrentDictionary<string, TrendingList> _lists = new();
     private readonly ConcurrentDictionary<string, Task> _building = new();
+    private readonly ConcurrentDictionary<string, (DateTime At, string Error)> _failures = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TrendingService"/> class.
@@ -105,6 +106,22 @@ public class TrendingService
         StartBuild("tv", Config.TopSource);
     }
 
+    /// <summary>Gets Netflix's official Top 10 loader (for its status).</summary>
+    public NetflixTop10 Netflix => _netflix;
+
+    /// <summary>When a trending list last built, how many streaming titles it has, and its last error.</summary>
+    /// <param name="type">"movie" or "tv".</param>
+    /// <param name="window">"day" or "week".</param>
+    /// <returns>The status.</returns>
+    public (DateTime? Built, int Titles, bool Building, DateTime? FailedAt, string? Error) Status(string type, string window)
+    {
+        var key = Key(type, window);
+        _lists.TryGetValue(key, out var list);
+        _failures.TryGetValue(key, out var fail);
+        var failed = fail.Error is not null && (list is null || fail.At > list.Built);
+        return (list?.Built, list?.Titles.Count ?? 0, _building.ContainsKey(key), failed ? fail.At : null, failed ? fail.Error : null);
+    }
+
     private static string Key(string type, string window) => $"{type}:{window}:{Config.Region}";
 
     private void StartBuild(string type, string window)
@@ -118,6 +135,7 @@ public class TrendingService
             }
             catch (Exception ex)
             {
+                _failures[key] = (DateTime.UtcNow, ex.Message);
                 _logger.LogWarning(ex, "JellyStream: could not build the trending {Type} list", type);
             }
             finally

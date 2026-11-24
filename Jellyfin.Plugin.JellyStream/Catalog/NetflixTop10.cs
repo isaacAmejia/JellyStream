@@ -33,6 +33,8 @@ public class NetflixTop10
     private readonly ILogger<NetflixTop10> _logger;
     private readonly ConcurrentDictionary<string, Week> _weeks = new();
     private readonly ConcurrentDictionary<string, Task> _building = new();
+    private readonly ConcurrentDictionary<string, (DateTime At, string Error)> _failures = new();
+    private readonly ConcurrentDictionary<string, Week> _lastGood = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NetflixTop10"/> class.
@@ -100,6 +102,16 @@ public class NetflixTop10
         return list.Count > 0 ? list : null;
     }
 
+    /// <summary>The last successful load for the configured country, and the last error since then.</summary>
+    /// <returns>The status.</returns>
+    public (DateTime? Updated, DateTime? WeekEnding, int Movies, int Tv, bool Loading, DateTime? FailedAt, string? Error) Status()
+    {
+        var key = Config.Region.ToUpperInvariant();
+        _lastGood.TryGetValue(key, out var good);
+        _failures.TryGetValue(key, out var fail);
+        return (good?.Built, good?.Ending, good?.Movies.Count ?? 0, good?.Tv.Count ?? 0, _building.ContainsKey(key), fail.Error is null ? null : fail.At, fail.Error);
+    }
+
     /// <summary>Loads the list in the background (at startup).</summary>
     /// <param name="service">The Netflix service entry.</param>
     public void Warm(ServiceEntry service)
@@ -121,6 +133,7 @@ public class NetflixTop10
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "JellyStream: could not load Netflix's official Top 10 for {Country}; using trending instead", country);
+                _failures[country] = (DateTime.UtcNow, ex.Message);
                 _weeks[country] = Week.Failure();
             }
             finally
@@ -136,6 +149,7 @@ public class NetflixTop10
         if (rows.Count == 0)
         {
             _logger.LogInformation("JellyStream: Netflix publishes no Top 10 for {Country}; using trending instead", country);
+            _failures[country] = (DateTime.UtcNow, $"Netflix's Top 10 files have no list for {country}.");
             return Week.Failure();
         }
 
@@ -149,7 +163,9 @@ public class NetflixTop10
             latest,
             movies.Count,
             tv.Count);
-        return new Week(DateTime.UtcNow, latest, movies, tv, false);
+        _failures.TryRemove(country, out _);
+        _lastGood[country] = new Week(DateTime.UtcNow, latest, movies, tv, false);
+        return _lastGood[country];
     }
 
     // Columns (by name, so a reordered file still reads): country_iso2, week, category ("Films"/"TV"),
