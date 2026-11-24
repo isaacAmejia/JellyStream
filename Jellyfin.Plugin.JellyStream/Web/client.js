@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.10';
+  const VERSION = '1.23.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1092,6 +1092,51 @@
     .js-bb-new { display: none; }
     .js-view.js-libmode > .js-bb, .js-view.js-libmode > .js-rows { display: none !important; }
     .js-libview { padding: 5.5em 0 4em; min-height: 100vh; }
+    /* TV / desktop library: the banner stays put at the top showing the selected title; the grid moves under it */
+    html .js-view.js-libmode.js-libhero > .js-libview { padding-top: 0; }
+    html .js-view.js-libmode.js-libhero > .js-libview > .js-bb.js-lib-hero { position: fixed !important; top: 0 !important; left: 0; right: 0; height: 56vh !important; min-height: 0 !important;
+      margin: 0 !important; z-index: 2; pointer-events: auto; }
+    html .js-view.js-libhero .js-lib-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 22%; pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--js-base, #0b0c10)); }
+    html .js-view.js-libhero .js-lib-hero .js-bb-slide { transition: opacity .5s ease; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-dots, html .js-view.js-libhero .js-lib-hero .js-bb-actions,
+    html .js-view.js-libhero .js-lib-hero .js-bb-rank, html .js-view.js-libhero .js-lib-hero .js-hero { display: none !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-content { top: auto !important; bottom: 14% !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-logo { max-height: 14vh !important; max-width: 32vw !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-title { font-size: clamp(1.6em, 3.2vw, 2.8em) !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-overview { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 42em; }
+    html .js-view.js-libmode.js-libhero .js-lib-body { position: relative; z-index: 1; margin-top: 56vh; padding-bottom: 45vh; }
+    html .js-view.js-libhero .js-lib-body .js-section { transition: opacity .25s ease; }
+    html .js-view.js-libhero .js-lib-body .js-section.js-above { opacity: 0 !important; pointer-events: none; }
+    /* the way into the library, at the end of each service home */
+    .js-browse { position: relative; margin: 2.4em 3.3% 3em; padding: 2.2em 0 1.4em; border-radius: 22px; overflow: hidden; isolation: isolate;
+      background: linear-gradient(120deg, color-mix(in srgb, var(--js-accent, #00a4dc) 30%, #0b0c10), #0b0c10 70%);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 30px 60px rgba(0,0,0,.4); }
+    .js-browse-wall { position: absolute; inset: -30% -10% -30% 30%; z-index: -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; transform: rotate(-12deg);
+      opacity: .38; -webkit-mask: linear-gradient(90deg, transparent, #000 45%); mask: linear-gradient(90deg, transparent, #000 45%); }
+    .js-browse-wall i { aspect-ratio: 2 / 3; border-radius: 8px; background: #222 center / cover no-repeat; }
+    html:not(.js-lite) .js-browse-wall { animation: js-browse-drift 60s linear infinite alternate; }
+    @keyframes js-browse-drift { to { transform: rotate(-12deg) translateY(-12%); } }
+    .js-browse-head { padding: 0 2.2em; max-width: 40em; }
+    .js-browse-eyebrow { text-transform: uppercase; letter-spacing: .16em; font-size: .78em; font-weight: 700; color: var(--js-accent, #00a4dc); filter: brightness(1.4); }
+    .js-browse-title { font-size: 2em; font-weight: 800; line-height: 1.1; margin: .25em 0 .2em; color: #fff; }
+    .js-browse-sub { opacity: .75; }
+    .js-browse .js-browse-row .js-scroller { padding: .7em 2.2em .4em !important; }
+    .js-browse-btn { color: #fff !important; text-decoration: none; gap: .1em;
+      background: linear-gradient(150deg, rgba(255,255,255,.16), rgba(255,255,255,.04)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+    html:not(.js-lite) .js-browse-btn { -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+    .js-browse-tile:is(:hover, :focus-within, .show-focus, .focused) .js-browse-btn { transform: scale(1.04); box-shadow: inset 0 0 0 2px #fff, 0 12px 30px rgba(0,0,0,.4);
+      background: linear-gradient(150deg, color-mix(in srgb, var(--js-accent, #00a4dc) 55%, transparent), rgba(255,255,255,.06)) !important; }
+    .js-browse-icon { font-size: 1.9em !important; opacity: .9; margin-bottom: auto; }
+    .js-browse-label { font-size: 1.15em; font-weight: 700; white-space: nowrap; }
+    .js-browse-count { opacity: .7; font-size: .85em; }
+    .js-browse-genres .js-sw-tab { background: rgba(255,255,255,.08) !important; color: #fff !important; }
+    html.js-phone .js-browse { margin: 1.6em 4% 2em; padding-top: 1.6em; border-radius: 18px; }
+    html.js-phone .js-browse-head { padding: 0 1.2em; }
+    html.js-phone .js-browse-title { font-size: 1.45em; }
+    html.js-phone .js-browse .js-browse-row .js-scroller { padding: .6em 1.2em .3em !important; }
+    html.js-phone .js-browse-btn { width: 9.5em !important; height: 6em !important; }
     html.js-phone .js-libview { padding-top: 1em; }
     .js-lib-head { display: flex; align-items: baseline; gap: .9em; padding: 0 3.3%; margin-bottom: .4em; }
     .js-lib-title { margin: 0; font-size: 1.9em; font-weight: 800; color: #fff; }
@@ -1364,7 +1409,8 @@
     .js-jf.diving .js-jf-black { display: none; }
     .js-jf.flying .js-jf-push { animation: none; transform: scale(1.01); }
     .js-jf.flying .jf-sweep { visibility: hidden; }
-    .js-services a.js-jf-landing .js-sw-logo, .js-services a.js-jf-landing .js-sw-name { visibility: hidden !important; }
+    .js-switcher .js-current a.js-sw-tab.js-jf-waiting, .js-services a.js-sw-tab.js-jf-waiting { background: #000 !important; box-shadow: 0 0 0 1px rgba(255,255,255,.12) !important; }
+    .js-services a.js-jf-waiting .js-sw-logo, .js-services a.js-jf-waiting .js-sw-name { visibility: hidden !important; }
     .js-jf-hole { position: absolute; inset: 0; z-index: 0; display: block; }
     .js-jf-bloom { position: absolute; left: 50%; top: 45%; width: 90vmin; height: 90vmin; margin: -45vmin; border-radius: 50%; pointer-events: none; opacity: 0;
       background: radial-gradient(closest-side, rgba(120,80,210,.28), rgba(0,140,210,.1) 55%, transparent); }
@@ -1389,16 +1435,18 @@
     .js-jf.go .js-jf-name { animation: js-jf-name calc(1.2s * var(--jf-k, 1)) cubic-bezier(.4,0,.2,1) calc(1.55s * var(--jf-k, 1)) forwards; }
     /* light chatter: specks wander, then pull together into the logo as the voices converge */
     .js-jf-chatter { position: absolute; left: 50%; top: 55%; width: 0; height: 0; pointer-events: none; }
-    .js-jf-chatter i { position: absolute; width: 12px; height: 12px; margin: -6px; border-radius: 50%; opacity: 0; will-change: transform, opacity;
-      background: radial-gradient(circle, #fff 0 14%, var(--c) 26%, transparent 70%); transform: translate(var(--x), var(--y)); }
-
-    .js-jf.go .js-jf-chatter i { animation: js-jf-chatter calc(1.15s * var(--jf-k, 1)) linear var(--d) forwards; }
-    @keyframes js-jf-chatter {
-      0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(.5); animation-timing-function: cubic-bezier(.35,0,.65,1); }
-      20% { opacity: .85; }
-      55% { opacity: .9; transform: translate(var(--mx), var(--my)) scale(.9); animation-timing-function: cubic-bezier(.6,0,.9,.6); }
-      94% { opacity: 1; }
-      100% { opacity: 0; transform: translate(0, 0) scale(.6); } }
+    .js-jf-chatter b { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotate(var(--a0)); will-change: transform; }
+    /* each speck is a short streak of light trailing behind it as it circles in */
+    .js-jf-chatter i { position: absolute; left: -1.5px; top: -28px; width: 3px; height: 30px; border-radius: 3px; opacity: 0; will-change: transform, opacity;
+      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--c) 55%, transparent) 55%, var(--c) 88%, #fff);
+      transform-origin: 50% 100%; transform: translateX(var(--r)); }
+    html.js-lite .js-jf-chatter i { height: 18px; top: -16px; }
+    .js-jf.go .js-jf-chatter b { animation: js-jf-orbit calc(1.2s * var(--jf-k, 1) - var(--d)) cubic-bezier(.3,0,.8,.55) var(--d) forwards; }
+    .js-jf.go .js-jf-chatter i { animation: js-jf-inward calc(1.2s * var(--jf-k, 1) - var(--d)) cubic-bezier(.45,0,.85,.45) var(--d) forwards,
+      js-jf-speck calc(1.2s * var(--jf-k, 1) - var(--d)) linear var(--d) forwards; }
+    @keyframes js-jf-orbit { to { transform: rotate(var(--a1)); } }
+    @keyframes js-jf-inward { to { transform: translateX(0) scaleY(.3); } }
+    @keyframes js-jf-speck { 0% { opacity: 0; } 14% { opacity: .95; } 92% { opacity: 1; } 100% { opacity: 0; } }
     /* slow beams of light turning behind the logo once it lands */
     .js-jf-rays { position: absolute; left: 50%; top: 55%; width: 420%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(0deg) scale(.6); pointer-events: none; opacity: 0;
       background: repeating-conic-gradient(from 0deg, rgba(170,140,255,.16) 0deg 2.2deg, transparent 2.2deg 13deg, rgba(0,164,220,.12) 13deg 14.6deg, transparent 14.6deg 24deg);
@@ -2153,6 +2201,11 @@
     if (scrollY < 4) document.querySelectorAll('.js-view .js-above').forEach((s) => s.classList.remove('js-above'));
   }, { passive: true });
   const navScroll = (kind, el) => {
+    if (el?.closest?.('.js-libhero .js-libview .js-lib-body')) {
+      if (kind === 'card') { libHeroFollow(el.closest('.card') || el); return false; }
+      if (kind === 'row') { const sec = el.closest('.js-section'); if (sec) { libPin(sec); return true; } }
+      return false;
+    }
     if (heroOn() && el?.closest?.('.js-view .js-rows')) {
       document.documentElement.classList.toggle('js-hero-fixed', heroFixed());
       if (kind === 'card') { heroFollow(el); return false; }
@@ -2456,6 +2509,7 @@
       gone = true;
       el.classList.add('out');
       document.documentElement.classList.remove('js-intro-on');
+      pillsArrive();
       setTimeout(() => { cleanup(); el.remove(); }, 380);
     };
     const fail = (why) => {
@@ -2506,6 +2560,29 @@
   });
   const watchIntros = () => { if (document.body) introWatch.observe(document.body, { childList: true }); };
   if (document.body) watchIntros(); else addEventListener('DOMContentLoaded', watchIntros);
+
+  // As an intro leaves, the pill row comes to life: the current service's pill gives a small pop and the others
+  // rise into place one after another.
+  const pillsArrive = (popCurrent = true, after = 140) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const row = [...document.querySelectorAll('.js-switcher .itemsContainer')].find((r) => r.offsetParent && !r.closest('.js-libview'));
+    if (!row) return;
+    const cards = [...row.querySelectorAll(':scope > .js-sw-card')].filter((c) => {
+      const r = c.getBoundingClientRect();
+      return r.width && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight;
+    });
+    let n = 0;
+    cards.forEach((c) => {
+      const tab = c.querySelector('.js-sw-tab');
+      if (!tab?.animate) return;
+      if (c.classList.contains('js-current')) {
+        if (popCurrent) tab.animate([{ transform: 'scale(.92)' }, { transform: 'scale(1.08)', offset: .55 }, { transform: 'none' }], { duration: 560, delay: 60, easing: 'cubic-bezier(.2,.8,.2,1)' });
+        return;
+      }
+      tab.animate([{ opacity: 0, transform: 'translateY(12px) scale(.94)' }, { opacity: 1, transform: 'none' }],
+        { duration: 480, delay: after + n++ * 50, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+    });
+  };
 
   // the service's intro: its uploaded video, or the built-in animation
   const playIntro = (svc) => {
@@ -2617,6 +2694,18 @@
           depth.gain.setValueAtTime(from * .035, t); depth.gain.linearRampToValueAtTime(from * .02, land - .25); depth.gain.linearRampToValueAtTime(0, land);
           lfo.connect(depth); depth.connect(vo.frequency); lfo.start(t); lfo.stop(land + .05);
         }
+        // the light chatter: little crystalline blips all over the room, getting busier and settling onto the
+        // chord's notes as the specks reach the logo
+        const twinkle = [1174.66, 1318.5, 1479.98, 1760, 1975.5, 2349.3, 2637, 2960, 3520];
+        const settle = [1174.66, 1479.98, 1760, 2349.3, 2960, 3520];
+        for (let i = 0; i < 110; i++) {
+          const p = Math.pow(Math.random(), .6); // busier toward the landing
+          const at = t + .05 + p * (land - t - .08);
+          const f = (p > .75 ? settle : twinkle)[Math.floor(Math.random() * (p > .75 ? settle : twinkle).length)];
+          const len = .09 + Math.random() * .18;
+          const bl = bus(.55, 1.1, (Math.random() * 2 - 1) * (1 - p * .7));
+          osc(i % 3 ? 'sine' : 'triangle', f, at, at + len + .05, [[at, .0001], [at + .004, .13 + p * .1], [at + len, .0001]], bl);
+        }
         // a timpani-like rumble rolling up into the landing
         const rum = noise(1.6 * k); const rl = ac.createBiquadFilter(); rl.type = 'lowpass'; rl.Q.value = 6;
         ramp(rl.frequency, [[land - .9 * k, 55], [land, 140]]);
@@ -2624,7 +2713,7 @@
         rum.connect(rl); rl.connect(rg); rg.connect(bus(1, .6)); rum.start(land - .9 * k); rum.stop(land + .2);
         // sub-bass swell (D1 and D2)
         const sub = bus(1, .25);
-        osc('sine', 36.71, t, end, [[t, .0001], [land, .3], [land + .6, .5], [end, .0001]], sub);
+        osc('sine', 36.71, t, end, [[t, .0001], [land - .35, .02], [land, .3], [land + .6, .5], [end, .0001]], sub);
         osc('triangle', 73.42, t, end, [[t, .0001], [land + .4, .15], [end, .0001]], sub);
         // the landing: a saturated boom, a thud of air, and a crash of light (bright noise in the hall)
         const boom = drive(3); const bg = bus(1, .6); boom.connect(bg);
@@ -2667,12 +2756,12 @@
     const k = lite() ? 1.6 : 1.3; // unhurried, and slower still on small devices like a Raspberry Pi
     const T = { floor: JF_T.floor * k, dive: JF_T.dive * (lite() ? 1.5 : 1.3) };
     const chatter = Array.from({ length: lite() ? 16 : 26 }, (_, i) => {
-      const a = Math.random() * Math.PI * 2;
-      const r = 26 + Math.random() * 34;
-      const b = a + (Math.random() - .5) * 1.4;
-      const r2 = r * (.45 + Math.random() * .3);
+      const a0 = Math.round(Math.random() * 360);
+      const turn = 300 + Math.round(Math.random() * 200);
+      const r = (24 + Math.random() * 30).toFixed(1);
       const c = ['#c08cff', '#5fd0ff', '#ffffff', '#aa5cc3', '#00a4dc'][i % 5];
-      return `<i style="--x:${(Math.cos(a) * r).toFixed(1)}vmin;--y:${(Math.sin(a) * r).toFixed(1)}vmin;--mx:${(Math.cos(b) * r2).toFixed(1)}vmin;--my:${(Math.sin(b) * r2).toFixed(1)}vmin;--c:${c};--d:${(Math.random() * .05 * k).toFixed(2)}s"></i>`;
+      const d = (Math.random() * .18 * k).toFixed(2);
+      return `<b style="--a0:${a0}deg;--a1:${a0 + turn}deg;--d:${d}s"><i style="--r:${r}vmin;--c:${c}"></i></b>`;
     }).join('');
     const el = document.createElement('div');
     el.className = 'js-intro js-jf';
@@ -2706,45 +2795,37 @@
     setTimeout(begin, 500);
 
     const still = lite() || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // the logo and the name fly into the Jellyfin pill on the home screen and become it, while the black lifts
-    const flyToPill = () => {
+    // the black lifts and the big logo dissolves toward you; the Jellyfin pill waits there black and empty,
+    // then its logo and name pop in, and the other pills rise into place
+    const popToPill = () => {
       const pill = [...document.querySelectorAll('.js-services a.js-sw-tab[href="#/home"]')].find((a) => a.offsetParent);
       const icon = pill?.querySelector('.js-sw-logo');
       const label = pill?.querySelector('.js-sw-name');
       if (!icon || !label) return false;
-      const ir = icon.getBoundingClientRect();
-      const nr = label.getBoundingClientRect();
+      const ir = pill.getBoundingClientRect();
       if (!ir.width || ir.bottom < 0 || ir.top > innerHeight || ir.right < 0 || ir.left > innerWidth) return false;
-      const logo = el.querySelector('.js-jf-logo');
-      const name = el.querySelector('.js-jf-name');
-      const lr = logo.getBoundingClientRect();
-      const mr = name.getBoundingClientRect();
-      // the pill's logo sits inside a dark disc: aim for the glyph itself
-      const gx = ir.left + ir.width * (80 / 672);
-      const gy = ir.top + ir.height * (70 / 672);
-      const ls = (ir.width * (512 / 672)) / lr.width;
-      const ns = nr.width / mr.width;
       const D = T.dive;
-      pill.classList.add('js-jf-landing');
+      pill.classList.add('js-jf-waiting');
       el.classList.add('flying');
-      const fly = (node, r, x, y, sc) => node.animate([
-        { transform: 'none', transformOrigin: '0 0' },
-        { transform: `translate(${(x - r.left) * .05}px, ${(y - r.top) * .05 - 6}px) scale(1.03)`, transformOrigin: '0 0', offset: .16 },
-        { transform: `translate(${x - r.left}px, ${y - r.top}px) scale(${sc})`, transformOrigin: '0 0' },
-      ], { duration: D, easing: 'cubic-bezier(.65,0,.2,1)', fill: 'forwards' });
-      fly(logo, lr, gx, gy, ls);
-      fly(name, mr, nr.left, nr.top + (nr.height - mr.height * ns) / 2, ns);
-      el.querySelector('.js-jf-black').animate([{ opacity: 1 }, { opacity: 1, offset: .2 }, { opacity: 0 }], { duration: D, easing: 'ease-in-out', fill: 'forwards' });
+      pillsArrive(false, D * .55 + 160); // the others wait out of sight, then rise in after the Jellyfin pill pops
+      const out = { duration: D * .6, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' };
+      el.querySelector('.js-jf-logo').animate([{ transform: 'none', opacity: 1, filter: 'blur(0)' }, { transform: 'scale(1.08)', opacity: 0, filter: 'blur(6px)' }], out);
+      el.querySelector('.js-jf-name').animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(.3em)' }], out);
+      el.querySelector('.js-jf-black').animate([{ opacity: 1 }, { opacity: 0 }], { duration: D * .75, delay: D * .1, easing: 'ease-in-out', fill: 'forwards' });
       el.querySelector('.js-jf-bloom').animate([{ opacity: 1 }, { opacity: 0 }], { duration: D * .4, fill: 'forwards' });
-      homeSections()?.animate?.([{ transform: 'scale(1.03)', opacity: 0 }, { transform: 'scale(1.03)', opacity: 0, offset: .2 }, { transform: 'none', opacity: 1 }],
-        { duration: D, easing: 'cubic-bezier(.3,0,.2,1)' });
       setTimeout(() => {
-        pill.classList.remove('js-jf-landing');
-        pill.animate?.([{ boxShadow: '0 0 0 0 rgba(0,164,220,.9)' }, { boxShadow: '0 0 0 14px rgba(0,164,220,0)' }], { duration: 700, easing: 'ease-out' });
-        const fade = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' });
-        fade.onfinish = () => el.remove();
-        setTimeout(() => el.remove(), 400);
-      }, D - 40);
+        pill.style.transition = 'background-color .5s ease, box-shadow .5s ease';
+        pill.classList.remove('js-jf-waiting');
+        setTimeout(() => { pill.style.transition = ''; }, 700);
+        const pop = (node, delay) => node.animate([
+          { opacity: 0, transform: 'scale(.4)' },
+          { opacity: 1, transform: 'scale(1.22)', offset: .5 },
+          { opacity: 1, transform: 'none' },
+        ], { duration: 560, delay, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+        pop(icon, 0);
+        pop(label, 70);
+      }, D * .55);
+      setTimeout(() => el.remove(), D + 40);
       return true;
     };
     const exit = () => {
@@ -2752,12 +2833,14 @@
       if (ac && ac.state === 'running') jfScore(ac, ac.currentTime + .02, 'out', k, T);
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
         el.classList.add('out');
+        pillsArrive();
         setTimeout(() => el.remove(), 450);
         return;
       }
-      if (flyToPill()) return;
+      if (popToPill()) return;
       if (still) {
         el.classList.add('out');
+        pillsArrive();
         setTimeout(() => el.remove(), 450);
         return;
       }
@@ -2834,6 +2917,7 @@
       const wait = Math.max(0, 1600 - (performance.now() - started));
       setTimeout(() => {
         el.classList.add('out');
+        pillsArrive();
         setTimeout(() => el.remove(), 400);
       }, wait);
     };
@@ -2868,18 +2952,18 @@
     const cards = [sw('#/home', 'Jellyfin', JF_LOGO, current === 'jellyfin', '#00a4dc')]
       .concat(cfg.Services.map((x) => sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, x.Logo, x.Key === current, tintOf(x))));
     // a service's whole library, filterable
-    if (svc) cards.push(sw('#js-library', `${svc.Name} library`, null, false, null, 'video_library').replace('js-sw-card', 'js-sw-card js-sw-lib'));
     return section({ title: 'Services', cls: 'js-switcher', cards });
   };
 
   // ---------------------------------------------------------------- a service's whole library
   // Everything on the service you can watch, as a grid you can filter (type, genre) and sort. Each grid
   // line is its own row, so remotes (JellyNav) move through it like any other rows.
+  const CHIP_TAB = SW_TAB.replace('height:3em !important;padding:0 1.25em 0 .45em !important;', 'height:2.6em !important;padding:0 1.2em !important;justify-content:center !important;text-decoration:none !important;');
   const chip = (label, on, attrs) => `
-    <div class="card js-sw-card js-chip${on ? ' js-current' : ''}" style="width:auto !important;min-width:max-content !important;flex:0 0 auto !important;height:auto !important;">
-      <div class="cardBox" style="margin:0 .35em 0 0 !important;"><div class="cardScalable" style="position:static !important;padding:0 !important;">
-        <a class="cardImageContainer cardContent itemAction js-sw-tab" href="#" ${attrs} style="position:relative !important;display:inline-flex !important;align-items:center !important;height:2.5em !important;padding:0 1.15em !important;border-radius:999px !important;width:auto !important;white-space:nowrap !important;">
-          <span class="js-sw-name">${esc(label)}</span></a>
+    <div class="card js-sw-card js-chip${on ? ' js-current' : ''}" style="${SW_CARD}height:auto !important;overflow:visible !important;contain:none !important;">
+      <div class="cardBox" style="${SW_FIT}"><div class="cardScalable" style="${SW_FIT}">
+        <a class="cardImageContainer cardContent itemAction js-sw-tab" href="#" ${attrs} style="${CHIP_TAB}">
+          <span class="js-sw-name" style="${SW_TEXT}">${esc(label)}</span></a>
       </div></div>
     </div>`;
   const chipRow = (cards, cls) => `<div class="verticalSection js-section js-switcher js-lib-chips ${cls}"><div class="js-rowwrap"><div class="emby-scroller js-scroller"><div class="itemsContainer scrollSlider focuscontainer-x">${cards.join('')}</div></div></div></div>`;
@@ -2893,8 +2977,12 @@
     if (!lv) {
       lv = document.createElement('div');
       lv.className = 'js-libview';
+      // TV and desktop: Prime-style, the selected title's banner stays at the top while the grid moves under it
+      lv.innerHTML = `${isPhone() ? '' : '<section class="js-bb js-lib-hero" aria-live="polite"></section>'}<div class="js-lib-body"></div>`;
       view.appendChild(lv);
     }
+    view.classList.toggle('js-libhero', !isPhone());
+    const body = lv.querySelector('.js-lib-body');
     const draw = () => {
       const all = data.library;
       const byType = all.filter((i) => libState.type === 'all' || i.Type === libState.type);
@@ -2909,7 +2997,7 @@
       }[libState.sort];
       items = [...items].sort(by);
       const n = (t) => all.filter((i) => t === 'all' || i.Type === t).length;
-      lv.innerHTML = `
+      body.innerHTML = `
         <div class="js-lib-head">
           <h2 class="js-lib-title">${esc(svc.Name)} library</h2>
           <span class="js-lib-count">${items.length} title${items.length === 1 ? '' : 's'}</span>
@@ -2920,7 +3008,8 @@
         ${genres.length ? chipRow([chip('All genres', !libState.genre, 'data-lib="genre" data-v=""')].concat(genres.map((g) => chip(g, libState.genre === g, `data-lib="genre" data-v="${esc(g)}"`))), 'js-lib-genres') : ''}
         <div class="js-lib-grid"></div>
         <div class="js-lib-more"></div>`;
-      stubRows(lv);
+      stubRows(body);
+      if (items[0]) requestAnimationFrame(() => libHeroShow(view, items[0].Id, body.querySelector('.card.js-lib')));
       // lay the titles out in lines that fill the width, a few screens at a time
       const grid = lv.querySelector('.js-lib-grid');
       const probe = document.createElement('div');
@@ -2944,7 +3033,7 @@
         stubRows(grid);
         if (shown >= items.length) io2?.disconnect();
       };
-      const sentinel = lv.querySelector('.js-lib-more');
+      const sentinel = body.querySelector('.js-lib-more');
       const io2 = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { rootMargin: '800px' }) : null;
       more();
       if (io2) io2.observe(sentinel); else while (shown < items.length) more();
@@ -2963,8 +3052,85 @@
     draw();
     scrollTo({ top: 0 });
   };
+  // the library's banner: the selected title, in the service's own banner style
+  let libHeroTimer = 0;
+  const libHeroShow = (view, id, card) => {
+    const hero = view?.querySelector('.js-lib-hero');
+    if (!hero || !id || hero.dataset.id === id) return;
+    const lib = state.lib?.get(normId(id));
+    if (!lib) return;
+    hero.dataset.id = id;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = bbSlide({ n: state.ranks?.get(normId(id))?.n || null, kind: lib.Type, t: { ItemId: lib.Id, Name: lib.Name, Type: lib.Type, Year: lib.Year, LogoTag: lib.LogoTag, BackdropTag: lib.BackdropTag, PrimaryTag: lib.PrimaryTag, Backdrop: ((card?.dataset.wide || '').split('|')[0] || (card?.querySelector('.js-img')?.dataset.src || '').split('|')[0]), Poster: '' } });
+    const slide = tmp.firstElementChild;
+    if (!slide) return;
+    const old = [...hero.querySelectorAll('.js-bb-slide')];
+    hero.appendChild(slide);
+    bbFill(slide);
+    requestAnimationFrame(() => {
+      slide.classList.add('on');
+      old.forEach((o) => { o.classList.remove('on'); o.setAttribute('inert', ''); setTimeout(() => o.remove(), 700); });
+    });
+  };
+  const libHeroFollow = (card) => {
+    const view = card?.closest?.('.js-view.js-libhero');
+    if (!view || !card.dataset.id) return;
+    clearTimeout(libHeroTimer);
+    libHeroTimer = setTimeout(() => libHeroShow(view, card.dataset.id, card), 140);
+  };
+  // remotes: the selected line sits just under the banner; lines above it fade away
+  const LIB_LINE = 0.6;
+  const libPin = (section) => {
+    const top = section.getBoundingClientRect().top + scrollY - innerHeight * LIB_LINE;
+    scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    let above = true;
+    for (const s of section.closest('.js-lib-body').querySelectorAll('.js-section')) {
+      if (s === section) above = false;
+      s.classList.toggle('js-above', above);
+    }
+  };
+  document.addEventListener('mouseover', (e) => {
+    const c = e.target.closest?.('.js-libhero .js-libview .card.js-lib');
+    if (c) libHeroFollow(c);
+  }, { passive: true });
+  document.addEventListener('focusin', (e) => {
+    const c = e.target.closest?.('.js-libhero .js-libview .card.js-lib');
+    if (c) libHeroFollow(c);
+  });
+
+  // The way into a service's whole library: the last thing on its home, built to stand apart from the rows:
+  // a tilted wall of its posters behind big tiles (everything, movies, shows) and its genres.
+  const browseTile = (kind, icon, label, count) => `
+    <div class="card js-browse-tile" style="${SW_CARD}height:auto !important;overflow:visible !important;contain:none !important;">
+      <div class="cardBox" style="${SW_FIT}"><div class="cardScalable" style="${SW_FIT}">
+        <a class="cardImageContainer cardContent itemAction js-browse-btn" href="#" data-browse="${kind}" aria-label="${esc(label)}"
+          style="position:relative !important;inset:auto !important;display:flex !important;flex-direction:column !important;align-items:flex-start !important;justify-content:flex-end !important;width:clamp(11em, 17vw, 17em) !important;height:clamp(6.5em, 9vw, 8.5em) !important;padding:1em 1.2em !important;box-sizing:border-box !important;border-radius:16px !important;aspect-ratio:auto !important;overflow:hidden !important;contain:none !important;">
+          <span class="material-icons js-browse-icon">${icon}</span>
+          <b class="js-browse-label">${esc(label)}</b>
+          <small class="js-browse-count">${count} title${count === 1 ? '' : 's'}</small></a>
+      </div></div>
+    </div>`;
+  const browsePanel = (svc, data, movies, shows) => {
+    const wall = [...data.library].sort(() => Math.random() - .5).slice(0, isPhone() ? 12 : 24)
+      .map((i) => `<i style="background-image:url('${esc(imgUrl(i.Id, i.PrimaryTag))}')"></i>`).join('');
+    const tiles = [browseTile('all', 'apps', `Everything on ${svc.Name}`, data.library.length)];
+    if (movies.length) tiles.push(browseTile('movie', 'movie', 'Movies', movies.length));
+    if (shows.length) tiles.push(browseTile('tv', 'tv', 'Shows', shows.length));
+    const genres = groupByGenre(data.library, 14).map((g) => g.genre);
+    return `<div class="js-browse">
+      <div class="js-browse-wall" aria-hidden="true">${wall}</div>
+      <div class="js-browse-head">
+        <div class="js-browse-eyebrow">The whole library</div>
+        <div class="js-browse-title">Browse everything on ${esc(svc.Name)}</div>
+        <div class="js-browse-sub">${movies.length} movie${movies.length === 1 ? '' : 's'} · ${shows.length} show${shows.length === 1 ? '' : 's'} you can watch now</div>
+      </div>
+      <div class="verticalSection js-section js-browse-row"><div class="js-rowwrap"><div class="emby-scroller js-scroller"><div class="itemsContainer scrollSlider focuscontainer-x">${tiles.join('')}</div></div></div></div>
+      ${genres.length ? `<div class="verticalSection js-section js-browse-row js-browse-genres"><div class="js-rowwrap"><div class="emby-scroller js-scroller"><div class="itemsContainer scrollSlider focuscontainer-x">${genres.map((g) => chip(g, false, `data-browse="genre" data-v="${esc(g)}"`)).join('')}</div></div></div></div>` : ''}
+    </div>`;
+  };
+
   const closeLibrary = (view) => {
-    view.classList.remove('js-libmode');
+    view.classList.remove('js-libmode', 'js-libhero');
     view.querySelector('.js-libview')?.remove();
     scrollTo({ top: 0 });
   };
@@ -3101,11 +3267,19 @@
     // the two Top 10s never sit next to each other: shows near the top, movies a few rows later
     const filled = body.filter(Boolean);
     rows.push(...head, topShows, ...filled.slice(0, 3), topMovies, ...filled.slice(3));
+    if (data.library.length) rows.push(browsePanel(svc, data, movies, shows));
 
     const html = rows.join('');
     renderBillboard(view, svc, data);
     const box = view.querySelector('.js-rows');
     box.onclick = (e) => {
+      const go = e.target.closest('[data-browse]');
+      if (go) {
+        e.preventDefault();
+        e.stopPropagation();
+        openLibrary(view, svc, data, go.dataset.browse === 'genre' ? { genre: go.dataset.v } : { type: go.dataset.browse });
+        return;
+      }
       const t = e.target.closest('[data-seeall] .sectionTitle');
       if (!t) return;
       e.preventDefault();
@@ -3280,18 +3454,27 @@
     bbFill(slides[n]);
     if (slides[(n + 1) % slides.length]) bbFill(slides[(n + 1) % slides.length]); // ready before it's due
   };
+  // the banner keeps rotating unless you're actually using it right now: a mouse resting on it, a phone's
+  // leftover tap or a remote selection sitting on it all stop counting after a few seconds of nothing
+  let bbInputAt = 0;
+  addEventListener('keydown', () => { bbInputAt = Date.now(); }, true);
+  addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') bbInputAt = Date.now(); }, { capture: true, passive: true });
   const bbBusy = (bb) => {
     if (document.hidden || document.documentElement.classList.contains('js-intro-on')) return true;
     if (bb.dataset.focus && (heroFixed() || Date.now() - +bb.dataset.focusAt < 15000)) return true;
-    if (bb.matches(':hover') || bb.contains(document.activeElement)) return true;
+    const b = bb.getBoundingClientRect();
+    if (b.bottom < 0 || b.top > innerHeight) return true; // scrolled away: no point changing it
+    if (Date.now() - bbInputAt > 6000) return false;
+    if (!matchMedia('(pointer: coarse)').matches && bb.matches(':hover')) return true;
+    const ae = document.activeElement;
+    if (ae && ae !== document.body && bb.contains(ae) && ae.matches(':focus-visible')) return true;
     const ring = document.getElementById('__jf_library_focus_ring__');
     if (ring && ring.style.display !== 'none' && ring.style.opacity !== '0') {
-      const r = ring.getBoundingClientRect(), b = bb.getBoundingClientRect();
+      const r = ring.getBoundingClientRect();
       const x = r.left + r.width / 2, y = r.top + r.height / 2;
       if (r.width && x > b.left && x < b.right && y > b.top && y < b.bottom) return true;
     }
-    const b = bb.getBoundingClientRect();
-    return b.bottom < 0 || b.top > innerHeight; // scrolled away: no point changing it
+    return false;
   };
   const renderBillboard = (view, svc, data) => {
     const hero = view.querySelector('.js-hero');
@@ -3619,13 +3802,6 @@
     if (!a || a.closest('.js-libview')) return;
     e.preventDefault();
     e.stopPropagation();
-    if (a.getAttribute('href') === '#js-library') {
-      const view = a.closest('.js-view');
-      const svc = state.cfg?.Services.find((x) => x.Key === view?.dataset.key);
-      const data = svc && state.data.get(svc.Key);
-      if (view && data) openLibrary(view, svc, data);
-      return;
-    }
     const current = serviceKey();
     const heroImg = document.querySelector('.js-view .js-hero img');
 
