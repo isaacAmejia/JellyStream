@@ -244,7 +244,7 @@
                 <!-- 5. Intros -->
                 <div class="js-card">
                     <h2>5. Intros</h2>
-                    <p class="js-sub">Give a service an intro video and it plays, with sound, while that service's page loads. Phones use their own (portrait) video; a phone without one gets the built-in animation. It plays full screen with no player controls. Services without one show the built-in animation. Short clips (a few seconds of 720p or 1080p H.264 MP4) load instantly; they're kept by the browser after the first play and preloaded on the home screen.</p>
+                    <p class="js-sub">Give a service an intro video and it plays, with sound, when you switch to that service (Jellyfin's plays when you switch back to Jellyfin). Phones use their own (portrait) video; a phone without one gets the built-in animation. It plays full screen with no player controls. Services without one show the built-in animation. Short clips (a few seconds of 720p or 1080p H.264 MP4) load instantly; they're kept by the browser after the first play and preloaded on the home screen.</p>
                     <div id="jsIntros"></div>
                 </div>
 
@@ -600,8 +600,9 @@
         function renderIntros() {
             var box = $('jsIntros');
             if (!box || !config) return;
-            var list = (config.Services || []).filter(function (s) { return s.Key; });
-            if (!list.length) { box.innerHTML = '<p class="js-sub">Add a service first.</p>'; return; }
+            // Jellyfin itself first: it plays when you go back to Jellyfin from a service
+            var list = [{ Key: 'jellyfin', Name: 'Jellyfin', Enabled: true, LogoUrl: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="#101018"/><path fill="url(#g)" d="M50 18c-6 0-28 40-25 46s47 6 50 0-19-46-25-46zm0 20c3 0 13 21 11 24s-20 3-22 0 8-24 11-24z"/></svg>') }]
+                .concat((config.Services || []).filter(function (s) { return s.Key && s.Key !== 'jellyfin'; }));
             box.innerHTML = list.map(function (s) {
                 var logo = logoFor(s);
                 return '<div class="js-svc js-intro-row' + (s.Enabled ? '' : ' off') + '">'

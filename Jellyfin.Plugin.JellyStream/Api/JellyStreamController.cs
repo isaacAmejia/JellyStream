@@ -164,7 +164,9 @@ public class JellyStreamController : ControllerBase
             config.ShowContinueWatching,
             config.ShowRecentlyAdded,
             config.ShowPopularMissing && config.ShowMissing && SeerrClient.IsConfigured,
-            config.Diagnostics);
+            config.Diagnostics,
+            _intros.VersionOf("jellyfin"),
+            _intros.VersionOf("jellyfin", "mobile"));
     }
 
     /// <summary>The most popular titles on a service, marked with what you have.</summary>

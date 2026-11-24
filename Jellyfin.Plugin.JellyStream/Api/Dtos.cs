@@ -30,6 +30,8 @@ public record ClientService(string Key, string Name, string? Logo, string Accent
 /// <param name="ShowRecentlyAdded">Show Recently Added.</param>
 /// <param name="ShowPopularMissing">Show Popular to request.</param>
 /// <param name="Diagnostics">Show the diagnostics panel.</param>
+/// <param name="JellyfinIntroVersion">Version of the Jellyfin intro video (TV / desktop), when one is uploaded.</param>
+/// <param name="JellyfinMobileIntroVersion">Version of the Jellyfin phone intro video, when one is uploaded.</param>
 public record ClientConfig(
     List<ClientService> Services,
     bool ShowHomeRow,
@@ -44,7 +46,9 @@ public record ClientConfig(
     bool ShowContinueWatching,
     bool ShowRecentlyAdded,
     bool ShowPopularMissing,
-    bool Diagnostics = false);
+    bool Diagnostics = false,
+    string? JellyfinIntroVersion = null,
+    string? JellyfinMobileIntroVersion = null);
 
 /// <summary>A popular title (in the library or not).</summary>
 /// <param name="TmdbId">TMDB id.</param>

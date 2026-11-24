@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.20.1';
+  const VERSION = '1.21.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -165,6 +165,17 @@
     if (st && typeof st === 'object' && 'jellystream' in st) return st.jellystream || null;
     return new URLSearchParams((location.hash || '').split('?')[1] || '').get(PARAM);
   };
+
+  // Jellyfin itself counts as the main streaming service: a pill of its own, an intro of its own,
+  // and the Home tab opens whichever one (a service or Jellyfin) you picked last on this device
+  const JF_LOGO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="#101018"/><path fill="url(#g)" d="M50 18c-6 0-28 40-25 46s47 6 50 0-19-46-25-46zm0 20c3 0 13 21 11 24s-20 3-22 0 8-24 11-24z"/></svg>');
+  const jellyfin = () => ({
+    Key: 'jellyfin', Name: 'Jellyfin', Logo: JF_LOGO, Accent: '#00a4dc', Movies: 0, Shows: 0,
+    IntroVersion: state.cfg?.JellyfinIntroVersion || null, MobileIntroVersion: state.cfg?.JellyfinMobileIntroVersion || null,
+  });
+  const lastKey = () => `jellystream:last:${userId() || ''}`;
+  const getLast = () => { try { return localStorage.getItem(lastKey()) || 'jellyfin'; } catch { return 'jellyfin'; } };
+  const setLast = (k) => { try { localStorage.setItem(lastKey(), k || 'jellyfin'); } catch { /* private mode */ } };
 
   const lite = () => {
     const mode = state.cfg?.VisualMode || 'auto';
@@ -1065,6 +1076,7 @@
     .js-bb-dot.on { background: #fff; transform: scale(1.25); }
     .js-bb .js-hero { z-index: 4; }
     .js-bb-new { display: none; }
+    html.js-pending .homeSectionsContainer > :not(.js-view), html.js-pending .homeSectionsContainer > .js-services { visibility: hidden !important; }
     html.js-phone.js-service-open, html.js-phone.js-service-open body { overflow-x: hidden !important; overscroll-behavior-x: none; }
     html.js-phone .js-view, html.js-phone .js-services { touch-action: pan-y pinch-zoom; }
     html.js-phone .js-view .js-scroller, html.js-phone .js-services .js-scroller { touch-action: pan-x pan-y pinch-zoom; overscroll-behavior-x: contain; }
@@ -2327,7 +2339,7 @@
   let warming = false;
   const warmIntros = () => {
     if (warming || !state.cfg) return;
-    const list = state.cfg.Services.filter((x) => introVersion(x) && !introBlobs.has(x.Key + introVersion(x)));
+    const list = [jellyfin(), ...state.cfg.Services].filter((x) => introVersion(x) && !introBlobs.has(x.Key + introVersion(x)));
     if (!list.length) return;
     warming = true;
     const next = () => {
@@ -2494,7 +2506,9 @@
     view.className = state.vt ? 'js-view' : 'js-view js-anim';
     view.dataset.key = key;
     sections.appendChild(view);
-    if (svc && state.introKey !== key) state.introDone = playIntro(svc);
+    // intros only mark a switch: reopening the service that's already your home (a reload, coming back) has none
+    if (svc && state.introKey !== key && key !== getLast()) state.introDone = playIntro(svc);
+    if (svc) setLast(key);
     state.introKey = key;
 
     if (!svc) {
@@ -2511,7 +2525,7 @@
           <h1>${esc(svc.Name)}</h1>
           <div class="js-stats">${svc.Movies} movie${svc.Movies === 1 ? '' : 's'} · ${svc.Shows} show${svc.Shows === 1 ? '' : 's'} in your library</div>
         </div>
-        <button type="button" class="js-back">Back to Home</button>
+        <button type="button" class="js-back">Jellyfin</button>
       </div>
       <div class="js-rows"><div class="js-empty">Loading…</div></div>`;
     autoAccent(svc).then((col) => col && view.style.setProperty('--js-accent', col));
@@ -2555,7 +2569,7 @@
     rows.push(section({
       title: 'Services',
       cls: 'js-switcher',
-      cards: [sw('#/home', 'Home', null, false, null, 'arrow_back')].concat(cfg.Services.map((x) =>
+      cards: [sw('#/home', 'Jellyfin', JF_LOGO, false, '#00a4dc')].concat(cfg.Services.map((x) =>
         sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, x.Logo, x.Key === svc.Key, tintOf(x)))),
     }));
 
@@ -3084,7 +3098,7 @@
     if (to.key) {
       const st = { ...base, jellystream: to.key, jsPushed: to.replace ? base.jsPushed : true };
       if (to.replace) history.replaceState(st, ''); else history.pushState(st, '');
-    } else if (base.jsPushed && base.jellystream) {
+    } else if (base.jsPushed && base.jellystream && !to.replace) {
       history.back();
       return;
     } else if (new URLSearchParams((location.hash || '').split('?')[1] || '').get(PARAM)) {
@@ -3137,20 +3151,26 @@
     const heroImg = document.querySelector('.js-view .js-hero img');
 
     if (a.classList.contains('js-back') || a.getAttribute('href') === '#/home') {
-      go({ key: null, from: heroImg, fromKey: current });
+      setLast('jellyfin');
+      if (!current) return;
+      // back to Jellyfin is a switch like any other: its intro plays (inside the press, so with sound)
+      state.introDone = playIntro(jellyfin());
+      state.introKey = 'jellyfin';
+      go({ key: null, from: heroImg, fromKey: current, replace: true });
       return;
     }
     const key = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get(PARAM);
     if (!key || key === current) return;
+    setLast(key);
     // the intro starts right here, inside the click / remote press, so browsers let it play sound
     const opening = state.cfg?.Services.find((x) => x.Key === key);
     if (opening && state.introKey !== key) {
       state.introDone = playIntro(opening);
       state.introKey = key;
     }
-    // switching services replaces the entry, so Back still goes home; opening one adds an entry
+    // the service is now this device's home: it replaces the entry rather than stacking on Jellyfin's
     if (current) go({ key, from: null, replace: true });
-    else navigate({ key });
+    else navigate({ key, replace: true });
   }, true);
 
   // Jellyfin's own Home (header tab, home button, drawer link, tab bars added by other plugins) goes
@@ -3167,8 +3187,8 @@
   };
   document.addEventListener('click', (e) => {
     if (!serviceKey() || !isHomeControl(e.target)) return;
-    diag.add('nav', 'Jellyfin Home pressed: closing the service page');
-    navigate({ key: null });
+    diag.add('nav', 'Jellyfin Home pressed on a service page: staying on it (it is the home now)');
+    scrollTo({ top: 0, behavior: 'smooth' });
   }, true);
 
   // ---------------------------------------------------------------- main loop
@@ -3184,6 +3204,12 @@
       teardown();
       return;
     }
+    // a service is this device's home: keep Jellyfin's own home hidden until it's on screen (no flash)
+    const html = document.documentElement;
+    if (!state.cfg && getLast() !== 'jellyfin' && !html.classList.contains('js-pending')) {
+      html.classList.add('js-pending');
+      setTimeout(() => html.classList.remove('js-pending'), 5000); // never stuck hidden
+    }
     const sections = homeSections();
     if (!sections) return;
 
@@ -3191,7 +3217,17 @@
     try {
       await loadConfig();
       if (!state.cfg) return;
-      const key = serviceKey();
+      let key = serviceKey();
+      const st = history.state && typeof history.state === 'object' ? history.state : {};
+      if (!key) {
+        const last = getLast();
+        if (last !== 'jellyfin' && state.cfg.Services.some((x) => x.Key === last)) {
+          state.introKey = last; // returning to the same home: no intro
+          history.replaceState({ ...st, jellystream: last, jsPushed: false }, '');
+          key = last;
+          diag.add('nav', `Home: opening ${last} (picked last on this device)`);
+        }
+      }
       document.documentElement.classList.toggle('js-service-open', !!key);
       document.documentElement.classList.toggle('js-phone', isPhone());
       const svc = key ? state.cfg.Services.find((x) => x.Key === key) : null;
@@ -3205,12 +3241,16 @@
       if (key) {
         sections.querySelector(':scope > .js-services')?.remove();
         await renderService(sections, key);
+        html.classList.remove('js-pending');
         if (!painted.includes(sections.closest('[data-role="page"], .page, .mainAnimatedPage'))) paintPage(true);
       } else {
         if (painted.length) paintPage(false);
         closeService(sections);
-        state.introKey = null;
+        if (state.introKey !== 'jellyfin') state.introKey = null;
         renderHomeRow(sections);
+        html.classList.remove('js-pending');
+        state.introDone?.();
+        state.introDone = null;
       }
     } finally {
       busy = false;
