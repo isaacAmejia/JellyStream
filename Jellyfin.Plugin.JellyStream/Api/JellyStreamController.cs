@@ -338,7 +338,8 @@ public class JellyStreamController : ControllerBase
                 ImageTag(i, ImageType.Primary),
                 ImageTag(i, ImageType.Backdrop),
                 ImageTag(i, ImageType.Logo),
-                ImageTag(i, ImageType.Thumb)))
+                ImageTag(i, ImageType.Thumb),
+                (i as MediaBrowser.Controller.Entities.Folder)?.DateLastMediaAdded))
             .ToList();
     }
 

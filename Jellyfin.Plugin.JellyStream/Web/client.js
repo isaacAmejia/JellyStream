@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.15.0';
+  const VERSION = '1.16.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -160,24 +160,31 @@
   const BRANDS = {
     netflix: {
       c1: '#e50914', c2: '#b20710', numA: '#141414', numB: '#595959', num: 'outline',
-      base: '#141414', bg: '#141414', shape: 'landscape', caption: 'overlay',
+      // TV: deep navy that lightens toward the bottom; phones: black
+      base: '#11142a', bg: 'linear-gradient(180deg, #0e1121 0%, #131730 40%, #1b1f43 100%)',
+      basePhone: '#000', bgPhone: '#000',
+      shape: 'portrait', caption: 'none',
+      focusExpand: true, badges: true, headerMark: true,
       nav: 'top', tabs: ['Home', 'Shows', 'Movies'],
       font: '"Netflix Sans", "Helvetica Neue", Helvetica, Arial, sans-serif',
-      labels: { tagMovie: 'FILM', tagTv: 'SERIES', play: 'Play', info: 'More Info', request: 'Request' },
+      labels: { tagMovie: 'Movie', tagTv: 'Show', play: 'Play', info: 'More Info', request: 'Request' },
       css: `
-        .js-bb { height: min(68vh, 720px) !important; }
-        .js-bb-tag { color: #e5e5e5; letter-spacing: .32em; font-weight: 700; font-size: .85em; }
-        .js-bb-tag::before { content: "N"; color: #e50914; font-weight: 900; font-size: 1.9em; letter-spacing: 0; margin-right: .3em; vertical-align: -.22em; }
-        .js-bb-title { font-weight: 900 !important; letter-spacing: -.02em; text-transform: uppercase; text-shadow: 0 4px 30px rgba(0,0,0,.6); }
+        .js-bb { height: min(60vh, 640px) !important; min-height: 300px; margin: .4em 3.3% 1.4em !important; border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 2px rgba(255,255,255,.14), 0 24px 50px rgba(0,0,0,.45); transition: box-shadow .2s ease; }
+        .js-bb:is(:hover, :focus-within) { box-shadow: 0 0 0 3px #fff, 0 24px 50px rgba(0,0,0,.5); }
+        .js-bb-shade { background: linear-gradient(0deg, rgba(8,10,22,.92) 0%, rgba(8,10,22,.35) 38%, transparent 60%), linear-gradient(90deg, rgba(8,10,22,.7) 0%, transparent 55%) !important; }
+        .js-bb-content { left: 4% !important; bottom: 9% !important; gap: .6em !important; }
+        .js-bb-tag { color: #fff; font-weight: 700; font-size: .95em; letter-spacing: 0; }
+        .js-bb-tag::before { content: "N"; color: #e50914; font-weight: 900; font-size: 1.6em; margin-right: .35em; vertical-align: -.18em; }
+        .js-bb-title { font-weight: 900 !important; letter-spacing: -.01em; text-shadow: 0 4px 30px rgba(0,0,0,.6); }
         .js-bb-rank::before { content: "TOP\\A 10"; white-space: pre; display: inline-flex; align-items: center; justify-content: center; text-align: center; width: 2.2em; height: 2.2em; font-size: .62em; line-height: .95; font-weight: 900; background: #e50914; color: #fff; border-radius: 3px; margin-right: .6em; vertical-align: middle; }
-        .js-bb-btn { border-radius: 4px !important; font-weight: 700 !important; padding: .55em 1.6em !important; }
+        .js-bb-overview { -webkit-line-clamp: 2 !important; font-size: 1em !important; }
+        .js-bb-btn { border-radius: 999px !important; font-weight: 700 !important; padding: .5em 1.5em !important; height: 2.6em !important; }
         .js-bb-btn.js-primary { background: #fff !important; color: #000 !important; }
-        .js-bb-btn.js-secondary { background: rgba(109,109,110,.7) !important; color: #fff !important; }
-        .js-view .sectionTitle { font-weight: 700 !important; font-size: 1.3em !important; color: #e5e5e5 !important; }
+        .js-bb-btn.js-secondary { background: rgba(255,255,255,.2) !important; color: #fff !important; }
+        .js-view .sectionTitle { font-weight: 700 !important; font-size: 1.35em !important; color: #fff !important; letter-spacing: -.005em; }
         .js-view .js-section .sectionTitle::before { display: none !important; }
-        .js-view .js-lib .cardImageContainer { border-radius: 4px !important; }
-        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.06); box-shadow: 0 0 0 2px #fff, 0 14px 30px rgba(0,0,0,.8) !important; }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 2px #fff, 0 12px 30px rgba(0,0,0,.7) !important; }
+        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; }
+        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: none !important; }
         .js-view .jst-shade { opacity: 0 !important; }
         .js-view .jst-feature::before { background: transparent !important; border: none !important; box-shadow: none !important; }
         .js-view .jst-t10 { background: none !important; -webkit-text-fill-color: #e50914 !important; filter: none !important; }`,
@@ -354,7 +361,7 @@
   // row sizing per service: card widths, spacing, and how wide a Top 10 slot is next to its poster
   const LAND = (w, cw) => `--js-rank-pw: ${w}; --js-rank-ph: calc(var(--js-rank-pw) * .5625); --js-rank-cw: ${cw};`;
   const LAYOUT = {
-    netflix: '--js-land-w: clamp(210px, 15.5vw, 300px); --js-gap: .16em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
+    netflix: '--js-port-w: clamp(140px, 11.2vw, 230px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
     disney: `--js-land-w: clamp(240px, 19vw, 350px); --js-gap: .6em; ${LAND('clamp(240px, 19vw, 340px)', 'calc(var(--js-rank-pw) * 1.12)')}`,
     max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-cw: calc(var(--js-poster-w) * 1.5);',
     prime: `--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; ${LAND('clamp(230px, 17vw, 310px)', 'calc(var(--js-rank-pw) + var(--js-rank-ph) * .66)')}`,
@@ -368,8 +375,8 @@
   const RANKS = {
     // Netflix: huge black numerals outlined in gray, the poster tucked against each one
     netflix: `
-      .js-rank-num { font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif; font-weight: 900; }
-      .js-rank-poster { border-radius: 4px !important; }`,
+      .js-rank-num { font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif !important; font-weight: 700 !important; color: var(--js-base, #11142a) !important; -webkit-text-stroke: 3px rgba(255,255,255,.92) !important; letter-spacing: -.06em !important; }
+      .js-rank-poster { border-radius: 8px !important; box-shadow: none !important; }`,
     // Disney+: wide tiles with a frosted edge; the rank stands over the tile's lower left
     disney: `
       .js-rank-num { z-index: 2 !important; left: 0 !important; bottom: -.1em !important; font-size: calc(var(--js-rank-ph) * .9) !important; font-weight: 800 !important; letter-spacing: -.04em !important; color: #f9f9f9 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 6px 24px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.7); }
@@ -409,8 +416,7 @@
   // how each service dresses its rows: where the title art sits, captions, focus details
   const ROWS = {
     netflix: `
-      .js-tlogo { max-width: 46% !important; max-height: 34% !important; left: 5% !important; bottom: 8% !important; }
-      .js-view .js-section .sectionTitle { font-size: 1.35em !important; }`,
+      .js-tlogo { max-width: 46% !important; max-height: 34% !important; left: 5% !important; bottom: 8% !important; }`,
     disney: `
       .js-tlogo { left: 50% !important; transform: translateX(-50%); object-position: center bottom !important; max-width: 66% !important; max-height: 40% !important; bottom: 11% !important; }
       .js-tshade { background: linear-gradient(0deg, rgba(0,0,0,.5), transparent 55%) !important; }
@@ -439,6 +445,90 @@
       .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer::after { opacity: 1; }`,
   };
 
+  // Netflix, by device: the TV / desktop app (navy, header tabs as text with a pill on the current one,
+  // poster rows whose selected title opens wide) and the phone app (black, a tall poster billboard,
+  // chips for tabs, red badges on posters).
+  const NF = 'html[data-js-brand="netflix"]';
+  const NF_TV = `${NF}:not(.js-phone)`;
+  const NF_PH = `${NF}.js-phone`;
+  const NETFLIX_CSS = `
+    /* header: Jellyfin's tabs become Netflix's top navigation */
+    ${NF}.js-service-open .skinHeader { background: linear-gradient(180deg, rgba(8,10,22,.88) 0%, rgba(8,10,22,.35) 70%, transparent 100%) !important; box-shadow: none !important; }
+    ${NF}.js-service-open .headerTabs, ${NF}.js-service-open .headerTabs .emby-tabs-slider, ${NF}.js-service-open .sectionTabs {
+      background: none !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+    ${NF_TV}.js-service-open .headerTabs .emby-tab-button {
+      font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif !important; font-weight: 600 !important; font-size: 1.05em !important;
+      color: rgba(255,255,255,.88) !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+      border-radius: 999px !important; padding: .5em 1.15em !important; margin: 0 .1em !important; }
+    ${NF_TV}.js-service-open .headerTabs .emby-tab-button-active,
+    ${NF_TV}.js-service-open .headerTabs .emby-tab-button:is(:hover, :focus-visible) { background: rgba(150,160,215,.5) !important; color: #fff !important; }
+    ${NF_PH}.js-service-open .headerTabs .emby-tab-button {
+      font-weight: 600 !important; color: #fff !important; background: rgba(255,255,255,.14) !important;
+      border: 1px solid rgba(255,255,255,.2) !important; border-radius: 10px !important; box-shadow: none !important;
+      padding: .5em 1em !important; margin: 0 .4em 0 0 !important; }
+    ${NF_PH}.js-service-open .headerTabs .emby-tab-button-active { background: rgba(255,255,255,.3) !important; }
+    ${NF}.js-service-open .headerTabs .emby-tab-button::before, ${NF}.js-service-open .headerTabs .emby-tab-button::after { display: none !important; }
+    .js-hdr-mark { display: inline-flex; align-items: center; margin: 0 .5em; }
+    .js-hdr-mark img { height: 2.1em; width: auto; border-radius: 6px; }
+    ${NF_PH} .js-hdr-mark img { height: 1.9em; }
+
+    /* TV / desktop: the selected title opens wide, framed in white, with badges and its details below */
+    ${NF_TV} .js-view .js-lib.overflowPortraitCard, ${NF_TV} .js-view .js-rank-card { transition: width .28s cubic-bezier(.2,.9,.25,1), min-width .28s cubic-bezier(.2,.9,.25,1); }
+    ${NF_TV} .js-view .js-lib .cardPadder { transition: padding-bottom .28s cubic-bezier(.2,.9,.25,1); }
+    ${NF_TV} .js-view .js-rank-poster { transition: width .28s cubic-bezier(.2,.9,.25,1), box-shadow .2s ease !important; }
+    ${NF_TV} .js-view .js-open .cardImageContainer, ${NF_TV} .js-view .js-rank-card.js-open .js-rank-poster {
+      border-radius: 12px !important; box-shadow: 0 0 0 3px #fff, 0 18px 40px rgba(0,0,0,.6) !important; transform: none !important; }
+    ${NF_TV} .js-view .js-lib:not(.js-open):is(:hover) .cardImageContainer { transform: none !important; }
+    .js-nf-wide { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+    .js-nf-info { padding: .1em 3.3% .4em; max-width: min(62%, 900px); min-height: 4.4em; opacity: 0; transition: opacity .2s ease; font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif; }
+    .js-nf-info.on { opacity: 1; }
+    .js-nf-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .1em .5em; font-weight: 700; font-size: .95em; color: #fff; }
+    .js-nf-meta i { font-style: normal; opacity: .7; }
+    .js-nf-ov { margin: .35em 0 0; font-size: 1.02em; line-height: 1.4; color: rgba(255,255,255,.9);
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* badges */
+    .js-nf-pb { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 3; white-space: nowrap;
+      background: #e50914; color: #fff; font: 700 .72em/1 "Netflix Sans", "Helvetica Neue", Arial, sans-serif; padding: .4em .7em; border-radius: 2px 2px 0 0; pointer-events: none; }
+    .js-nf-pb.js-nf-ep { display: flex; flex-direction: column; align-items: stretch; padding: 0; text-align: center; }
+    .js-nf-pb.js-nf-ep { padding-top: .4em; }
+    .js-nf-pb.js-nf-ep b { display: block; margin-top: .4em; padding: .35em .7em; background: #fff; color: #000; font-weight: 700; }
+    .js-nf-top { position: absolute; top: 0; right: 6%; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 1.9em; padding: .2em 0 .25em; background: #e50914; color: #fff; font: 800 .5em/1 "Netflix Sans", Arial, sans-serif; letter-spacing: .02em; border-radius: 0 0 2px 2px; pointer-events: none; }
+    .js-nf-top b { font-size: 1.9em; line-height: .95; letter-spacing: -.04em; }
+    .js-nf-ob { display: none; }
+    ${NF_TV} .js-open .js-nf-pb, ${NF_TV} .js-open .js-nf-top { display: none; }
+    ${NF_TV} .js-open .js-nf-ob { display: flex; position: absolute; right: 3%; bottom: 5%; gap: .45em; z-index: 3; pointer-events: none; }
+    .js-nf-pill { display: inline-flex; align-items: center; gap: .45em; padding: .4em .75em; border-radius: 6px; background: rgba(28,28,34,.86);
+      color: #fff; font: 700 .78em/1 "Netflix Sans", "Helvetica Neue", Arial, sans-serif; white-space: nowrap; }
+    .js-nf-ico-new { width: .8em; height: .8em; border-radius: 50%; background: #e50914; box-shadow: 0 0 0 2px rgba(229,9,20,.35); }
+    .js-nf-ico-top { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; font: 800 .45em/1 Arial, sans-serif; font-style: normal;
+      background: #e50914; color: #fff; width: 2.6em; height: 2.6em; border-radius: 2px; }
+    .js-nf-ico-top b { font-size: 1.7em; line-height: .9; }
+
+    /* phone: black, a tall poster billboard with centred logo, genre line and two buttons */
+    ${NF_PH} .js-view { --js-poster-w: 28vw; --js-rank-cw: calc(28vw * 1.62); }
+    ${NF_PH} .js-view .sectionTitle { font-size: 1.32em !important; font-weight: 800 !important; }
+    ${NF_PH} .js-view .js-lib .cardImageContainer { border-radius: 4px !important; }
+    ${NF_PH} .js-rank-num { color: #000 !important; -webkit-text-stroke: 2.5px #fff !important; }
+    ${NF_PH} .js-rank-poster { border-radius: 4px !important; }
+    ${NF_PH} .js-bb { height: auto !important; min-height: 0 !important; aspect-ratio: .69; margin: .6em 5% 1.4em !important; border-radius: 16px !important;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 20px 40px rgba(0,0,0,.5) !important; }
+    ${NF_PH} .js-bb-art { display: none !important; }
+    ${NF_PH} .js-bb-poster { display: block !important; position: absolute; inset: 0; background-size: cover; background-position: center top; }
+    ${NF_PH} .js-bb-shade { background: linear-gradient(0deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 32%, transparent 52%) !important; }
+    ${NF_PH} .js-bb-content { left: 6% !important; right: 6% !important; width: auto !important; bottom: 4% !important; align-items: center; text-align: center; gap: .75em !important; }
+    ${NF_PH} .js-bb-tag, ${NF_PH} .js-bb-rank, ${NF_PH} .js-bb-overview { display: none !important; }
+    ${NF_PH} .js-bb-title { font-size: 2.3em !important; text-align: center; text-transform: none !important; }
+    ${NF_PH} .js-bb-logo { max-width: 82%; max-height: 18vh; margin: 0 auto; object-position: center bottom; }
+    ${NF_PH} .js-bb-tags { display: flex !important; flex-wrap: wrap; justify-content: center; align-items: center; gap: .15em .5em; color: #fff; font-size: .98em; }
+    ${NF_PH} .js-bb-tags .js-strong { font-weight: 700; }
+    ${NF_PH} .js-bb-tags i { font-style: normal; opacity: .6; }
+    ${NF_PH} .js-bb-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: .6em; width: 100%; margin: 0 !important; }
+    ${NF_PH} .js-bb-btn { width: 100% !important; height: 2.9em !important; border-radius: 8px !important; font-size: 1.02em !important; padding: 0 .5em !important; }
+    ${NF_PH} .js-bb-btn.js-secondary { background: rgba(109,109,110,.55) !important; }
+  `;
+
   const brandKeyFor = (svc) => {
     const id = `${svc.Key} ${svc.Name}`.toLowerCase();
     return Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
@@ -463,7 +553,7 @@
       const rules = (b.css + (RANKS[k] || '') + (ROWS[k] || '')).replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
         `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
       return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} ${LAYOUT[k] || ''} }`;
-    }).join('\n');
+    }).join('\n') + NETFLIX_CSS;
     return el;
   })();
 
@@ -477,13 +567,14 @@
       return;
     }
     const set = (b) => {
+      const phone = isPhone();
       root.setProperty('--js-c1', svc.Accent || b.c1);
       root.setProperty('--js-c2', b.c2);
-      root.setProperty('--js-bg', b.bg);
+      root.setProperty('--js-bg', (phone && b.bgPhone) || b.bg);
       root.setProperty('--jst-num', b.num || 'glass');
       root.setProperty('--jst-num-a', b.numA || b.c1);
       root.setProperty('--jst-num-b', b.numB || b.c2);
-      root.setProperty('--js-base', b.base || '#0b0c10');
+      root.setProperty('--js-base', (phone && b.basePhone) || b.base || '#0b0c10');
       html.dataset.jstNum = b.num || 'glass';
     };
     const known = brandKeyFor(svc);
@@ -754,6 +845,7 @@
       display: flex; flex-direction: column; gap: .75em;
     }
     .js-bb-tag { text-transform: none; }
+    .js-bb-poster, .js-bb-tags { display: none; }
     .js-bb-title { margin: 0; font-size: clamp(2em, 4.2vw, 4.4em); line-height: 1; font-weight: 800; }
     .js-bb-rank { font-weight: 700; font-size: 1.05em; display: flex; align-items: center; }
     .js-bb-overview {
@@ -1328,12 +1420,45 @@
     if (caption === 'overlay' || (shape === 'landscape' && caption !== 'below')) return `<span class="js-ovl">${esc(name)}</span>`;
     return '';
   };
-  const card = ({ id, name, sub, img, href, cls = '', attrs = '', badge = '', type = '', shape = 'portrait', caption = 'below', logo = null, titled = false }) => `
+  // ---- Netflix-style badges, from the library: added in the last two weeks, a show's new episode, Top 10 rank
+  const DAY = 864e5;
+  const normId = (id) => String(id || '').replace(/-/g, '').toLowerCase();
+  const flagsFor = (id) => {
+    const it = state.lib?.get(normId(id));
+    if (!it) return {};
+    const now = Date.now();
+    const added = Date.parse(it.Added) || 0;
+    const last = it.LastAdded ? Date.parse(it.LastAdded) || 0 : 0;
+    const recent = now - added < 14 * DAY;
+    return { recent, newEp: it.Type === 'tv' && !recent && now - last < 14 * DAY };
+  };
+  const badgesFor = (id, inTopRow) => {
+    if (!look().badges) return '';
+    const f = id ? flagsFor(id) : {};
+    const r = id ? state.ranks?.get(normId(id)) : null;
+    const poster = f.recent ? '<span class="js-nf-pb">Recently Added</span>'
+      : f.newEp ? '<span class="js-nf-pb js-nf-ep">New Episode<b>Watch Now</b></span>' : '';
+    const corner = r && !inTopRow ? '<span class="js-nf-top">TOP<b>10</b></span>' : '';
+    const pills = [
+      f.recent ? '<span class="js-nf-pill"><i class="js-nf-ico-new"></i>Recently Added</span>' : '',
+      f.newEp ? '<span class="js-nf-pill"><i class="js-nf-ico-new"></i>New Episode</span>' : '',
+      r ? `<span class="js-nf-pill"><i class="js-nf-ico-top">TOP<b>10</b></i>#${r.n} in ${r.kind === 'tv' ? 'TV Shows' : 'Movies'}</span>` : '',
+    ].join('');
+    return `${poster}${corner}${pills ? `<span class="js-nf-ob">${pills}</span>` : ''}`;
+  };
+  // what a card opens into when selected (services with focusExpand): wide art plus the title's logo
+  const wideAttrs = (id, tags, fallback = '') => {
+    if (!look().focusExpand || !id) return fallback ? `data-wide="${esc(fallback)}"` : '';
+    const w = wideArt(id, tags);
+    return `data-wide="${esc(w.img + (fallback ? `|${fallback}` : ''))}"${w.logo ? ` data-logo="${esc(w.logo)}"` : ''}`;
+  };
+
+  const card = ({ id, name, sub, img, href, cls = '', attrs = '', badge = '', type = '', shape = 'portrait', caption = 'below', logo = null, titled = false, extra = '' }) => `
     <div class="card ${shape === 'landscape' ? 'overflowBackdropCard' : 'overflowPortraitCard'} card-hoverable js-card js-cap-${caption} ${cls}" ${id ? `data-id="${esc(id)}" data-serverid="${esc(serverId())}"` : ''} ${type ? `data-type="${type}"` : ''} ${attrs}>
       <div class="cardBox cardBox-bottompadded">
         <div class="cardScalable">
           <div class="cardPadder ${shape === 'landscape' ? 'cardPadder-overflowBackdrop' : 'cardPadder-overflowPortrait'}"></div>
-          <a class="cardImageContainer coveredImage cardContent itemAction js-img" href="${esc(href)}" aria-label="${esc(name)}" ${img ? `data-src="${esc(img)}"` : ''}>${titleOnArt({ name, shape, caption, logo, titled })}</a>
+          <a class="cardImageContainer coveredImage cardContent itemAction js-img" href="${esc(href)}" aria-label="${esc(name)}" ${img ? `data-src="${esc(img)}"` : ''}>${titleOnArt({ name, shape, caption, logo, titled })}${extra}</a>
           ${badge}
         </div>
         <div class="cardFooter">
@@ -1366,6 +1491,8 @@
       cls: 'js-lib',
       shape: l.shape,
       caption: l.caption,
+      attrs: l.shape === 'portrait' ? wideAttrs(it.Id, it) : '',
+      extra: badgesFor(it.Id, false),
     });
   };
 
@@ -1390,12 +1517,14 @@
       : (owned ? `${imgUrl(t.ItemId, t.PrimaryTag)}|${t.Poster || ''}` : (t.Poster || ''));
     const onArt = land ? titleOnArt({ name: t.Name, shape: 'landscape', caption: look().rankCaption || 'overlay', logo: w?.logo, titled: w?.titled }) : '';
     const status = owned ? '' : (t.Status === 'available' ? 'missing' : t.Status);
+    const opens = land ? '' : (owned ? wideAttrs(t.ItemId, t, t.Backdrop || '') : (look().focusExpand && t.Backdrop ? `data-wide="${esc(`${t.Backdrop}|${t.Poster || ''}`)}"` : ''));
+    const rankPills = look().badges ? (owned ? badgesFor(t.ItemId, true) : '') : '';
     return `
-    <div class="card js-card js-rank-card${land ? ' js-rank-land' : ''}${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
+    <div class="card js-card js-rank-card${land ? ' js-rank-land' : ''}${owned ? '' : ' js-missing'}" style="${RANK_CARD_STYLE}" ${opens} ${owned ? `data-id="${esc(t.ItemId)}" data-serverid="${esc(serverId())}" data-type="${t.Type === 'tv' ? 'Series' : 'Movie'}"` : `data-jstmdb="${t.TmdbId}" data-jstype="${t.Type}" data-jsstatus="${status}"`}>
       <div class="cardBox">
         <div class="cardScalable js-rank-box" style="${RANK_BOX_STYLE}">
           <span class="js-rank-num" aria-hidden="true">${i + 1}</span>
-          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(art)}">${onArt}</a>
+          <a class="cardImageContainer cardContent itemAction js-img js-rank-poster" style="${RANK_POSTER_STYLE}" href="${owned ? esc(detailsHref(t.ItemId)) : '#'}" aria-label="${esc(t.Name)}" data-src="${esc(art)}">${onArt}${rankPills}</a>
           ${owned ? (t.Status === 'partial' ? BADGES.partial : '') : (BADGES[status] || BADGES.missing)}
         </div>
         <div class="cardFooter js-rank-cap"><b>${i + 1}</b><span class="cardText cardText-first"><bdi>${esc(t.Name)}</bdi></span></div>
@@ -1495,6 +1624,141 @@
     sc.scrollBy({ left: e.deltaY, behavior: 'auto' });
     e.preventDefault();
   }, { passive: false });
+
+  // ---------------------------------------------------------------- focus card (Netflix TV style)
+  // The selected title opens into a wide card (its landscape art and logo, white frame, badges) and its
+  // details appear under the row. Follows JellyNav's selection, the keyboard, and the mouse.
+  const focusOn = () => !!look().focusExpand && !isPhone();
+  const EXPANDABLE = '.js-view .js-lib.overflowPortraitCard, .js-view .js-rank-card:not(.js-rank-land)';
+  const WIDE = 2.667; // a portrait card's height as a 16:9 width
+  let nfCard = null;
+  let nfTimer = null;
+  const nfDetailsCache = new Map();
+  const nfDetails = (card) => {
+    const id = card.dataset.id;
+    const key = id || `${card.dataset.jstype}:${card.dataset.jstmdb}`;
+    if (!nfDetailsCache.has(key)) {
+      nfDetailsCache.set(key, Promise.resolve(id
+        ? window.ApiClient.getItem(userId(), id)
+        : getJSON(`Details?type=${card.dataset.jstype}&tmdbId=${card.dataset.jstmdb}`)).catch(() => null));
+    }
+    return nfDetailsCache.get(key);
+  };
+  const metaLine = (d) => {
+    const tv = /^(series|tv)$/i.test(d.Type || '');
+    const parts = [tv ? 'Show' : 'Movie'];
+    if (d.Genres?.[0]) parts.push(d.Genres[0]);
+    if (d.ProductionYear) parts.push(d.ProductionYear);
+    if (tv && d.ChildCount) parts.push(`${d.ChildCount} Season${d.ChildCount === 1 ? '' : 's'}`);
+    if (!tv && d.RunTimeTicks) {
+      const m = Math.round(d.RunTimeTicks / 6e8);
+      parts.push(m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
+    }
+    if (d.OfficialRating) parts.push(d.OfficialRating);
+    return parts.map((x) => `<span>${esc(x)}</span>`).join('<i>•</i>');
+  };
+  const nfClose = () => {
+    const c = nfCard;
+    nfCard = null;
+    if (!c) return;
+    c.classList.remove('js-open');
+    for (const p of ['width', 'min-width', '--js-rank-cw', '--js-rank-pw']) c.style.removeProperty(p);
+    c.querySelector('.cardPadder')?.style.removeProperty('padding-bottom');
+    const art = c.querySelector('.js-img');
+    if (art?.dataset.src && art.style.backgroundImage) art.style.backgroundImage = bgOf(art.dataset.src);
+    art?.querySelector('.js-nf-wide')?.remove();
+    c.closest('.js-section')?.querySelector(':scope > .js-nf-info')?.remove();
+  };
+  const nfReset = () => { nfCard = null; clearTimeout(nfTimer); };
+  const nfOpen = (card, scroll) => {
+    if (!card || card === nfCard || !focusOn() || !card.isConnected) return;
+    nfClose();
+    nfCard = card;
+    card.classList.add('js-open');
+    if (card.classList.contains('js-rank-card')) {
+      card.style.setProperty('--js-rank-pw', `calc(var(--js-poster-w, 150px) * ${WIDE})`);
+      card.style.setProperty('--js-rank-cw', `calc(var(--js-poster-w, 150px) * ${WIDE + 0.62})`);
+    } else {
+      const w = `calc(var(--js-port-w, 180px) * ${WIDE})`;
+      card.style.setProperty('width', w, 'important');
+      card.style.setProperty('min-width', w, 'important');
+      card.querySelector('.cardPadder')?.style.setProperty('padding-bottom', '56.25%', 'important');
+    }
+    const art = card.querySelector('.js-img');
+    if (art && card.dataset.wide) {
+      art.style.backgroundImage = bgOf(card.dataset.wide);
+      if (card.dataset.logo) {
+        art.insertAdjacentHTML('beforeend', `<span class="js-nf-wide"><span class="js-tshade"></span><img class="js-tlogo" src="${esc(card.dataset.logo)}" alt=""></span>`);
+      }
+    }
+    const sec = card.closest('.js-section');
+    if (sec) {
+      const info = document.createElement('div');
+      info.className = 'js-nf-info';
+      info.innerHTML = '<div class="js-nf-meta"></div><p class="js-nf-ov"></p>';
+      sec.appendChild(info);
+      nfDetails(card).then((d) => {
+        if (nfCard !== card || !d) return;
+        info.querySelector('.js-nf-meta').innerHTML = metaLine(d);
+        info.querySelector('.js-nf-ov').textContent = d.Overview || '';
+        info.classList.add('on');
+      });
+    }
+    if (scroll) {
+      // keep the opened card on screen once it has grown
+      setTimeout(() => {
+        const sc = card.closest('.js-scroller');
+        if (!sc || nfCard !== card) return;
+        const r = card.getBoundingClientRect(), b = sc.getBoundingClientRect();
+        const pad = b.width * 0.04;
+        if (r.right > b.right - pad) sc.scrollBy({ left: r.right - b.right + pad, behavior: 'smooth' });
+        else if (r.left < b.left + pad) sc.scrollBy({ left: r.left - b.left - pad, behavior: 'smooth' });
+      }, 260);
+    }
+  };
+  // mouse: hovering a title opens it (after a short rest, so sweeping across a row stays calm)
+  document.addEventListener('mouseover', (e) => {
+    if (!focusOn() || matchMedia('(pointer: coarse)').matches) return;
+    const card = e.target.closest?.(EXPANDABLE);
+    clearTimeout(nfTimer);
+    if (card && card !== nfCard) nfTimer = setTimeout(() => nfOpen(card, false), 140);
+  }, { passive: true });
+  // keyboard focus
+  document.addEventListener('focusin', (e) => {
+    const card = e.target.closest?.(EXPANDABLE);
+    if (card && focusOn()) nfOpen(card, true);
+  });
+  // JellyNav: it draws its own selection ring instead of moving focus, so follow the ring
+  const ringTarget = (ring) => {
+    if (ring.style.display === 'none' || ring.style.visibility === 'hidden') return undefined;
+    const r = ring.getBoundingClientRect();
+    if (!r.width) return undefined;
+    const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((el) => el !== ring && !ring.contains(el));
+    return hit || null;
+  };
+  let ringFrame = 0;
+  const onRing = (ring) => {
+    if (ringFrame) return;
+    ringFrame = requestAnimationFrame(() => {
+      ringFrame = 0;
+      if (!focusOn()) return;
+      clearTimeout(nfTimer);
+      // wait for the ring to settle, then look again (it glides across other cards on its way)
+      nfTimer = setTimeout(() => {
+        const hit = ringTarget(ring);
+        if (hit === undefined) return;
+        const card = hit?.closest?.(EXPANDABLE);
+        if (card) nfOpen(card, true);
+        else if (nfCard && !hit?.closest?.('.js-open')) nfClose();
+      }, 120);
+    });
+  };
+  setInterval(() => {
+    const ring = document.getElementById('__jf_library_focus_ring__');
+    if (!ring || ring.__jsWatched) return;
+    ring.__jsWatched = true;
+    new MutationObserver(() => onRing(ring)).observe(ring, { attributes: true, attributeFilter: ['style', 'class'] });
+  }, 1500);
 
   // ---------------------------------------------------------------- config
   const loadConfig = async (force) => {
@@ -1899,6 +2163,12 @@
     if (!view.isConnected) return;
 
     const onService = new Set(data.library.map((i) => i.Id.replace(/-/g, '').toLowerCase()));
+    state.lib = new Map(data.library.map((i) => [normId(i.Id), i]));
+    state.ranks = new Map();
+    for (const [list, kind] of [[uniqueTop(data.topShows), 'tv'], [uniqueTop(data.topMovies), 'movie']]) {
+      list.forEach((t, i) => { if (t.ItemId && !state.ranks.has(normId(t.ItemId))) state.ranks.set(normId(t.ItemId), { n: i + 1, kind }); });
+    }
+    nfReset();
     const movies = data.library.filter((i) => i.Type === 'movie');
     const shows = data.library.filter((i) => i.Type === 'tv');
     const when = cfg.TopSource === 'day' ? 'Trending today on' : cfg.TopSource === 'week' ? 'Trending this week on' : 'Popular on';
@@ -2012,8 +2282,14 @@
       const rank = data.topShows[0] === pick ? 'TV Shows' : 'Movies';
       const when = state.cfg.TopSource === 'day' ? 'Today' : state.cfg.TopSource === 'week' ? 'This Week' : '';
       const owned = !!pick.ItemId;
+      // phones show the title's poster (portrait) instead of the wide backdrop
+      const poster = owned
+        ? window.ApiClient.getImageUrl(pick.ItemId, { type: 'Primary', fillHeight: 1000, quality: 85, ...(pick.PrimaryTag ? { tag: pick.PrimaryTag } : {}) })
+          + (pick.Poster ? `|${pick.Poster.replace('/w342/', '/w780/')}` : '')
+        : (pick.Poster || '').replace('/w342/', '/w780/');
       bb.innerHTML = `
         <div class="js-bb-art"></div>
+        <div class="js-bb-poster js-img" data-src="${esc(poster)}"></div>
         <div class="js-bb-shade"></div>
         <div class="js-bb-content">
           <div class="js-bb-tag">${esc(isTv ? l.labels.tagTv : l.labels.tagMovie)}</div>
@@ -2021,6 +2297,7 @@
             ? `<img class="js-bb-logo" src="${esc(logoUrl(pick.ItemId, pick.LogoTag))}" alt="${esc(pick.Name)}">`
             : esc(pick.Name)}</h2>
           <div class="js-bb-rank">#1 in ${rank}${when ? ` ${when}` : ''}</div>
+          <div class="js-bb-tags">${esc(isTv ? 'Show' : 'Movie')}</div>
           <p class="js-bb-overview"></p>
           <div class="js-bb-actions">
             ${owned
@@ -2041,10 +2318,29 @@
       getJSON(`Details?type=${pick.Type}&tmdbId=${pick.TmdbId}`).then((d) => {
         const p = bb.querySelector('.js-bb-overview');
         if (p && d?.Overview) p.textContent = d.Overview;
+        const tags = bb.querySelector('.js-bb-tags');
+        if (tags && d?.Genres?.length) {
+          tags.innerHTML = [isTv ? 'Show' : 'Movie', ...d.Genres.slice(0, 3)].map((x, i) => `<span${i ? '' : ' class="js-strong"'}>${esc(x)}</span>`).join('<i>•</i>');
+        }
       }).catch(() => {});
+      const posterEl = bb.querySelector('.js-bb-poster');
+      if (posterEl) posterEl.style.backgroundImage = bgOf(posterEl.dataset.src);
     }
     hero.replaceWith(bb);
     bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
+  };
+
+  // the service's logo in Jellyfin's header (right on TV/desktop, after the title on phones)
+  const headerMark = (svc) => {
+    document.querySelectorAll('.js-hdr-mark').forEach((el) => el.remove());
+    if (!svc || !look().headerMark || !svc.Logo) return;
+    const header = document.querySelector('.skinHeader');
+    const slot = isPhone() ? header?.querySelector('.headerLeft') : header?.querySelector('.headerRight');
+    if (!slot) return;
+    const el = document.createElement('span');
+    el.className = 'js-hdr-mark';
+    el.innerHTML = `<img src="${esc(svc.Logo)}" alt="${esc(svc.Name)}">`;
+    if (isPhone()) slot.appendChild(el); else slot.appendChild(el);
   };
 
   // remove every trace of a service page (used when leaving the home screen)
@@ -2056,6 +2352,7 @@
     document.querySelectorAll('.js-hide-native').forEach((el) => el.classList.remove('js-hide-native'));
     state.brandKey = null;
     document.querySelector('.js-intro')?.remove();
+    document.querySelectorAll('.js-hdr-mark').forEach((el) => el.remove());
     paintPage(false);
     applyBrand(null);
   };
@@ -2356,10 +2653,14 @@
       if (!state.cfg) return;
       const key = serviceKey();
       document.documentElement.classList.toggle('js-service-open', !!key);
+      document.documentElement.classList.toggle('js-phone', isPhone());
       const svc = key ? state.cfg.Services.find((x) => x.Key === key) : null;
       if ((svc?.Key || null) !== state.brandKey) {
         state.brandKey = svc?.Key || null;
         applyBrand(svc);
+        headerMark(svc);
+      } else if (svc && look().headerMark && !document.querySelector('.js-hdr-mark')) {
+        headerMark(svc); // Jellyfin re-drew its header
       }
       if (key) {
         sections.querySelector(':scope > .js-services')?.remove();
