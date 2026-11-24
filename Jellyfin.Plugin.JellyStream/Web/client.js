@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.23.1';
+  const VERSION = '1.23.2';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1115,6 +1115,9 @@
     html .js-view.js-libhero .js-lib-hero .js-bb-dots, html .js-view.js-libhero .js-lib-hero .js-bb-actions,
     html .js-view.js-libhero .js-lib-hero .js-bb-rank, html .js-view.js-libhero .js-lib-hero .js-hero { display: none !important; }
     html .js-view.js-libhero .js-lib-hero .js-bb-content { top: auto !important; bottom: 14% !important; }
+    html .js-view.js-libhero .js-lib-hero .js-bb-link { display: none !important; }
+    html.js-lite .js-view.js-libhero .js-lib-hero .js-bb-slide, html.js-lite .js-view.js-libhero .js-lib-body .js-section { transition: none !important; }
+    html.js-lite .js-view.js-libhero .js-lib-hero .js-bb-art { animation: none !important; }
     html .js-view.js-libhero .js-lib-hero .js-bb-logo { max-height: 14vh !important; max-width: 32vw !important; }
     html .js-view.js-libhero .js-lib-hero .js-bb-title { font-size: clamp(1.6em, 3.2vw, 2.8em) !important; }
     html .js-view.js-libhero .js-lib-hero .js-bb-overview { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 42em; }
@@ -2719,8 +2722,8 @@
         const end = land + 3.6;
         // the chatter: voices wandering on their own, spread across the room, gliding together onto the chord
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .5;
-        ramp(lp.frequency, [[t, 1600], [land, 4200], [land + .8, 5200], [end, 600]]);
-        const chord = [36.71, 55, 73.42, 110, 146.83, 220, 293.66, 369.99, 440, 587.33, 739.99, 880, 1174.66, 1760];
+        ramp(lp.frequency, [[t, 700], [land, 1500], [land + .8, 1800], [end, 400]]);
+        const chord = [36.71, 55, 73.42, 110, 146.83, 220, 293.66, 369.99, 440];
         const n = 32;
         lp.connect(bus(.75, .95));
         for (let i = 0; i < n; i++) {
@@ -2728,7 +2731,7 @@
           const pan = ((i * 7) % n) / n * 1.6 - .8; // spread, then everything meets in the middle as the chord lands
           const vb = ac.createStereoPanner ? ac.createStereoPanner() : null;
           if (vb) { vb.pan.setValueAtTime(pan, t); vb.pan.linearRampToValueAtTime(pan * .25, land); vb.connect(lp); }
-          const from = 200 + Math.random() * 500;
+          const from = 90 + Math.random() * 260;
           const w = [1, 2, 3].map(() => from * (.7 + Math.random() * .6));
           const vo = osc('sawtooth', [[t, from], [t + .28 * k, w[0]], [t + .56 * k, w[1]], [t + .84 * k, w[2]], [land - .03, f]], t, end,
             [[t, .0001], [t + .12 * k, .022], [land - .1, .03], [land + .6, .034], [land + 2, .022], [end, .0001]], vb || lp);
@@ -2739,18 +2742,6 @@
           depth.gain.setValueAtTime(from * .035, t); depth.gain.linearRampToValueAtTime(from * .02, land - .25); depth.gain.linearRampToValueAtTime(0, land);
           lfo.connect(depth); depth.connect(vo.frequency); lfo.start(t); lfo.stop(land + .05);
         }
-        // the light chatter: little crystalline blips all over the room, getting busier and settling onto the
-        // chord's notes as the specks reach the logo
-        const twinkle = [1174.66, 1318.5, 1479.98, 1760, 1975.5, 2349.3, 2637, 2960, 3520];
-        const settle = [1174.66, 1479.98, 1760, 2349.3, 2960, 3520];
-        for (let i = 0; i < 110; i++) {
-          const p = Math.pow(Math.random(), .6); // busier toward the landing
-          const at = t + .05 + p * (land - t - .08);
-          const f = (p > .75 ? settle : twinkle)[Math.floor(Math.random() * (p > .75 ? settle : twinkle).length)];
-          const len = .09 + Math.random() * .18;
-          const bl = bus(.55, 1.1, (Math.random() * 2 - 1) * (1 - p * .7));
-          osc(i % 3 ? 'sine' : 'triangle', f, at, at + len + .05, [[at, .0001], [at + .004, .13 + p * .1], [at + len, .0001]], bl);
-        }
         // a timpani-like rumble rolling up into the landing
         const rum = noise(1.6 * k); const rl = ac.createBiquadFilter(); rl.type = 'lowpass'; rl.Q.value = 6;
         ramp(rl.frequency, [[land - .9 * k, 55], [land, 140]]);
@@ -2760,18 +2751,15 @@
         const sub = bus(1, .25);
         osc('sine', 36.71, t, end, [[t, .0001], [land - .35, .02], [land, .3], [land + .6, .5], [end, .0001]], sub);
         osc('triangle', 73.42, t, end, [[t, .0001], [land + .4, .15], [end, .0001]], sub);
-        // the landing: a saturated boom, a thud of air, and a crash of light (bright noise in the hall)
+        // the landing: a saturated boom and a thud of air
         const boom = drive(3); const bg = bus(1, .6); boom.connect(bg);
         osc('sine', [[land, 100], [land + 1.1, 28]], land, land + 3, [[land, .0001], [land + .012, .95], [land + 2.8, .0001]], boom);
         const thud = noise(.9); const tl = ac.createBiquadFilter(); tl.type = 'lowpass'; tl.frequency.value = 200;
         const tg = ac.createGain(); ramp(tg.gain, [[land, .0001], [land + .01, .7], [land + .8, .0001]]);
         thud.connect(tl); tl.connect(tg); tg.connect(bg); thud.start(land); thud.stop(land + .9);
-        const crash = noise(2.6); const ch = ac.createBiquadFilter(); ch.type = 'highpass'; ch.frequency.value = 3500;
-        const cg = ac.createGain(); ramp(cg.gain, [[land, .0001], [land + .02, .035], [land + 2, .0001]]);
-        crash.connect(ch); ch.connect(cg); cg.connect(bus(.4, 1.2)); crash.start(land); crash.stop(land + 2.6);
         // brass: a slow, broad swell on the chord after the hit
         const br = ac.createBiquadFilter(); br.type = 'lowpass'; br.Q.value = 2;
-        ramp(br.frequency, [[land + .1, 300], [land + .9, 2600], [end, 500]]);
+        ramp(br.frequency, [[land + .1, 250], [land + .9, 1100], [end, 350]]);
         br.connect(bus(.9, .9));
         [146.83, 220, 293.66, 369.99, 440].forEach((f, i) => {
           [-7, 7].forEach((c) => {
@@ -2781,14 +2769,14 @@
         });
         // the air of light during the trace
         const air = noise(1.6 * k); const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.6;
-        ramp(bp.frequency, [[t, 300], [land, 2400]]);
+        ramp(bp.frequency, [[t, 160], [land, 700]]);
         const ag = ac.createGain(); ramp(ag.gain, [[t, .0001], [land - .05, .05], [land + .1, .0001]]);
         air.connect(bp); bp.connect(ag); ag.connect(bus(.6, 1)); air.start(t); air.stop(land + .15);
       } else {
         // the flight to the home screen: a deep, smooth rush
         const end = t + T.dive / 1000;
         const n = noise(T.dive / 1000 + .6); const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
-        ramp(lp.frequency, [[t, 1500], [end, 140]]);
+        ramp(lp.frequency, [[t, 700], [end, 120]]);
         const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [t + .3, .18], [end + .35, .0001]]);
         n.connect(lp); lp.connect(ng); ng.connect(bus(1, .7)); n.start(t); n.stop(end + .3);
         osc('sine', [[t, 66], [end, 40]], t, end + 1, [[t, .0001], [t + .35, .22], [end + .9, .0001]], bus(1, .5));
@@ -3014,7 +3002,12 @@
   const chipRow = (cards, cls) => `<div class="verticalSection js-section js-switcher js-lib-chips ${cls}"><div class="js-rowwrap"><div class="emby-scroller js-scroller"><div class="itemsContainer scrollSlider focuscontainer-x">${cards.join('')}</div></div></div></div>`;
   const libState = { type: 'all', genre: '', sort: 'az' };
   const LIB_SORTS = [['az', 'A–Z'], ['added', 'Recently added'], ['newest', 'Newest'], ['rating', 'Top rated']];
-  const openLibrary = (view, svc, data, opts = {}) => {
+  const navTo = (el) => { if (el) document.dispatchEvent(new CustomEvent('jellynav:reset', { detail: { focus: el } })); };
+  let libOpener = null;
+  const openLibrary = (view, svc, data, opts = {}, opener = null) => {
+    libOpener = opener;
+    // Back (remote, browser, phone gesture) closes the library instead of leaving the page
+    if (!history.state?.jsLib) history.pushState({ ...(history.state || {}), jsLib: 1 }, '');
     Object.assign(libState, { type: 'all', genre: '', sort: 'az' }, opts);
     view.classList.add('js-libmode');
     nfReset();
@@ -3092,11 +3085,29 @@
       if (kind === 'back') { closeLibrary(view); return; }
       libState[kind] = a.dataset.v;
       draw();
-      lv.querySelector(`[data-lib="${kind}"][data-v="${CSS.escape(a.dataset.v)}"]`)?.focus?.();
+      // keep the selection on the button you just pressed
+      const again = lv.querySelector(`[data-lib="${kind}"][data-v="${CSS.escape(a.dataset.v)}"]`);
+      if (again) { requestAnimationFrame(() => navTo(again.closest('.card'))); if (!document.getElementById('__jf_library_focus_ring__')) again.focus?.(); }
     };
     draw();
     scrollTo({ top: 0 });
+    // remotes start on the first title, not up in the filters
+    requestAnimationFrame(() => requestAnimationFrame(() => navTo(lv.querySelector('.js-lib-grid .card'))));
   };
+  // remote / keyboard Back closes the library first (before JellyNav or Jellyfin act on it)
+  addEventListener('keydown', (e) => {
+    if (!['Escape', 'BrowserBack', 'GoBack', 'Backspace'].includes(e.key) || e.repeat) return;
+    if (e.key === 'Backspace' && e.target?.closest?.('input, textarea, [contenteditable]')) return;
+    const view = document.querySelector('.js-view.js-libmode');
+    if (!view || !view.isConnected || !document.querySelector('.js-libview')?.offsetParent) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    closeLibrary(view);
+  }, true);
+  addEventListener('popstate', () => {
+    const view = document.querySelector('.js-view.js-libmode');
+    if (view && !history.state?.jsLib) closeLibrary(view, true);
+  });
   // the library's banner: the selected title, in the service's own banner style
   let libHeroTimer = 0;
   const libHeroShow = (view, id, card) => {
@@ -3121,17 +3132,17 @@
     const view = card?.closest?.('.js-view.js-libhero');
     if (!view || !card.dataset.id) return;
     clearTimeout(libHeroTimer);
-    libHeroTimer = setTimeout(() => libHeroShow(view, card.dataset.id, card), 140);
+    libHeroTimer = setTimeout(() => libHeroShow(view, card.dataset.id, card), lite() ? 320 : 140);
   };
   // remotes: the selected line sits just under the banner; lines above it fade away
   const LIB_LINE = 0.6;
   const libPin = (section) => {
-    const top = section.getBoundingClientRect().top + scrollY - innerHeight * LIB_LINE;
-    scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    const top = Math.max(0, Math.round(section.getBoundingClientRect().top + scrollY - innerHeight * LIB_LINE));
+    if (Math.abs(top - scrollY) > 1) scrollTo({ top, behavior: lite() ? 'auto' : 'smooth' });
     let above = true;
     for (const s of section.closest('.js-lib-body').querySelectorAll('.js-section')) {
       if (s === section) above = false;
-      s.classList.toggle('js-above', above);
+      if (s.classList.contains('js-above') !== above) s.classList.toggle('js-above', above);
     }
   };
   document.addEventListener('mouseover', (e) => {
@@ -3174,10 +3185,18 @@
     </div>`;
   };
 
-  const closeLibrary = (view) => {
+  const closeLibrary = (view, fromHistory) => {
+    if (!fromHistory && history.state?.jsLib) { history.back(); return; } // the popstate below does the closing
     view.classList.remove('js-libmode', 'js-libhero');
     view.querySelector('.js-libview')?.remove();
-    scrollTo({ top: 0 });
+    const back = libOpener?.isConnected ? libOpener : null;
+    libOpener = null;
+    if (back) {
+      back.scrollIntoView({ block: 'center' });
+      requestAnimationFrame(() => navTo(back.closest('.card') || back));
+    } else {
+      scrollTo({ top: 0 });
+    }
   };
 
   const renderService = async (sections, key) => {
@@ -3322,13 +3341,13 @@
       if (go) {
         e.preventDefault();
         e.stopPropagation();
-        openLibrary(view, svc, data, go.dataset.browse === 'genre' ? { genre: go.dataset.v } : { type: go.dataset.browse });
+        openLibrary(view, svc, data, go.dataset.browse === 'genre' ? { genre: go.dataset.v } : { type: go.dataset.browse }, go.closest('.card'));
         return;
       }
       const t = e.target.closest('[data-seeall] .sectionTitle');
       if (!t) return;
       e.preventDefault();
-      openLibrary(view, svc, data, { type: t.closest('[data-seeall]').dataset.seeall });
+      openLibrary(view, svc, data, { type: t.closest('[data-seeall]').dataset.seeall }, t);
     };
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
