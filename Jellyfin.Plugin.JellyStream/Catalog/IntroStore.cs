@@ -49,18 +49,27 @@ public partial class IntroStore
     /// <returns>Content type.</returns>
     public static string? TypeFor(string extension) => Types.GetValueOrDefault(extension);
 
+    /// <summary>Whether a variant name is known: "" (TV / desktop) or "mobile" (phones).</summary>
+    /// <param name="variant">Variant.</param>
+    /// <returns>True when it is.</returns>
+    public static bool IsValidVariant(string? variant) => string.IsNullOrEmpty(variant) || variant == "mobile";
+
+    private static string Stem(string key, string? variant) =>
+        key.ToLowerInvariant() + (string.IsNullOrEmpty(variant) ? string.Empty : "." + variant);
+
     /// <summary>Finds a service's intro.</summary>
     /// <param name="key">Service key.</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <returns>The file, or null.</returns>
-    public FileInfo? Find(string key)
+    public FileInfo? Find(string key, string? variant = null)
     {
-        if (!IsValidKey(key) || !Directory.Exists(_dir))
+        if (!IsValidKey(key) || !IsValidVariant(variant) || !Directory.Exists(_dir))
         {
             return null;
         }
 
         return Types.Keys
-            .Select(ext => new FileInfo(Path.Combine(_dir, key.ToLowerInvariant() + ext)))
+            .Select(ext => new FileInfo(Path.Combine(_dir, Stem(key, variant) + ext)))
             .Where(f => f.Exists)
             .OrderByDescending(f => f.LastWriteTimeUtc)
             .FirstOrDefault();
@@ -68,30 +77,33 @@ public partial class IntroStore
 
     /// <summary>A value that changes whenever the intro does (for cache-busting addresses).</summary>
     /// <param name="key">Service key.</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <returns>The version, or null when there's no intro.</returns>
-    public string? VersionOf(string key)
+    public string? VersionOf(string key, string? variant = null)
     {
-        var file = Find(key);
+        var file = Find(key, variant);
         return file is null ? null : file.LastWriteTimeUtc.Ticks.ToString("x", CultureInfo.InvariantCulture);
     }
 
     /// <summary>Opens a new intro file for writing, replacing any intro the service had.</summary>
     /// <param name="key">Service key.</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <param name="extension">Extension including the dot.</param>
     /// <returns>The stream to write to.</returns>
-    public FileStream Create(string key, string extension)
+    public FileStream Create(string key, string? variant, string extension)
     {
         Directory.CreateDirectory(_dir);
-        Delete(key);
-        return new FileStream(Path.Combine(_dir, key.ToLowerInvariant() + extension.ToLowerInvariant()), FileMode.Create, FileAccess.Write, FileShare.None);
+        Delete(key, variant);
+        return new FileStream(Path.Combine(_dir, Stem(key, variant) + extension.ToLowerInvariant()), FileMode.Create, FileAccess.Write, FileShare.None);
     }
 
     /// <summary>Removes a service's intro.</summary>
     /// <param name="key">Service key.</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <returns>True if there was one.</returns>
-    public bool Delete(string key)
+    public bool Delete(string key, string? variant = null)
     {
-        if (!IsValidKey(key) || !Directory.Exists(_dir))
+        if (!IsValidKey(key) || !IsValidVariant(variant) || !Directory.Exists(_dir))
         {
             return false;
         }
@@ -99,7 +111,7 @@ public partial class IntroStore
         var removed = false;
         foreach (var ext in Types.Keys)
         {
-            var path = Path.Combine(_dir, key.ToLowerInvariant() + ext);
+            var path = Path.Combine(_dir, Stem(key, variant) + ext);
             if (File.Exists(path))
             {
                 File.Delete(path);

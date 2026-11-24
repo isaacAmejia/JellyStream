@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.14.0';
+  const VERSION = '1.15.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -873,8 +873,10 @@
     }
 
     /* service intro: plays over the screen while the service page loads */
+    html.js-intro-on #__jf_library_focus_ring__, html.js-intro-on [id^="__jf_"][id$="_ring__"],
+    html.js-intro-on [class*="focus-ring"], html.js-intro-on [class*="focusRing"] { visibility: hidden !important; opacity: 0 !important; }
     .js-intro {
-      position: fixed; inset: 0; z-index: 99990;
+      position: fixed; inset: 0; z-index: 2147482000;
       display: flex; align-items: center; justify-content: center;
       background: var(--js-intro-bg, #000);
       overflow: hidden;
@@ -1693,11 +1695,18 @@
   // screens, remote navigation) can't see it, and its play/pause events never reach the page. No
   // controls, picture-in-picture or casting either. Videos are preloaded into memory on the home screen.
   const introBlobs = new Map(); // key + version -> object URL
-  const introSrc = (svc) => (svc.IntroVersion ? api(`Intro/${encodeURIComponent(svc.Key)}?v=${svc.IntroVersion}`) : null);
+  // phones get their own (portrait) intro; a phone without one gets the built-in animation
+  const isPhone = () => document.documentElement.classList.contains('layout-mobile')
+    || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 768);
+  const introVersion = (svc) => (isPhone() ? svc.MobileIntroVersion : svc.IntroVersion) || null;
+  const introSrc = (svc) => {
+    const v = introVersion(svc);
+    return v ? api(`Intro/${encodeURIComponent(svc.Key)}?v=${v}${isPhone() ? '&variant=mobile' : ''}`) : null;
+  };
   let warming = false;
   const warmIntros = () => {
     if (warming || !state.cfg) return;
-    const list = state.cfg.Services.filter((x) => x.IntroVersion && !introBlobs.has(x.Key + x.IntroVersion));
+    const list = state.cfg.Services.filter((x) => introVersion(x) && !introBlobs.has(x.Key + introVersion(x)));
     if (!list.length) return;
     warming = true;
     const next = () => {
@@ -1705,7 +1714,7 @@
       if (!x) { warming = false; return; }
       fetch(introSrc(x))
         .then((r) => (r.ok ? r.blob() : null))
-        .then((b) => { if (b && b.size) introBlobs.set(x.Key + x.IntroVersion, URL.createObjectURL(b)); })
+        .then((b) => { if (b && b.size) introBlobs.set(x.Key + introVersion(x), URL.createObjectURL(b)); })
         .catch(() => {})
         .finally(() => setTimeout(next, 250));
     };
@@ -1752,6 +1761,7 @@
       if (gone) return;
       gone = true;
       el.classList.add('out');
+      document.documentElement.classList.remove('js-intro-on');
       setTimeout(() => { cleanup(); el.remove(); }, 380);
     };
     const fail = (why) => {
@@ -1796,10 +1806,17 @@
     return () => { ready = true; if (ended) finish(); };
   };
 
+  // while any intro is on screen, the page underneath (and JellyNav's selection ring) stays hidden
+  const introWatch = new MutationObserver(() => {
+    document.documentElement.classList.toggle('js-intro-on', !!document.querySelector('body > .js-intro:not(.out)'));
+  });
+  const watchIntros = () => { if (document.body) introWatch.observe(document.body, { childList: true }); };
+  if (document.body) watchIntros(); else addEventListener('DOMContentLoaded', watchIntros);
+
   // the service's intro: its uploaded video, or the built-in animation
   const playIntro = (svc) => {
     document.querySelector('.js-intro')?.remove();
-    const src = svc.IntroVersion ? (introBlobs.get(svc.Key + svc.IntroVersion) || introSrc(svc)) : null;
+    const src = introVersion(svc) ? (introBlobs.get(svc.Key + introVersion(svc)) || introSrc(svc)) : null;
     if (!src) return playIntroAnim(svc);
     let anim = null;
     let pageReady = false;

@@ -68,11 +68,19 @@
         #JellyStreamConfigPage .js-steps li.done .material-icons { opacity: 1; color: #4caf50; }
         #JellyStreamConfigPage .js-steps li.busy .material-icons { opacity: 1; color: #64b5f6; }
         #JellyStreamConfigPage .js-steps small { opacity: .6; }
-        #JellyStreamConfigPage .js-intro-row .js-name small.ok { color: #81c784; opacity: 1; }
-        #JellyStreamConfigPage .js-intro-row .js-bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); margin-top: .35em; overflow: hidden; display: none; }
-        #JellyStreamConfigPage .js-intro-row .js-bar i { display: block; height: 100%; width: 0; background: #64b5f6; transition: width .2s; }
-        #JellyStreamConfigPage .js-intro-row.busy .js-bar { display: block; }
+        #JellyStreamConfigPage .js-intro-row { flex-wrap: wrap; }
+        #JellyStreamConfigPage .js-intro-name { flex: 0 0 8em; min-width: 0; }
+        #JellyStreamConfigPage .js-intro-slots { flex: 1 1 320px; display: flex; flex-wrap: wrap; gap: .5em; }
+        #JellyStreamConfigPage .js-intro-slot { flex: 1 1 200px; display: flex; align-items: center; gap: .3em; padding: .35em .5em; border-radius: 10px; background: rgba(255,255,255,.04); }
+        #JellyStreamConfigPage .js-intro-slot .js-name { flex: 1 1 auto; min-width: 0; }
+        #JellyStreamConfigPage .js-intro-slot .js-name b { font-size: .9em; }
+        #JellyStreamConfigPage .js-intro-slot .js-name small { display: block; opacity: .6; font-size: .82em; }
+        #JellyStreamConfigPage .js-intro-slot .js-name small.ok { color: #81c784; opacity: 1; }
+        #JellyStreamConfigPage .js-intro-slot .js-bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); margin-top: .35em; overflow: hidden; display: none; }
+        #JellyStreamConfigPage .js-intro-slot .js-bar i { display: block; height: 100%; width: 0; background: #64b5f6; transition: width .2s; }
+        #JellyStreamConfigPage .js-intro-slot.busy .js-bar { display: block; }
         #JellyStreamConfigPage .js-intro-preview { width: 100%; max-height: 260px; border-radius: 10px; background: #000; margin: -.2em 0 .8em; }
+        #JellyStreamConfigPage .js-intro-preview.phone { max-height: 420px; }
     </style>
 
     <div data-role="content">
@@ -216,7 +224,7 @@
                 <!-- 5. Intros -->
                 <div class="js-card">
                     <h2>5. Intros</h2>
-                    <p class="js-sub">Give a service an intro video and it plays, with sound, while that service's page loads. It plays full screen with no player controls. Services without one show the built-in animation. Short clips (a few seconds of 720p or 1080p H.264 MP4) load instantly; they're kept by the browser after the first play and preloaded on the home screen.</p>
+                    <p class="js-sub">Give a service an intro video and it plays, with sound, while that service's page loads. Phones use their own (portrait) video; a phone without one gets the built-in animation. It plays full screen with no player controls. Services without one show the built-in animation. Short clips (a few seconds of 720p or 1080p H.264 MP4) load instantly; they're kept by the browser after the first play and preloaded on the home screen.</p>
                     <div id="jsIntros"></div>
                 </div>
 
@@ -531,37 +539,47 @@
         function loadIntros() {
             return ApiClient.getJSON(api('Admin/Intros')).then(function (map) { intros = map || {}; }, function () { intros = {}; }).then(renderIntros);
         }
+        function introInfo(key, variant) { return intros[key + (variant ? ':' + variant : '')] || intros[(key + (variant ? ':' + variant : '')).toLowerCase()]; }
+        function introSlot(s, variant, label, hint) {
+            var it = introInfo(s.Key, variant);
+            return '<div class="js-intro-slot" data-key="' + esc(s.Key) + '" data-variant="' + variant + '">'
+                + '<div class="js-name"><b>' + label + '</b>'
+                + (it ? '<small class="ok">' + fmtSize(it.Size) + ' video</small>' : '<small>' + hint + '</small>')
+                + '<div class="js-bar"><i></i></div></div>'
+                + '<input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov" data-act="intro-file" hidden>'
+                + (it ? '<button type="button" class="js-icon" data-act="intro-preview" title="Preview"><span class="material-icons">play_circle</span></button>' : '')
+                + '<button type="button" class="js-icon" data-act="intro-pick" title="' + (it ? 'Replace video' : 'Upload video') + '"><span class="material-icons">upload</span></button>'
+                + (it ? '<button type="button" class="js-icon" data-act="intro-remove" title="Remove video"><span class="material-icons">delete</span></button>' : '')
+                + '</div>';
+        }
         function renderIntros() {
             var box = $('jsIntros');
             if (!box || !config) return;
             var list = (config.Services || []).filter(function (s) { return s.Key; });
             if (!list.length) { box.innerHTML = '<p class="js-sub">Add a service first.</p>'; return; }
             box.innerHTML = list.map(function (s) {
-                var it = intros[s.Key] || intros[s.Key.toLowerCase()];
                 var logo = logoFor(s);
-                return '<div class="js-svc js-intro-row' + (s.Enabled ? '' : ' off') + '" data-key="' + esc(s.Key) + '">'
+                return '<div class="js-svc js-intro-row' + (s.Enabled ? '' : ' off') + '">'
                     + (logo ? '<img src="' + esc(logo) + '" alt="">' : '<span class="js-nologo"></span>')
-                    + '<div class="js-name"><b>' + esc(s.Name) + '</b>'
-                    + (it ? '<small class="ok">Intro video · ' + fmtSize(it.Size) + '</small>' : '<small>No video: plays the built-in animation</small>')
-                    + '<div class="js-bar"><i></i></div></div>'
-                    + '<input type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.m4v,.webm,.mov" data-act="intro-file" hidden>'
-                    + (it ? '<button type="button" class="js-icon" data-act="intro-preview" title="Preview"><span class="material-icons">play_circle</span></button>' : '')
-                    + '<button type="button" class="js-icon" data-act="intro-pick" title="' + (it ? 'Replace video' : 'Upload video') + '"><span class="material-icons">upload</span></button>'
-                    + (it ? '<button type="button" class="js-icon" data-act="intro-remove" title="Remove video"><span class="material-icons">delete</span></button>' : '')
-                    + '</div>';
+                    + '<div class="js-intro-name"><b>' + esc(s.Name) + '</b></div>'
+                    + '<div class="js-intro-slots">'
+                    + introSlot(s, '', 'TV / desktop', 'None: built-in animation')
+                    + introSlot(s, 'mobile', 'Phone', 'None: built-in animation')
+                    + '</div></div>';
             }).join('');
         }
-        function uploadIntro(row, file) {
-            var key = row.getAttribute('data-key');
-            var small = row.querySelector('.js-name small');
-            var bar = row.querySelector('.js-bar i');
-            row.classList.add('busy');
+        function uploadIntro(slot, file) {
+            var key = slot.getAttribute('data-key');
+            var variant = slot.getAttribute('data-variant');
+            var small = slot.querySelector('.js-name small');
+            var bar = slot.querySelector('.js-bar i');
+            slot.classList.add('busy');
             small.className = '';
             small.textContent = 'Uploading ' + file.name + '…';
             var form = new FormData();
             form.append('file', file, file.name);
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', api('Admin/Intro/' + encodeURIComponent(key)));
+            xhr.open('POST', api('Admin/Intro/' + encodeURIComponent(key) + (variant ? '?variant=' + variant : '')));
             // Jellyfin's standard auth header (newer servers ignore the old X-Emby-Token header)
             var q = function (v) { return encodeURIComponent(String(v == null ? '' : v)); };
             var call = function (name) { try { return typeof ApiClient[name] === 'function' ? ApiClient[name]() : ''; } catch (err) { return ''; } };
@@ -569,9 +587,8 @@
                 + '", DeviceId="' + q(call('deviceId') || 'jellystream') + '", Version="' + q(call('appVersion') || '1') + '", Token="' + ApiClient.accessToken() + '"');
             xhr.upload.onprogress = function (e) { if (e.lengthComputable) bar.style.width = Math.round(e.loaded / e.total * 100) + '%'; };
             xhr.onload = function () {
-                row.classList.remove('busy');
+                slot.classList.remove('busy');
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    Dashboard.alert('Intro saved for ' + row.querySelector('b').textContent + '. Reload Jellyfin in your browser to use it.');
                     loadIntros();
                 } else {
                     var why = {
@@ -584,7 +601,7 @@
                     small.textContent = 'Upload failed (HTTP ' + xhr.status + '): ' + (why || text || 'unknown error');
                 }
             };
-            xhr.onerror = function () { row.classList.remove('busy'); small.textContent = 'Upload failed (connection lost).'; };
+            xhr.onerror = function () { slot.classList.remove('busy'); small.textContent = 'Upload failed (connection lost).'; };
             xhr.send(form);
         }
         page.addEventListener('click', function (e) {
@@ -592,29 +609,33 @@
             // the hidden file picker's own click must go through, or the file browser never opens
             if (!btn || btn.getAttribute('data-act') === 'intro-file') return;
             e.preventDefault();
-            var row = btn.closest('.js-intro-row');
-            var key = row.getAttribute('data-key');
+            var slot = btn.closest('.js-intro-slot');
+            var key = slot.getAttribute('data-key');
+            var variant = slot.getAttribute('data-variant');
             var act = btn.getAttribute('data-act');
-            if (act === 'intro-pick') row.querySelector('input[type=file]').click();
+            var qs = variant ? '?variant=' + variant : '';
+            if (act === 'intro-pick') slot.querySelector('input[type=file]').click();
             if (act === 'intro-remove') {
-                ApiClient.ajax({ type: 'DELETE', url: api('Admin/Intro/' + encodeURIComponent(key)) }).then(loadIntros, loadIntros);
+                ApiClient.ajax({ type: 'DELETE', url: api('Admin/Intro/' + encodeURIComponent(key) + qs) }).then(loadIntros, loadIntros);
             }
             if (act === 'intro-preview') {
+                var row = slot.closest('.js-intro-row');
                 var open = row.nextElementSibling;
-                if (open && open.classList.contains('js-intro-preview')) { open.remove(); return; }
-                var it = intros[key] || intros[key.toLowerCase()] || {};
+                if (open && open.classList.contains('js-intro-preview')) { open.remove(); if (open.getAttribute('data-for') === key + variant) return; }
+                var it = introInfo(key, variant) || {};
                 var v = document.createElement('video');
-                v.className = 'js-intro-preview';
+                v.className = 'js-intro-preview' + (variant ? ' phone' : '');
+                v.setAttribute('data-for', key + variant);
                 v.controls = true;
                 v.autoplay = true;
-                v.src = api('Intro/' + encodeURIComponent(key) + '?v=' + (it.Version || ''));
+                v.src = api('Intro/' + encodeURIComponent(key) + '?v=' + (it.Version || '') + (variant ? '&variant=' + variant : ''));
                 row.after(v);
             }
         });
         page.addEventListener('change', function (e) {
             var input = e.target.closest('[data-act="intro-file"]');
             if (!input || !input.files || !input.files[0]) return;
-            uploadIntro(input.closest('.js-intro-row'), input.files[0]);
+            uploadIntro(input.closest('.js-intro-slot'), input.files[0]);
             input.value = '';
         });
 

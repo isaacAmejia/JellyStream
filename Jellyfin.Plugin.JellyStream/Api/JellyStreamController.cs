@@ -146,7 +146,8 @@ public class JellyStreamController : ControllerBase
                 s.Accent,
                 movies,
                 shows,
-                _intros.VersionOf(KeyOf(s))));
+                _intros.VersionOf(KeyOf(s)),
+                _intros.VersionOf(KeyOf(s), "mobile")));
         }
 
         return new ClientConfig(

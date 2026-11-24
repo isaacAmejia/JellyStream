@@ -40,12 +40,13 @@ public class IntroController : ControllerBase
     /// carries the file's version, so browsers may keep it for good.
     /// </summary>
     /// <param name="key">Service key.</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <returns>The video.</returns>
     [HttpGet("Intro/{key}")]
     [AllowAnonymous]
-    public ActionResult GetIntro([FromRoute, Required] string key)
+    public ActionResult GetIntro([FromRoute, Required] string key, [FromQuery] string? variant = null)
     {
-        var file = _intros.Find(key);
+        var file = _intros.Find(key, variant);
         var type = file is null ? null : IntroStore.TypeFor(file.Extension);
         if (file is null || type is null)
         {
@@ -56,8 +57,8 @@ public class IntroController : ControllerBase
         return PhysicalFile(file.FullName, type, enableRangeProcessing: true);
     }
 
-    /// <summary>Which services have an intro.</summary>
-    /// <returns>Service key to size and upload time.</returns>
+    /// <summary>Which services have intros (TV / desktop under the key, phone under "key:mobile").</summary>
+    /// <returns>Key to size and upload time.</returns>
     [HttpGet("Admin/Intros")]
     [Authorize(Policy = Policies.RequiresElevation)]
     public ActionResult<Dictionary<string, IntroInfo>> ListIntros()
@@ -66,10 +67,13 @@ public class IntroController : ControllerBase
         var result = new Dictionary<string, IntroInfo>(StringComparer.OrdinalIgnoreCase);
         foreach (var key in config.Services.Select(s => s.Key).Where(IntroStore.IsValidKey).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var file = _intros.Find(key);
-            if (file is not null)
+            foreach (var variant in new[] { string.Empty, "mobile" })
             {
-                result[key] = new IntroInfo(file.Length, file.LastWriteTimeUtc, _intros.VersionOf(key)!);
+                var file = _intros.Find(key, variant);
+                if (file is not null)
+                {
+                    result[variant.Length == 0 ? key : key + ":" + variant] = new IntroInfo(file.Length, file.LastWriteTimeUtc, _intros.VersionOf(key, variant)!);
+                }
             }
         }
 
@@ -79,15 +83,16 @@ public class IntroController : ControllerBase
     /// <summary>Uploads (or replaces) a service's intro video.</summary>
     /// <param name="key">Service key.</param>
     /// <param name="file">The video (mp4, m4v, webm or mov).</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The stored intro.</returns>
     [HttpPost("Admin/Intro/{key}")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [RequestSizeLimit(IntroStore.MaxBytes + (1024 * 1024))]
     [RequestFormLimits(MultipartBodyLengthLimit = IntroStore.MaxBytes + (1024 * 1024))]
-    public async Task<ActionResult<IntroInfo>> UploadIntro([FromRoute, Required] string key, IFormFile? file, CancellationToken ct)
+    public async Task<ActionResult<IntroInfo>> UploadIntro([FromRoute, Required] string key, IFormFile? file, [FromQuery] string? variant, CancellationToken ct)
     {
-        if (!IntroStore.IsValidKey(key))
+        if (!IntroStore.IsValidKey(key) || !IntroStore.IsValidVariant(variant))
         {
             return BadRequest("That service key can't be used.");
         }
@@ -108,30 +113,31 @@ public class IntroController : ControllerBase
             return BadRequest("Use an MP4, M4V, WebM or MOV video.");
         }
 
-        var target = _intros.Create(key, ext);
+        var target = _intros.Create(key, variant, ext);
         await using (target.ConfigureAwait(false))
         {
             await file.CopyToAsync(target, ct).ConfigureAwait(false);
         }
 
-        _logger.LogInformation("JellyStream: intro video saved for {Key} ({Bytes} bytes)", key, file.Length);
-        var stored = _intros.Find(key)!;
-        return new IntroInfo(stored.Length, stored.LastWriteTimeUtc, _intros.VersionOf(key)!);
+        _logger.LogInformation("JellyStream: {Which} intro video saved for {Key} ({Bytes} bytes)", string.IsNullOrEmpty(variant) ? "TV / desktop" : "phone", key, file.Length);
+        var stored = _intros.Find(key, variant)!;
+        return new IntroInfo(stored.Length, stored.LastWriteTimeUtc, _intros.VersionOf(key, variant)!);
     }
 
     /// <summary>Removes a service's intro video.</summary>
     /// <param name="key">Service key.</param>
+    /// <param name="variant">"" for TV / desktop, "mobile" for phones.</param>
     /// <returns>No content.</returns>
     [HttpDelete("Admin/Intro/{key}")]
     [Authorize(Policy = Policies.RequiresElevation)]
-    public ActionResult DeleteIntro([FromRoute, Required] string key)
+    public ActionResult DeleteIntro([FromRoute, Required] string key, [FromQuery] string? variant = null)
     {
-        if (!IntroStore.IsValidKey(key))
+        if (!IntroStore.IsValidKey(key) || !IntroStore.IsValidVariant(variant))
         {
             return BadRequest();
         }
 
-        _intros.Delete(key);
+        _intros.Delete(key, variant);
         return NoContent();
     }
 }

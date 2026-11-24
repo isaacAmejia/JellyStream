@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.14.2.0"
+version: "1.15.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,5 +14,5 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Fixes intro uploads failing on servers with legacy authorization turned off (the default), and
-  shows the reason when an upload fails.
+  Separate phone intro videos (a phone without one gets the built-in animation). Nothing shows
+  through an intro while it plays, including JellyNav's selection outline.
