@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.7';
+  const VERSION = '1.22.8';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1359,8 +1359,12 @@
     }
     /* anything else: a sweep of light in the service's color */
     /* Jellyfin intro: light on black, then a dive through the logo */
-    .js-jf { background: #000 !important; flex-direction: column; }
-    .js-jf.diving { background: transparent !important; }
+    .js-jf { background: transparent !important; flex-direction: column; }
+    .js-jf-black { position: absolute; inset: 0; background: #000; }
+    .js-jf.diving .js-jf-black { display: none; }
+    .js-jf.flying .js-jf-push { animation: none; transform: scale(1.01); }
+    .js-jf.flying .jf-sweep { visibility: hidden; }
+    .js-services a.js-jf-landing .js-sw-logo, .js-services a.js-jf-landing .js-sw-name { visibility: hidden !important; }
     .js-jf-hole { position: absolute; inset: 0; z-index: 0; display: block; }
     .js-jf-bloom { position: absolute; left: 50%; top: 45%; width: 90vmin; height: 90vmin; margin: -45vmin; border-radius: 50%; pointer-events: none; opacity: 0;
       background: radial-gradient(closest-side, rgba(120,80,210,.2), rgba(0,140,210,.07) 55%, transparent); }
@@ -1372,15 +1376,17 @@
     html:not(.js-lite) .js-jf .jf-trace { filter: drop-shadow(0 0 5px rgba(140,170,255,.85)); }
     .js-jf .jf-fill { opacity: 0; }
     .js-jf .jf-core { opacity: 0; transform-box: fill-box; transform-origin: 50% 62%; transform: scale(.7); }
-    .js-jf-name { position: relative; z-index: 1; margin-top: 3.6vmin; font-family: inherit; font-weight: 500; font-size: clamp(22px, 5vmin, 44px); line-height: 1;
-      color: #fff; letter-spacing: .7em; margin-right: -.7em; opacity: 0; white-space: nowrap; }
+    .js-jf-name { position: relative; z-index: 1; margin-top: 3.4vmin; font-family: "SF Pro Display", "Segoe UI Variable Display", "Helvetica Neue", Inter, Roboto, "Segoe UI", Arial, sans-serif; font-weight: 600; font-size: clamp(26px, 6vmin, 52px); line-height: 1;
+      color: #fff; letter-spacing: -.01em; white-space: nowrap; opacity: 0; -webkit-font-smoothing: antialiased;
+      -webkit-mask-image: linear-gradient(90deg, #000 42%, transparent 58%); mask-image: linear-gradient(90deg, #000 42%, transparent 58%);
+      -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-position: 100% 0; mask-position: 100% 0; }
     .js-jf.go .jf-trace { animation: js-jf-trace 1.05s cubic-bezier(.65,0,.35,1) .15s forwards, js-jf-trace-off .6s ease 1.2s forwards; }
     .js-jf.go .jf-fill { animation: js-jf-on .7s ease-out 1.1s forwards; }
     .js-jf.go .jf-core { animation: js-jf-core .9s cubic-bezier(.2,.8,.2,1) 1.28s forwards; }
     .js-jf.go .jf-sweep { animation: js-jf-sweep 1.4s cubic-bezier(.45,0,.25,1) 1.8s forwards; }
     .js-jf.go .js-jf-bloom { animation: js-jf-on 1.8s ease-out 1.15s forwards; }
     .js-jf.go .js-jf-push { animation: js-jf-push 4s linear forwards; }
-    .js-jf.go .js-jf-name { animation: js-jf-name 1.5s cubic-bezier(.2,.7,.2,1) 1.6s forwards; }
+    .js-jf.go .js-jf-name { animation: js-jf-name 1.2s cubic-bezier(.4,0,.2,1) 1.55s forwards; }
     .js-jf.diving .js-jf-name, .js-jf.diving .js-jf-bloom { opacity: 0 !important; transition: opacity .2s ease; }
     .js-jf.diving .jf-core { opacity: 0 !important; transition: opacity .3s ease; }
     @keyframes js-jf-trace { 0% { opacity: 0; stroke-dashoffset: 1; } 10% { opacity: 1; } 100% { opacity: 1; stroke-dashoffset: 0; } }
@@ -1389,10 +1395,10 @@
     @keyframes js-jf-core { to { opacity: 1; transform: none; } }
     @keyframes js-jf-sweep { to { transform: translateX(780px); } }
     @keyframes js-jf-push { to { transform: scale(1.01); } }
-    @keyframes js-jf-name { 0% { opacity: 0; letter-spacing: .7em; margin-right: -.7em; } 100% { opacity: 1; letter-spacing: .16em; margin-right: -.16em; } }
+    @keyframes js-jf-name { 0% { opacity: 1; transform: translateY(.12em); -webkit-mask-position: 100% 0; mask-position: 100% 0; } 100% { opacity: 1; transform: none; -webkit-mask-position: 0 0; mask-position: 0 0; } }
     @media (prefers-reduced-motion: reduce) {
       .js-jf.go * { animation: none !important; }
-      .js-jf .jf-fill, .js-jf .jf-core, .js-jf-name { opacity: 1 !important; transform: none !important; letter-spacing: .16em !important; }
+      .js-jf .jf-fill, .js-jf .jf-core, .js-jf-name { opacity: 1 !important; transform: none !important; -webkit-mask: none !important; mask: none !important; }
     }
     .js-switcher svg.js-sw-logo { display: block; }
     .js-intro-generic .js-intro-fx::before {
@@ -2508,73 +2514,96 @@
     if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
   }, { capture: true, passive: true }));
 
+  // The score, theatre style: a cloud of voices wanders and converges into one huge D chord as the logo lands,
+  // over a sub-bass swell and a saturated low boom, in a big hall. The way out is a deep rush and a landing thump.
   const jfScore = (ac, t, part) => {
     try {
-      const out = ac.createDynamicsCompressor();
-      out.threshold.value = -14; out.ratio.value = 3;
-      const master = ac.createGain(); master.gain.value = .55;
-      out.connect(master); master.connect(ac.destination);
-      // a hall: a convolution reverb made from decaying noise (built once)
+      const comp = ac.createDynamicsCompressor();
+      comp.threshold.value = -20; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = .01; comp.release.value = .4;
+      const master = ac.createGain(); master.gain.value = .7;
+      comp.connect(master); master.connect(ac.destination);
       if (!jfScore.ir || jfScore.ir.sampleRate !== ac.sampleRate) {
-        const len = Math.floor(ac.sampleRate * 2.6);
+        const len = Math.floor(ac.sampleRate * 3.8);
         const ir = ac.createBuffer(2, len, ac.sampleRate);
         for (let c = 0; c < 2; c++) {
           const d = ir.getChannelData(c);
-          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2);
+          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
         }
         jfScore.ir = ir;
       }
       const verb = ac.createConvolver(); verb.buffer = jfScore.ir;
-      const wet = ac.createGain(); wet.gain.value = .55;
-      verb.connect(wet); wet.connect(out);
-      const send = (n, dry = 1) => { const g = ac.createGain(); g.gain.value = dry; n.connect(g); g.connect(out); n.connect(verb); };
-      const ramp = (param, pts) => { param.setValueAtTime(pts[0][1], pts[0][0]); pts.slice(1).forEach(([at, v]) => param.exponentialRampToValueAtTime(Math.max(v, .0001), at)); };
+      const wet = ac.createGain(); wet.gain.value = .5;
+      verb.connect(wet); wet.connect(comp);
+      const bus = (dry = 1, rev = 1) => {
+        const g = ac.createGain();
+        const d = ac.createGain(); d.gain.value = dry; g.connect(d); d.connect(comp);
+        const r = ac.createGain(); r.gain.value = rev; g.connect(r); r.connect(verb);
+        return g;
+      };
+      const ramp = (param, pts) => {
+        param.setValueAtTime(pts[0][1], pts[0][0]);
+        pts.slice(1).forEach(([at, v]) => param.exponentialRampToValueAtTime(Math.max(v, .0001), at));
+      };
       const noise = (dur) => {
         const b = ac.createBuffer(1, Math.ceil(dur * ac.sampleRate), ac.sampleRate);
         const d = b.getChannelData(0);
         for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
         const n = ac.createBufferSource(); n.buffer = b; return n;
       };
-      const tone = (type, f, at, end, pts, dest) => {
+      const drive = (k) => {
+        const ws = ac.createWaveShaper();
+        const c = new Float32Array(1024);
+        for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); }
+        ws.curve = c; return ws;
+      };
+      const osc = (type, freqPts, at, end, gainPts, dest) => {
         const o = ac.createOscillator(); o.type = type;
-        if (Array.isArray(f)) ramp(o.frequency, f); else o.frequency.value = f;
-        const g = ac.createGain(); ramp(g.gain, pts);
-        o.connect(g); (dest ? g.connect(dest) : send(g)); o.start(at); o.stop(end);
+        if (Array.isArray(freqPts)) ramp(o.frequency, freqPts); else o.frequency.value = freqPts;
+        const g = ac.createGain(); ramp(g.gain, gainPts);
+        o.connect(g); g.connect(dest); o.start(at); o.stop(end);
         return o;
       };
       if (part === 'in') {
-        // the line of light: an airy riser with a faint high shimmer, cut off as the logo lands
         const land = t + 1.2;
-        const n = noise(1.4);
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2.2;
-        ramp(bp.frequency, [[t, 420], [land, 2600]]);
-        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [land - .05, .07], [land + .08, .0001]]);
-        n.connect(bp); bp.connect(ng); send(ng, .8); n.start(t); n.stop(land + .1);
-        [1318.5, 1321.6].forEach((f) => tone('sine', f, t, land + .1, [[t, .0001], [land - .05, .018], [land + .08, .0001]]));
-        // the landing: a deep, slow boom and a warm swell (D major, added 9th) through an opening filter
-        tone('sine', [[land, 76], [land + 1.2, 42]], land, land + 2.4, [[land, .0001], [land + .02, .5], [land + 2.3, .0001]]);
-        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .7;
-        ramp(lp.frequency, [[land, 260], [land + .7, 2400], [land + 3.2, 900]]);
-        const pad = ac.createGain(); pad.gain.value = 1; lp.connect(pad); send(pad, .9);
-        [73.42, 146.83, 220, 293.66, 369.99, 440, 659.25].forEach((f, i) => {
-          [-5, 5].forEach((cents) => {
-            const o = tone('sawtooth', f, land, land + 3.6, [[land, .0001], [land + .09, .028 / (1 + i * .15)], [land + 1.6, .02 / (1 + i * .15)], [land + 3.5, .0001]], lp);
-            o.detune.value = cents;
-          });
-        });
-        // a soft bell on top
-        [1174.66, 1479.98, 1760].forEach((f, i) => tone('sine', f, land + i * .06, land + 2.2, [[land + i * .06, .0001], [land + i * .06 + .01, .03], [land + 2.1, .0001]]));
-        // the glint
-        [2349.3, 2793.8, 3520].forEach((f, i) => { const at = t + 1.85 + i * .09; tone('sine', f, at, at + 1.1, [[at, .0001], [at + .01, .014], [at + 1, .0001]]); });
+        const end = t + 4.4;
+        // the voices: wandering, then gliding onto the chord as the light finishes tracing the logo
+        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = .5;
+        ramp(lp.frequency, [[t, 350], [land, 3800], [end, 700]]);
+        const voices = bus(.8, .9); lp.connect(voices);
+        const chord = [36.71, 55, 73.42, 110, 146.83, 220, 293.66, 369.99, 440, 587.33, 880, 1174.66];
+        for (let i = 0; i < 24; i++) {
+          const f = chord[i % chord.length];
+          const from = 170 + Math.random() * 260;
+          const wob = from * (.85 + Math.random() * .3);
+          const v = osc('sawtooth', [[t, from], [t + .5, wob], [land - .02, f]], t, end,
+            [[t, .0001], [land - .1, .02], [land + .35, .03], [land + 1.6, .022], [end, .0001]], lp);
+          v.detune.value = (Math.random() - .5) * 14;
+        }
+        // sub-bass swell under it (D1)
+        const sub = bus(1, .25);
+        osc('sine', 36.71, t, end, [[t, .0001], [land, .25], [land + .4, .42], [end, .0001]], sub);
+        osc('triangle', 73.42, t, end, [[t, .0001], [land + .3, .12], [end, .0001]], sub);
+        // the boom as the logo lands: a saturated drop with a low thud of air
+        const boom = drive(2.5); const bg = bus(1, .5); boom.connect(bg);
+        osc('sine', [[land, 90], [land + .9, 30]], land, land + 2.6, [[land, .0001], [land + .015, .8], [land + 2.4, .0001]], boom);
+        const thud = noise(.8); const tl = ac.createBiquadFilter(); tl.type = 'lowpass'; tl.frequency.value = 180;
+        const tg = ac.createGain(); ramp(tg.gain, [[land, .0001], [land + .01, .6], [land + .7, .0001]]);
+        thud.connect(tl); tl.connect(tg); tg.connect(bg); thud.start(land); thud.stop(land + .8);
+        // a faint air of light during the trace
+        const air = noise(1.4); const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.6;
+        ramp(bp.frequency, [[t, 300], [land, 2200]]);
+        const ag = ac.createGain(); ramp(ag.gain, [[t, .0001], [land - .05, .05], [land + .1, .0001]]);
+        air.connect(bp); bp.connect(ag); ag.connect(bus(.6, 1)); air.start(t); air.stop(land + .15);
       } else {
-        // the dive: air rushing past, rising, with a low swell underneath
+        // the flight to the home screen: a deep rush down, and a soft landing
         const end = t + JF_T.dive / 1000;
-        const n = noise(1.3);
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
-        ramp(bp.frequency, [[t, 260], [end, 5200]]);
-        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [end - .08, .13], [end + .25, .0001]]);
-        n.connect(bp); bp.connect(ng); send(ng, .9); n.start(t); n.stop(end + .3);
-        tone('sine', [[t, 48], [end, 70]], t, end + .6, [[t, .0001], [end - .1, .22], [end + .5, .0001]]);
+        const n = noise(1.6); const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3;
+        ramp(lp.frequency, [[t, 1400], [end, 140]]);
+        const ng = ac.createGain(); ramp(ng.gain, [[t, .0001], [t + .25, .22], [end + .2, .0001]]);
+        n.connect(lp); lp.connect(ng); ng.connect(bus(1, .7)); n.start(t); n.stop(end + .3);
+        const low = drive(1.8); low.connect(bus(1, .5));
+        osc('sine', [[t, 70], [end, 34]], t, end + 1.2, [[t, .0001], [t + .3, .35], [end + 1.1, .0001]], low);
+        osc('sine', [[end - .02, 120], [end + .3, 45]], end - .02, end + .9, [[end - .02, .0001], [end, .45], [end + .8, .0001]], low);
       }
     } catch { /* no audio: the picture still runs */ }
   };
@@ -2583,7 +2612,7 @@
     const g = `jsjfi${++jfSeq}`;
     const el = document.createElement('div');
     el.className = 'js-intro js-jf';
-    el.innerHTML = `<div class="js-jf-bloom"></div>
+    el.innerHTML = `<div class="js-jf-black"></div><div class="js-jf-bloom"></div>
       <div class="js-jf-logo"><div class="js-jf-push">
         <svg class="js-jf-svg" viewBox="0 0 512 512" aria-hidden="true"><defs>
           <linearGradient id="${g}" x1="110.25" y1="213.3" x2="496.14" y2="436.09" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient>
@@ -2612,15 +2641,62 @@
     setTimeout(begin, 500);
 
     const still = lite() || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // the logo and the name fly into the Jellyfin pill on the home screen and become it, while the black lifts
+    const flyToPill = () => {
+      const pill = [...document.querySelectorAll('.js-services a.js-sw-tab[href="#/home"]')].find((a) => a.offsetParent);
+      const icon = pill?.querySelector('.js-sw-logo');
+      const label = pill?.querySelector('.js-sw-name');
+      if (!icon || !label) return false;
+      const ir = icon.getBoundingClientRect();
+      const nr = label.getBoundingClientRect();
+      if (!ir.width || ir.bottom < 0 || ir.top > innerHeight || ir.right < 0 || ir.left > innerWidth) return false;
+      const logo = el.querySelector('.js-jf-logo');
+      const name = el.querySelector('.js-jf-name');
+      const lr = logo.getBoundingClientRect();
+      const mr = name.getBoundingClientRect();
+      // the pill's logo sits inside a dark disc: aim for the glyph itself
+      const gx = ir.left + ir.width * (80 / 672);
+      const gy = ir.top + ir.height * (70 / 672);
+      const ls = (ir.width * (512 / 672)) / lr.width;
+      const ns = nr.width / mr.width;
+      const D = JF_T.dive;
+      pill.classList.add('js-jf-landing');
+      el.classList.add('flying');
+      const fly = (node, r, x, y, sc) => node.animate([
+        { transform: 'none', transformOrigin: '0 0' },
+        { transform: `translate(${(x - r.left) * .05}px, ${(y - r.top) * .05 - 6}px) scale(1.03)`, transformOrigin: '0 0', offset: .16 },
+        { transform: `translate(${x - r.left}px, ${y - r.top}px) scale(${sc})`, transformOrigin: '0 0' },
+      ], { duration: D, easing: 'cubic-bezier(.65,0,.2,1)', fill: 'forwards' });
+      fly(logo, lr, gx, gy, ls);
+      fly(name, mr, nr.left, nr.top + (nr.height - mr.height * ns) / 2, ns);
+      el.querySelector('.js-jf-black').animate([{ opacity: 1 }, { opacity: 1, offset: .2 }, { opacity: 0 }], { duration: D, easing: 'ease-in-out', fill: 'forwards' });
+      el.querySelector('.js-jf-bloom').animate([{ opacity: 1 }, { opacity: 0 }], { duration: D * .4, fill: 'forwards' });
+      homeSections()?.animate?.([{ transform: 'scale(1.03)', opacity: 0 }, { transform: 'scale(1.03)', opacity: 0, offset: .2 }, { transform: 'none', opacity: 1 }],
+        { duration: D, easing: 'cubic-bezier(.3,0,.2,1)' });
+      setTimeout(() => {
+        pill.classList.remove('js-jf-landing');
+        pill.animate?.([{ boxShadow: '0 0 0 0 rgba(0,164,220,.9)' }, { boxShadow: '0 0 0 14px rgba(0,164,220,0)' }], { duration: 700, easing: 'ease-out' });
+        const fade = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' });
+        fade.onfinish = () => el.remove();
+        setTimeout(() => el.remove(), 400);
+      }, D - 40);
+      return true;
+    };
     const exit = () => {
       if (!el.isConnected) return;
       if (ac && ac.state === 'running') jfScore(ac, ac.currentTime + .02, 'out');
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 450);
+        return;
+      }
+      if (flyToPill()) return;
       if (still) {
         el.classList.add('out');
         setTimeout(() => el.remove(), 450);
         return;
       }
-      // dive through the centre of the logo: the home screen is waiting on the other side
+      // no Jellyfin pill on screen: dive through the centre of the logo: the home screen is waiting on the other side
       const core = el.querySelector('.jf-core');
       const logo = el.querySelector('.js-jf-logo');
       const r = core.getBoundingClientRect();

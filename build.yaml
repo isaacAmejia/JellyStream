@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.22.7.0"
+version: "1.22.8.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  A new Jellyfin intro on black: a line of light traces the logo, the light becomes the logo with a cinematic swell,
-  a glint crosses it and the name settles in, then you dive through the logo's centre into the home screen. The
-  score now starts on the same clock as the picture, so slower devices like a Raspberry Pi stay in sync.
+  Jellyfin intro: the name now reveals with a clean light wipe in a new typeface, the score is a deep theatre-style
+  swell (a cloud of voices converging on one huge chord over sub-bass), and the logo and name now fly into the
+  Jellyfin pill on the home screen and become it as the black lifts.
