@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.18.1';
+  const VERSION = '1.18.2';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1655,6 +1655,14 @@
     const sc = btn.parentElement.querySelector('.js-scroller');
     sc.scrollBy({ left: (btn.classList.contains('js-prev') ? -1 : 1) * sc.clientWidth * 0.85, behavior: 'smooth' });
   }, true);
+  // Phones (classic layout): Jellyfin turns any sideways swipe on the home screen into "next tab"
+  // unless it starts on one of its own scroll rows. Swiping our rows or page then switched tabs
+  // underneath the service page and left the screen blank. Keep our touches to ourselves; scrolling
+  // and taps are untouched (nothing is prevented, the event just doesn't reach Jellyfin's swipe watcher).
+  addEventListener('touchstart', (e) => {
+    if (e.target?.closest?.('.js-view, .js-services, .js-switcher')) e.stopPropagation();
+  }, { capture: true, passive: true });
+
   // Shift + mouse wheel scrolls a row sideways (trackpads scroll sideways on their own)
   document.addEventListener('wheel', (e) => {
     const sc = e.target.closest?.('.js-scroller');
