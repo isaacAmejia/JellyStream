@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.21.0';
+  const VERSION = '1.22.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1076,6 +1076,20 @@
     .js-bb-dot.on { background: #fff; transform: scale(1.25); }
     .js-bb .js-hero { z-index: 4; }
     .js-bb-new { display: none; }
+    .js-view.js-libmode > .js-bb, .js-view.js-libmode > .js-rows { display: none !important; }
+    .js-libview { padding: 5.5em 0 4em; min-height: 100vh; }
+    html.js-phone .js-libview { padding-top: 1em; }
+    .js-lib-head { display: flex; align-items: baseline; gap: .9em; padding: 0 3.3%; margin-bottom: .4em; }
+    .js-lib-title { margin: 0; font-size: 1.9em; font-weight: 800; color: #fff; }
+    .js-lib-count { opacity: .65; font-size: 1em; }
+    .js-libview .js-lib-chips .js-scroller { padding-top: .35em !important; padding-bottom: .35em !important; }
+    .js-libview .js-lib-genres .js-sw-tab { height: 2.2em !important; font-size: .9em; }
+    .js-libview .js-lib-grid { margin-top: .8em; }
+    .js-libview .js-lib-line .js-scroller { padding-top: .45em !important; padding-bottom: .45em !important; overflow: visible !important; }
+    .js-libview .js-lib-line .itemsContainer { flex-wrap: nowrap; }
+    .js-libview .js-lib-line .itemsContainer::after { content: none !important; }
+    [data-seeall] .sectionTitle { cursor: pointer; }
+    [data-seeall] .sectionTitle::after { content: "  See all ›"; font-size: .7em; font-weight: 600; opacity: .7; }
     html.js-pending .homeSectionsContainer > :not(.js-view), html.js-pending .homeSectionsContainer > .js-services { visibility: hidden !important; }
     html.js-phone.js-service-open, html.js-phone.js-service-open body { overflow-x: hidden !important; overscroll-behavior-x: none; }
     html.js-phone .js-view, html.js-phone .js-services { touch-action: pan-y pinch-zoom; }
@@ -1344,10 +1358,11 @@
     }
     .js-view .js-lib .cardBox { margin-left: var(--js-gap, .3em) !important; margin-right: var(--js-gap, .3em) !important; }
     /* themes that frame or tint every card don't get to on service pages */
-    .js-view .cardBox, .js-view .cardScalable {
+    .js-view .cardBox, .js-view .cardScalable, .js-switcher .card, .js-switcher .cardBox, .js-switcher .cardScalable {
       border: 0 !important; outline: 0 !important; background: transparent !important; box-shadow: none !important;
     }
-    .js-view .cardBox::before, .js-view .cardBox::after { display: none !important; }
+    .js-view .cardBox::before, .js-view .cardBox::after, .js-switcher .card::before, .js-switcher .card::after,
+    .js-switcher .cardBox::before, .js-switcher .cardBox::after { display: none !important; }
     .js-view.js-leaving { opacity: .55; transition: opacity .2s ease; pointer-events: none; }
 
     /* native Top 10 rows */
@@ -1922,7 +1937,7 @@
   // The selected title opens into a wide card (its landscape art and logo, white frame, badges) and its
   // details appear under the row. Follows JellyNav's selection, the keyboard, and the mouse.
   const focusOn = () => !!look().focusExpand && !isPhone();
-  const EXPANDABLE = '.js-view .js-lib.overflowPortraitCard, .js-view .js-rank-card:not(.js-rank-land)';
+  const EXPANDABLE = '.js-view .js-rows .js-lib.overflowPortraitCard, .js-view .js-rows .js-rank-card:not(.js-rank-land)';
   const WIDE = 2.667; // a portrait card's height as a 16:9 width
   let nfCard = null;
   let nfTimer = null;
@@ -2214,64 +2229,16 @@
     }
     row?.remove();
 
-    const tiles = cfg.Services.map((s) => {
-      const n = s.Movies + s.Shows;
-      const known = brandKeyFor(s);
-      const b = known ? BRANDS[known] : null;
-      const t1 = tintOf(s);
-      const t2 = b ? b.c2 : '';
-      const style = [t1 && `--js-t1:${t1}`, t2 && `--js-t2:${t2}`].filter(Boolean).join(';');
-      return `
-      <div class="card overflowBackdropCard card-hoverable js-svc-card" data-jskey="${esc(s.Key)}" style="${esc(style)}">
-        <div class="cardBox">
-          <div class="cardScalable">
-            <div class="cardPadder cardPadder-overflowBackdrop"></div>
-            <a class="cardImageContainer cardContent itemAction" href="#/home?${PARAM}=${encodeURIComponent(s.Key)}" aria-label="${esc(s.Name)}">
-              <span class="js-tile-bg"></span>
-              <span class="js-tile-tint"></span>
-              <span class="js-tile-sheen"></span>
-              <span class="js-tile-info">
-                ${s.Logo ? `<img class="js-tile-logo" src="${esc(s.Logo)}" alt="" loading="lazy">` : '<span class="js-tile-bar"></span>'}
-                <span class="js-tile-text">
-                  <b>${esc(s.Name)}</b>
-                  <small class="js-tile-sub">${n ? `${n} title${n === 1 ? '' : 's'} in your library` : 'Browse'}</small>
-                </span>
-              </span>
-            </a>
-          </div>
-        </div>
-      </div>`;
-    });
-
+    // the same pill bar as on service pages, Jellyfin selected, no row title
     const wrap = document.createElement('div');
-    wrap.innerHTML = section({ title: cfg.HomeRowTitle || 'Streaming services', cards: tiles, cls: 'js-services' });
+    wrap.innerHTML = pillsRow('jellyfin', null);
     row = wrap.firstElementChild;
+    row.classList.add('js-services');
     row.dataset.v = String(state.cfgAt);
     if (cfg.HomeRowPosition === 'bottom') sections.appendChild(row); else sections.prepend(row);
-    matchTileSize(sections, row);
     stubRows(row);
     warmIntros();
     requestAnimationFrame(() => updateAllArrows(row));
-
-    cfg.Services.forEach((s) => {
-      if (s.Accent || brandKeyFor(s)) return;
-      autoAccent(s).then((col) => {
-        const tile = row.querySelector(`[data-jskey="${CSS.escape(s.Key)}"]`);
-        if (col && tile) { tile.style.setProperty('--js-t1', col); tile.style.setProperty('--js-t2', '#15171d'); }
-      });
-    });
-    loadFeatured().then((map) => {
-      for (const [key, f] of Object.entries(map || {})) {
-        const tile = row.querySelector(`[data-jskey="${CSS.escape(key)}"]`);
-        const bg = tile?.querySelector('.js-tile-bg');
-        if (!bg || !f?.Backdrop) continue;
-        const img = new Image();
-        img.onload = () => { bg.style.backgroundImage = `url("${f.Backdrop}")`; bg.classList.add('on'); };
-        img.src = f.Backdrop;
-        const sub = tile.querySelector('.js-tile-sub');
-        if (sub && f.Name) sub.innerHTML = `<span class="js-tile-dot"></span>${esc(f.Name)}`;
-      }
-    });
   };
 
   // what's trending on each service, for the tile backdrops (cached for half an hour)
@@ -2494,6 +2461,134 @@
     return done;
   };
 
+  // The streaming services as pills (Jellyfin first): on service pages and on Jellyfin's own home.
+  // Home + every service as tabs: logo and full name, sized inline so no theme can shrink them
+  const SW_CARD = 'width:auto !important;min-width:max-content !important;max-width:none !important;flex:0 0 auto !important;';
+  const SW_FIT = 'position:static !important;width:auto !important;min-width:max-content !important;max-width:none !important;height:auto !important;padding:0 !important;margin:0 .45em 0 0 !important;overflow:visible !important;contain:none !important;';
+  // the tab itself: a real pill whatever a theme does to card images
+  const SW_TAB = 'position:relative !important;inset:auto !important;display:inline-flex !important;align-items:center !important;gap:.6em !important;'
+    + 'width:auto !important;min-width:max-content !important;max-width:none !important;height:3em !important;padding:0 1.25em 0 .45em !important;'
+    + 'box-sizing:border-box !important;border-radius:999px !important;white-space:nowrap !important;overflow:visible !important;contain:none !important;'
+    + 'aspect-ratio:auto !important;flex:none !important;transform:none;';
+  const SW_TEXT = 'display:inline-block !important;width:auto !important;max-width:none !important;overflow:visible !important;text-overflow:clip !important;white-space:nowrap !important;position:static !important;';
+  const sw = (href, name, logo, current, color, icon) => `
+    <div class="card js-sw-card${current ? ' js-current' : ''}" style="${SW_CARD}height:auto !important;overflow:visible !important;contain:none !important;${color ? `--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)};` : ''}">
+      <div class="cardBox" style="${SW_FIT}">
+        <div class="cardScalable" style="${SW_FIT}">
+          <a class="cardImageContainer cardContent itemAction js-sw-tab" style="${SW_TAB}" href="${esc(href)}" aria-label="${esc(name)}">
+            ${icon ? `<span class="material-icons js-sw-icon">${icon}</span>` : logo ? `<img class="js-sw-logo" src="${esc(logo)}" alt="" loading="lazy">` : `<span class="js-sw-dot"></span>`}
+            <span class="js-sw-name" style="${SW_TEXT}">${esc(name)}</span>
+          </a>
+        </div>
+      </div>
+    </div>`;
+
+  const pillsRow = (current, svc) => {
+    const cfg = state.cfg;
+    const cards = [sw('#/home', 'Jellyfin', JF_LOGO, current === 'jellyfin', '#00a4dc')]
+      .concat(cfg.Services.map((x) => sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, x.Logo, x.Key === current, tintOf(x))));
+    // a service's whole library, filterable
+    if (svc) cards.push(sw('#js-library', `${svc.Name} library`, null, false, null, 'video_library').replace('js-sw-card', 'js-sw-card js-sw-lib'));
+    return section({ title: 'Services', cls: 'js-switcher', cards });
+  };
+
+  // ---------------------------------------------------------------- a service's whole library
+  // Everything on the service you can watch, as a grid you can filter (type, genre) and sort. Each grid
+  // line is its own row, so remotes (JellyNav) move through it like any other rows.
+  const chip = (label, on, attrs) => `
+    <div class="card js-sw-card js-chip${on ? ' js-current' : ''}" style="width:auto !important;min-width:max-content !important;flex:0 0 auto !important;height:auto !important;">
+      <div class="cardBox" style="margin:0 .35em 0 0 !important;"><div class="cardScalable" style="position:static !important;padding:0 !important;">
+        <a class="cardImageContainer cardContent itemAction js-sw-tab" href="#" ${attrs} style="position:relative !important;display:inline-flex !important;align-items:center !important;height:2.5em !important;padding:0 1.15em !important;border-radius:999px !important;width:auto !important;white-space:nowrap !important;">
+          <span class="js-sw-name">${esc(label)}</span></a>
+      </div></div>
+    </div>`;
+  const chipRow = (cards, cls) => `<div class="verticalSection js-section js-switcher js-lib-chips ${cls}"><div class="js-rowwrap"><div class="emby-scroller js-scroller"><div class="itemsContainer scrollSlider focuscontainer-x">${cards.join('')}</div></div></div></div>`;
+  const libState = { type: 'all', genre: '', sort: 'az' };
+  const LIB_SORTS = [['az', 'A–Z'], ['added', 'Recently added'], ['newest', 'Newest'], ['rating', 'Top rated']];
+  const openLibrary = (view, svc, data, opts = {}) => {
+    Object.assign(libState, { type: 'all', genre: '', sort: 'az' }, opts);
+    view.classList.add('js-libmode');
+    nfReset();
+    let lv = view.querySelector('.js-libview');
+    if (!lv) {
+      lv = document.createElement('div');
+      lv.className = 'js-libview';
+      view.appendChild(lv);
+    }
+    const draw = () => {
+      const all = data.library;
+      const byType = all.filter((i) => libState.type === 'all' || i.Type === libState.type);
+      const genres = groupByGenre(byType, 16).map((g) => g.genre);
+      if (libState.genre && !genres.includes(libState.genre)) libState.genre = '';
+      let items = byType.filter((i) => !libState.genre || (i.Genres || []).includes(libState.genre));
+      const by = {
+        az: (a, b) => a.Name.localeCompare(b.Name),
+        added: (a, b) => (Date.parse(b.Added) || 0) - (Date.parse(a.Added) || 0),
+        newest: (a, b) => (b.Year || 0) - (a.Year || 0) || a.Name.localeCompare(b.Name),
+        rating: (a, b) => (b.Rating || 0) - (a.Rating || 0) || a.Name.localeCompare(b.Name),
+      }[libState.sort];
+      items = [...items].sort(by);
+      const n = (t) => all.filter((i) => t === 'all' || i.Type === t).length;
+      lv.innerHTML = `
+        <div class="js-lib-head">
+          <h2 class="js-lib-title">${esc(svc.Name)} library</h2>
+          <span class="js-lib-count">${items.length} title${items.length === 1 ? '' : 's'}</span>
+        </div>
+        ${chipRow([chip('Back', false, 'data-lib="back"')].concat(
+          [['all', 'All'], ['movie', 'Movies'], ['tv', 'Shows']].map(([t, l]) => chip(`${l} (${n(t)})`, libState.type === t, `data-lib="type" data-v="${t}"`)),
+          LIB_SORTS.map(([k, l]) => chip(l, libState.sort === k, `data-lib="sort" data-v="${k}"`))), 'js-lib-ctl')}
+        ${genres.length ? chipRow([chip('All genres', !libState.genre, 'data-lib="genre" data-v=""')].concat(genres.map((g) => chip(g, libState.genre === g, `data-lib="genre" data-v="${esc(g)}"`))), 'js-lib-genres') : ''}
+        <div class="js-lib-grid"></div>
+        <div class="js-lib-more"></div>`;
+      stubRows(lv);
+      // lay the titles out in lines that fill the width, a few screens at a time
+      const grid = lv.querySelector('.js-lib-grid');
+      const probe = document.createElement('div');
+      probe.className = 'js-lib-line';
+      probe.innerHTML = `<div class="itemsContainer">${libraryCard(items[0] || all[0])}</div>`;
+      grid.appendChild(probe);
+      const one = probe.querySelector('.card');
+      const cw = one ? one.getBoundingClientRect().width + parseFloat(getComputedStyle(one).marginLeft || 0) + parseFloat(getComputedStyle(one).marginRight || 0) : 200;
+      const avail = grid.getBoundingClientRect().width - (isPhone() ? innerWidth * .08 : innerWidth * .066);
+      const per = Math.max(2, Math.floor(avail / Math.max(cw, 1)));
+      probe.remove();
+      if (!items.length) { grid.innerHTML = '<div class="js-empty">Nothing here with these filters.</div>'; return; }
+      let shown = 0;
+      const more = () => {
+        const html = [];
+        for (let k = 0; k < 6 && shown < items.length; k++, shown += per) {
+          html.push(`<div class="verticalSection js-section js-lib-line"><div class="js-rowwrap"><div class="emby-scroller js-scroller"><div class="itemsContainer scrollSlider focuscontainer-x">${items.slice(shown, shown + per).map(libraryCard).join('')}</div></div></div></div>`);
+        }
+        grid.insertAdjacentHTML('beforeend', html.join(''));
+        lazy(grid);
+        stubRows(grid);
+        if (shown >= items.length) io2?.disconnect();
+      };
+      const sentinel = lv.querySelector('.js-lib-more');
+      const io2 = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) more(); }, { rootMargin: '800px' }) : null;
+      more();
+      if (io2) io2.observe(sentinel); else while (shown < items.length) more();
+    };
+    lv.onclick = (e) => {
+      const a = e.target.closest('[data-lib]');
+      if (!a) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const kind = a.dataset.lib;
+      if (kind === 'back') { closeLibrary(view); return; }
+      libState[kind] = a.dataset.v;
+      draw();
+      lv.querySelector(`[data-lib="${kind}"][data-v="${CSS.escape(a.dataset.v)}"]`)?.focus?.();
+    };
+    draw();
+    scrollTo({ top: 0 });
+  };
+  const closeLibrary = (view) => {
+    view.classList.remove('js-libmode');
+    view.querySelector('.js-libview')?.remove();
+    scrollTo({ top: 0 });
+  };
+
   const renderService = async (sections, key) => {
     const cfg = state.cfg;
     const svc = cfg?.Services.find((s) => s.Key === key);
@@ -2546,32 +2641,7 @@
     const span = cfg.TopSource === 'day' ? 'Today' : cfg.TopSource === 'week' ? 'This Week' : '';
     const rows = [];
 
-    // Home + every service as tabs: logo and full name, sized inline so no theme can shrink them
-    const SW_CARD = 'width:auto !important;min-width:max-content !important;max-width:none !important;flex:0 0 auto !important;';
-    const SW_FIT = 'position:static !important;width:auto !important;min-width:max-content !important;max-width:none !important;height:auto !important;padding:0 !important;margin:0 .45em 0 0 !important;overflow:visible !important;contain:none !important;';
-    // the tab itself: a real pill whatever a theme does to card images
-    const SW_TAB = 'position:relative !important;inset:auto !important;display:inline-flex !important;align-items:center !important;gap:.6em !important;'
-      + 'width:auto !important;min-width:max-content !important;max-width:none !important;height:3em !important;padding:0 1.25em 0 .45em !important;'
-      + 'box-sizing:border-box !important;border-radius:999px !important;white-space:nowrap !important;overflow:visible !important;contain:none !important;'
-      + 'aspect-ratio:auto !important;flex:none !important;transform:none;';
-    const SW_TEXT = 'display:inline-block !important;width:auto !important;max-width:none !important;overflow:visible !important;text-overflow:clip !important;white-space:nowrap !important;position:static !important;';
-    const sw = (href, name, logo, current, color, icon) => `
-      <div class="card js-sw-card${current ? ' js-current' : ''}" style="${SW_CARD}height:auto !important;overflow:visible !important;contain:none !important;${color ? `--js-sw:${esc(color)};--js-sw-ink:${inkOn(color)};` : ''}">
-        <div class="cardBox" style="${SW_FIT}">
-          <div class="cardScalable" style="${SW_FIT}">
-            <a class="cardImageContainer cardContent itemAction js-sw-tab" style="${SW_TAB}" href="${esc(href)}" aria-label="${esc(name)}">
-              ${icon ? `<span class="material-icons js-sw-icon">${icon}</span>` : logo ? `<img class="js-sw-logo" src="${esc(logo)}" alt="" loading="lazy">` : `<span class="js-sw-dot"></span>`}
-              <span class="js-sw-name" style="${SW_TEXT}">${esc(name)}</span>
-            </a>
-          </div>
-        </div>
-      </div>`;
-    rows.push(section({
-      title: 'Services',
-      cls: 'js-switcher',
-      cards: [sw('#/home', 'Jellyfin', JF_LOGO, false, '#00a4dc')].concat(cfg.Services.map((x) =>
-        sw(`#/home?${PARAM}=${encodeURIComponent(x.Key)}`, x.Name, x.Logo, x.Key === svc.Key, tintOf(x)))),
-    }));
+    rows.push(pillsRow(svc.Key, svc));
 
     const topMovies = section({ title: `Top ${cfg.TopCount} Movies ${span}`.trim(), cards: uniqueTop(data.topMovies).map(rankCard), cls: 'js-top', attrs: 'data-kind="movie"' });
     const topShows = section({ title: `Top ${cfg.TopCount} Shows ${span}`.trim(), cards: uniqueTop(data.topShows).map(rankCard), cls: 'js-top', attrs: 'data-kind="tv"' });
@@ -2641,11 +2711,11 @@
     }
     if (shows.length) {
       const az = [...shows].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      body.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard), attrs: 'data-kind="tv"' }));
+      body.push(section({ title: `All Shows (${shows.length})`, cards: az.map(libraryCard), attrs: 'data-kind="tv" data-seeall="tv"' }));
     }
     if (movies.length) {
       const az = [...movies].sort((a, b) => a.Name.localeCompare(b.Name)).slice(0, 120);
-      body.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard), attrs: 'data-kind="movie"' }));
+      body.push(section({ title: `All Movies (${movies.length})`, cards: az.map(libraryCard), attrs: 'data-kind="movie" data-seeall="movie"' }));
     }
 
     // the two Top 10s never sit next to each other: shows near the top, movies a few rows later
@@ -2655,6 +2725,12 @@
     const html = rows.join('');
     renderBillboard(view, svc, data);
     const box = view.querySelector('.js-rows');
+    box.onclick = (e) => {
+      const t = e.target.closest('[data-seeall] .sectionTitle');
+      if (!t) return;
+      e.preventDefault();
+      openLibrary(view, svc, data, { type: t.closest('[data-seeall]').dataset.seeall });
+    };
     box.innerHTML = html || `<div class="js-empty">Nothing from ${esc(svc.Name)} yet. If you just set JellyStream up, run the sync from its settings page.</div>`;
     lazy(box);
     stubRows(box);
@@ -3144,9 +3220,16 @@
 
   document.addEventListener('click', (e) => {
     const a = e.target.closest?.('.js-svc-card a, .js-switcher a, .js-back');
-    if (!a) return;
+    if (!a || a.closest('.js-libview')) return;
     e.preventDefault();
     e.stopPropagation();
+    if (a.getAttribute('href') === '#js-library') {
+      const view = a.closest('.js-view');
+      const svc = state.cfg?.Services.find((x) => x.Key === view?.dataset.key);
+      const data = svc && state.data.get(svc.Key);
+      if (view && data) openLibrary(view, svc, data);
+      return;
+    }
     const current = serviceKey();
     const heroImg = document.querySelector('.js-view .js-hero img');
 
@@ -3188,7 +3271,8 @@
   document.addEventListener('click', (e) => {
     if (!serviceKey() || !isHomeControl(e.target)) return;
     diag.add('nav', 'Jellyfin Home pressed on a service page: staying on it (it is the home now)');
-    scrollTo({ top: 0, behavior: 'smooth' });
+    const view = document.querySelector('.js-view.js-libmode');
+    if (view) closeLibrary(view); else scrollTo({ top: 0, behavior: 'smooth' });
   }, true);
 
   // ---------------------------------------------------------------- main loop

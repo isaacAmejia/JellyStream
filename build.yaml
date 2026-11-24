@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.21.0.0"
+version: "1.22.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,7 +14,7 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Jellyfin is now the main "service": the first pill is Jellyfin (back to the Jellyfin home, with its
-  own intro video or animation), and Jellyfin's Home tab opens whichever service you picked last on
-  that device, also after leaving and coming back or reloading. Intros only play when you switch to a
-  different service. Upload Jellyfin's intro in settings under Intros.
+  The streaming services row on Jellyfin's home is now the same pill bar as on service pages, with
+  Jellyfin selected and no row title. New: each service's whole library as a filterable grid (All /
+  Movies / Shows, genres, A-Z / Recently added / Newest / Top rated), from the "<service> library"
+  pill or "See all" on the All Shows / All Movies rows. Works with a remote.
