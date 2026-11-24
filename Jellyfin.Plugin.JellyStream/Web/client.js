@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.17.0';
+  const VERSION = '1.17.1';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -361,7 +361,7 @@
   // row sizing per service: card widths, spacing, and how wide a Top 10 slot is next to its poster
   const LAND = (w, cw) => `--js-rank-pw: ${w}; --js-rank-ph: calc(var(--js-rank-pw) * .5625); --js-rank-cw: ${cw};`;
   const LAYOUT = {
-    netflix: '--js-port-w: clamp(140px, 11.2vw, 230px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
+    netflix: '--js-port-w: clamp(170px, 14.6vw, 300px); --js-poster-w: clamp(160px, 13.6vw, 280px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
     disney: `--js-land-w: clamp(240px, 19vw, 350px); --js-gap: .6em; ${LAND('clamp(240px, 19vw, 340px)', 'calc(var(--js-rank-pw) * 1.12)')}`,
     max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-cw: calc(var(--js-poster-w) * 1.5);',
     prime: `--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; ${LAND('clamp(230px, 17vw, 310px)', 'calc(var(--js-rank-pw) + var(--js-rank-ph) * .66)')}`,
@@ -473,8 +473,8 @@
     ${NF_PH} .js-hdr-mark img { height: 1.9em; }
 
     /* TV / desktop: the selected title opens wide, framed in white, with badges and its details below */
+    ${NF_TV} .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w) !important; min-width: var(--js-port-w) !important; }
     ${NF_TV} .js-view .js-lib.overflowPortraitCard, ${NF_TV} .js-view .js-rank-card { transition: width .28s cubic-bezier(.2,.9,.25,1), min-width .28s cubic-bezier(.2,.9,.25,1); }
-    ${NF_TV} .js-view .js-lib .cardPadder { transition: padding-bottom .28s cubic-bezier(.2,.9,.25,1); }
     ${NF_TV} .js-view .js-rank-poster { transition: width .28s cubic-bezier(.2,.9,.25,1), box-shadow .2s ease !important; }
     ${NF_TV} .js-view .js-open .cardImageContainer, ${NF_TV} .js-view .js-rank-card.js-open .js-rank-poster {
       border-radius: 12px !important; box-shadow: 0 0 0 3px #fff, 0 18px 40px rgba(0,0,0,.6) !important; transform: none !important; }
@@ -1682,7 +1682,12 @@
     // rank cards carry their size inline (from the rank variables), so only the overrides come off
     const props = c.classList.contains('js-rank-card') ? ['--js-rank-cw', '--js-rank-pw'] : ['width', 'min-width'];
     for (const p of props) c.style.removeProperty(p);
-    c.querySelector('.cardPadder')?.style.removeProperty('padding-bottom');
+    // hold the height while the card narrows back (a % padding would balloon as the width animates), then let go
+    const padder = c.querySelector('.cardPadder');
+    if (padder) {
+      clearTimeout(c.__jsPadT);
+      c.__jsPadT = setTimeout(() => { if (!c.classList.contains('js-open')) padder.style.removeProperty('padding-bottom'); }, 360);
+    }
     const art = c.querySelector('.js-img');
     if (art?.dataset.src && art.style.backgroundImage) art.style.backgroundImage = bgOf(art.dataset.src);
     art?.querySelector('.js-nf-wide')?.remove();
@@ -1699,10 +1704,15 @@
       card.style.setProperty('--js-rank-pw', `calc(var(--js-poster-w, 150px) * ${WIDE})`);
       card.style.setProperty('--js-rank-cw', `calc(var(--js-poster-w, 150px) * ${WIDE + 0.62})`);
     } else {
+      // lock the artwork's height in pixels first, so widening only ever changes the width
+      const padder = card.querySelector('.cardPadder');
+      if (padder) {
+        clearTimeout(card.__jsPadT);
+        if (!padder.style.paddingBottom) padder.style.setProperty('padding-bottom', `${padder.getBoundingClientRect().height}px`, 'important');
+      }
       const w = `calc(var(--js-port-w, 180px) * ${WIDE})`;
       card.style.setProperty('width', w, 'important');
       card.style.setProperty('min-width', w, 'important');
-      card.querySelector('.cardPadder')?.style.setProperty('padding-bottom', '56.25%', 'important');
     }
     const art = card.querySelector('.js-img');
     if (art && card.dataset.wide) {
