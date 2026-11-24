@@ -65,7 +65,8 @@ public class IntroController : ControllerBase
     {
         var config = Plugin.Instance!.Configuration;
         var result = new Dictionary<string, IntroInfo>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in config.Services.Select(s => s.Key).Where(IntroStore.IsValidKey).Distinct(StringComparer.OrdinalIgnoreCase))
+        // Jellyfin's own intro (switching back to Jellyfin) sits alongside the services'
+        foreach (var key in config.Services.Select(s => s.Key).Prepend("jellyfin").Where(IntroStore.IsValidKey).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             foreach (var variant in new[] { string.Empty, "mobile" })
             {

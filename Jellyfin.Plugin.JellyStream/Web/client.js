@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.0';
+  const VERSION = '1.22.1';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -168,7 +168,7 @@
 
   // Jellyfin itself counts as the main streaming service: a pill of its own, an intro of its own,
   // and the Home tab opens whichever one (a service or Jellyfin) you picked last on this device
-  const JF_LOGO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient></defs><rect width="100" height="100" rx="50" fill="#101018"/><path fill="url(#g)" d="M50 18c-6 0-28 40-25 46s47 6 50 0-19-46-25-46zm0 20c3 0 13 21 11 24s-20 3-22 0 8-24 11-24z"/></svg>');
+  const JF_LOGO = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-80 -70 672 672"><circle cx="256" cy="266" r="336" fill="#101018"/><defs><linearGradient id="g" x1="110.25" y1="213.3" x2="496.14" y2="436.09" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient></defs><path d="M256,201.62c-20.44,0-86.23,119.29-76.2,139.43s142.48,19.92,152.4,0S276.47,201.63,256,201.62Z" fill="url(#g)"/><path d="M256,23.3c-61.56,0-259.82,359.43-229.59,420.1s429.34,60,459.24,0S317.61,23.3,256,23.3ZM406.51,390.76c-19.59,39.33-281.08,39.77-300.89,0S215.71,115.48,256.06,115.48,426.1,351.42,406.51,390.76Z" fill="url(#g)"/></svg>');
   const jellyfin = () => ({
     Key: 'jellyfin', Name: 'Jellyfin', Logo: JF_LOGO, Accent: '#00a4dc', Movies: 0, Shows: 0,
     IntroVersion: state.cfg?.JellyfinIntroVersion || null, MobileIntroVersion: state.cfg?.JellyfinMobileIntroVersion || null,
