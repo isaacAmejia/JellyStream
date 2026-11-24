@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.23.0.0"
+version: "1.23.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,10 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Libraries: no more library pill; each service home now ends with a "Browse everything" panel (a tilted wall of
-  posters behind big Everything / Movies / Shows tiles and genre buttons). The library itself now works like Prime
-  on TV and desktop for every service: the selected title's banner, in that service's style, stays at the top while
-  the grid moves under it, built for remotes. Filter buttons no longer get squished into circles. Banners at the top
-  of each service rotate again unless you're actually using them. Jellyfin intro: specks spiral all the way in with
-  light trails, audible chatter (crystal blips piling up into the chord), and the Jellyfin pill waits black and empty,
-  then its logo and name pop in while the other pills rise into place (after every service's intro, too).
+  Netflix is black now, like the app, and while its banner is selected the whole page glows with the banner's art.
+  On every service, the banner button you're on lights up fully (white, slightly larger) instead of just getting an
+  outline, and the others dim.

@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.23.0';
+  const VERSION = '1.23.1';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -207,8 +207,8 @@
   const BRANDS = {
     netflix: {
       c1: '#e50914', c2: '#b20710', numA: '#141414', numB: '#595959', num: 'outline',
-      // TV: deep navy that lightens toward the bottom; phones: black
-      base: '#11142a', bg: 'linear-gradient(180deg, #0e1121 0%, #131730 40%, #1b1f43 100%)',
+      // black, like the app; while the banner is selected the page glows with its art
+      base: '#000', bg: '#000', ambient: true,
       basePhone: '#000', bgPhone: '#000',
       shape: 'portrait', caption: 'none',
       focusExpand: true, badges: true, headerMark: true,
@@ -218,7 +218,7 @@
       css: `
         .js-bb { height: min(60vh, 640px) !important; min-height: 300px; margin: .4em 3.3% 1.4em !important; border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 2px rgba(255,255,255,.14), 0 24px 50px rgba(0,0,0,.45); transition: box-shadow .2s ease; }
         .js-bb:is(:hover, :focus-within) { box-shadow: 0 0 0 3px #fff, 0 24px 50px rgba(0,0,0,.5); }
-        .js-bb-shade { background: linear-gradient(0deg, rgba(8,10,22,.92) 0%, rgba(8,10,22,.35) 38%, transparent 60%), linear-gradient(90deg, rgba(8,10,22,.7) 0%, transparent 55%) !important; }
+        .js-bb-shade { background: linear-gradient(0deg, rgba(0,0,0,.9) 0%, rgba(0,0,0,.35) 38%, transparent 60%), linear-gradient(90deg, rgba(0,0,0,.7) 0%, transparent 55%) !important; }
         .js-bb-content { left: 4% !important; bottom: 9% !important; gap: .6em !important; }
         .js-bb-tag { color: #fff; font-weight: 700; font-size: .95em; letter-spacing: 0; }
         .js-bb-tag::before { content: "N"; color: #e50914; font-weight: 900; font-size: 1.6em; margin-right: .35em; vertical-align: -.18em; }
@@ -1092,6 +1092,19 @@
     .js-bb-new { display: none; }
     .js-view.js-libmode > .js-bb, .js-view.js-libmode > .js-rows { display: none !important; }
     .js-libview { padding: 5.5em 0 4em; min-height: 100vh; }
+    /* the banner's buttons: the selected one lights up fully; the remote's outline ring steps aside there */
+    .js-view .js-bb .js-bb-btn { transition: transform .18s ease, background-color .18s ease, color .18s ease, box-shadow .18s ease; }
+    .js-view .js-bb .js-bb-btn:is(.js-sel, :hover, :focus-visible) { background: #fff !important; color: #000 !important; border-color: #fff !important;
+      transform: scale(1.06); box-shadow: 0 8px 26px rgba(0,0,0,.45) !important; }
+    .js-view .js-bb:has(.js-bb-btn:is(.js-sel, :hover, :focus-visible)) .js-bb-btn:not(.js-sel, :hover, :focus-visible) {
+      background: rgba(255,255,255,.18) !important; color: #fff !important; border-color: transparent !important; }
+    html.js-ring-btn #__jf_library_focus_ring__ { opacity: 0 !important; }
+    /* ambient page (Netflix): black, glowing with the banner's art while the banner is selected */
+    .js-view > .js-amb { position: fixed; inset: -10%; z-index: 0; pointer-events: none; opacity: 0; background: center / cover no-repeat;
+      filter: blur(70px) saturate(1.4) brightness(.55); transform: scale(1.1); transition: opacity .6s ease, background-image .6s ease; }
+    html.js-lite .js-view > .js-amb { filter: brightness(.35); }
+    html.js-bb-active .js-view > .js-amb { opacity: 1; }
+    .js-view:has(> .js-amb) > :not(.js-amb) { position: relative; z-index: 1; }
     /* TV / desktop library: the banner stays put at the top showing the selected title; the grid moves under it */
     html .js-view.js-libmode.js-libhero > .js-libview { padding-top: 0; }
     html .js-view.js-libmode.js-libhero > .js-libview > .js-bb.js-lib-hero { position: fixed !important; top: 0 !important; left: 0; right: 0; height: 56vh !important; min-height: 0 !important;
@@ -2241,8 +2254,19 @@
     clearTimeout(nfTimer);
     if (card && card !== nfCard) nfTimer = setTimeout(() => nfOpen(card, false), 140);
   }, { passive: true });
+  document.addEventListener('mouseover', (e) => {
+    if (matchMedia('(pointer: coarse)').matches || document.getElementById('__jf_library_focus_ring__')?.style.display === 'block') return;
+    const inBanner = !!e.target.closest?.('.js-view > .js-bb');
+    if (inBanner || document.documentElement.classList.contains('js-bb-active')) bbSelect(null, inBanner);
+  }, { passive: true });
+  document.addEventListener('focusout', () => setTimeout(() => {
+    const ae = document.activeElement;
+    if (!ae?.closest?.('.js-view > .js-bb') && document.getElementById('__jf_library_focus_ring__')?.style.display !== 'block') bbSelect(null, false);
+  }, 0));
   // keyboard focus
   document.addEventListener('focusin', (e) => {
+    const b = e.target.closest?.('.js-view > .js-bb');
+    if (b) bbSelect(e.target.closest('.js-bb-btn'), true);
     if (heroOn()) { const c = e.target.closest?.('.js-view .js-rows .card'); if (c) heroFollow(c); }
     const card = e.target.closest?.(EXPANDABLE);
     if (card && focusOn()) nfOpen(card, true);
@@ -2256,10 +2280,31 @@
     return hit || null;
   };
   let ringFrame = 0;
+  // the banner's buttons light up fully when the remote is on them (the ring itself steps aside there),
+  // and on services with an ambient page the whole page takes on the banner's art while it's selected
+  const bbSelect = (btn, inBanner) => {
+    document.querySelectorAll('.js-bb-btn.js-sel').forEach((b) => { if (b !== btn) b.classList.remove('js-sel'); });
+    btn?.classList.add('js-sel');
+    const html = document.documentElement;
+    html.classList.toggle('js-ring-btn', !!btn);
+    if (html.classList.contains('js-bb-active') !== !!inBanner) {
+      html.classList.toggle('js-bb-active', !!inBanner);
+      ambSync();
+    }
+  };
+  const ambSync = () => {
+    const amb = document.querySelector('.js-view > .js-amb');
+    if (!amb) return;
+    const art = document.querySelector('.js-view > .js-bb .js-bb-slide.on .js-bb-art');
+    const img = art?.style.backgroundImage;
+    if (img && amb.style.backgroundImage !== img) amb.style.backgroundImage = img;
+  };
   const onRing = (ring) => {
     if (ringFrame) return;
     ringFrame = requestAnimationFrame(() => {
       ringFrame = 0;
+      const now = ringTarget(ring);
+      if (now !== undefined) bbSelect(now?.closest?.('.js-bb-btn') || null, !!now?.closest?.('.js-view > .js-bb'));
       if (!focusOn()) return;
       clearTimeout(nfTimer);
       // wait for the ring to settle, then look again (it glides across other cards on its way)
@@ -3452,6 +3497,8 @@
     bb.querySelectorAll('.js-bb-dot').forEach((d, k) => d.classList.toggle('on', k === n));
     bb.dataset.slide = n;
     bbFill(slides[n]);
+    setTimeout(ambSync, 60);
+    setTimeout(ambSync, 900);
     if (slides[(n + 1) % slides.length]) bbFill(slides[(n + 1) % slides.length]); // ready before it's due
   };
   // the banner keeps rotating unless you're actually using it right now: a mouse resting on it, a phone's
@@ -3512,7 +3559,8 @@
       }
     }
     hero.replaceWith(bb);
-    bb.appendChild(hero); // the service chip (logo, name, Back) sits in the corner
+    bb.appendChild(hero);
+    if (look().ambient && !view.querySelector(':scope > .js-amb')) view.insertAdjacentHTML('afterbegin', '<div class="js-amb" aria-hidden="true"></div>'); // the service chip (logo, name, Back) sits in the corner
     // services whose banner runs under the header: pull it up to the top of the page
     if (look().bleed && !isPhone()) {
       requestAnimationFrame(() => {
