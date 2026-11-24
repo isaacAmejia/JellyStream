@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.1';
+  const VERSION = '1.22.2';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -2150,6 +2150,17 @@
     try {
       state.cfg = await getJSON('Config');
       state.cfgAt = Date.now();
+      // the plugin was updated while this page (or the phone app) stayed open: load the new script once
+      const v = state.cfg?.PluginVersion;
+      if (v && !v.startsWith(`${VERSION}.`) && v !== VERSION) {
+        let done = '';
+        try { done = sessionStorage.getItem('jellystream:reloaded') || ''; } catch { /* private mode */ }
+        if (done !== v && onHome() && !document.querySelector('.js-intro')) {
+          try { sessionStorage.setItem('jellystream:reloaded', v); } catch { /* private mode */ }
+          diag.add('nav', `JellyStream was updated (${VERSION} -> ${v}): reloading`);
+          location.reload();
+        }
+      }
       document.documentElement.classList.toggle('js-lite', lite());
     } catch {
       state.cfg = state.cfg || null;

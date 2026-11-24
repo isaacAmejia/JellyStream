@@ -32,6 +32,7 @@ public record ClientService(string Key, string Name, string? Logo, string Accent
 /// <param name="Diagnostics">Show the diagnostics panel.</param>
 /// <param name="JellyfinIntroVersion">Version of the Jellyfin intro video (TV / desktop), when one is uploaded.</param>
 /// <param name="JellyfinMobileIntroVersion">Version of the Jellyfin phone intro video, when one is uploaded.</param>
+/// <param name="PluginVersion">The plugin's version, so pages still running an older script can refresh.</param>
 public record ClientConfig(
     List<ClientService> Services,
     bool ShowHomeRow,
@@ -48,7 +49,8 @@ public record ClientConfig(
     bool ShowPopularMissing,
     bool Diagnostics = false,
     string? JellyfinIntroVersion = null,
-    string? JellyfinMobileIntroVersion = null);
+    string? JellyfinMobileIntroVersion = null,
+    string? PluginVersion = null);
 
 /// <summary>A popular title (in the library or not).</summary>
 /// <param name="TmdbId">TMDB id.</param>
