@@ -6,8 +6,8 @@
     <AssemblyName>Jellyfin.Plugin.JellyStream</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyVersion>1.22.6.0</AssemblyVersion>
-    <FileVersion>1.22.6.0</FileVersion>
+    <AssemblyVersion>1.22.7.0</AssemblyVersion>
+    <FileVersion>1.22.7.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
