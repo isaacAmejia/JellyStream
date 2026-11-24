@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.22.3';
+  const VERSION = '1.22.4';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -867,6 +867,7 @@
   css.textContent = `
     /* service tiles: landscape glass cards. The backdrop is what's trending on that service right now,
        washed in the service's color, with the logo and name on a frosted strip. */
+    .js-services { overflow-x: clip; }
     .js-services .js-svc-card { width: var(--js-tile-w, clamp(220px, 18vw, 330px)) !important; min-width: 0 !important; flex: 0 0 auto !important; }
     .js-services .js-tile-logo { width: 2.3em; height: 2.3em; flex: none; border-radius: 22%; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.14); }
     .js-services .js-svc-card .cardScalable { background: transparent !important; box-shadow: none !important; }
@@ -1357,27 +1358,67 @@
       animation: js-intro-burst 1.3s cubic-bezier(.2,.9,.25,1) .15s both;
     }
     /* anything else: a sweep of light in the service's color */
-    /* Jellyfin: a purple-blue glow blooms, the arch draws itself and fills, the inner triangle pops in, the name follows */
-    .js-intro-jellyfin .js-intro-fx { position: absolute; inset: 0; overflow: hidden; }
-    .js-intro-jellyfin .js-intro-fx::before { content: ""; position: absolute; left: 50%; top: 46%; width: 120vmax; height: 120vmax; transform: translate(-50%, -50%) scale(.2);
-      background: radial-gradient(closest-side, rgba(170,92,195,.38), rgba(0,164,220,.22) 45%, transparent 70%); opacity: 0;
-      animation: js-jf-glow 1.9s cubic-bezier(.2,.8,.2,1) .05s both; }
-    .js-intro-jellyfin .js-intro-fx::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 50% 46%, transparent 40%, rgba(0,0,0,.55) 100%); }
-    .js-jf-stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2.4vmin; animation: js-jf-settle 1.9s cubic-bezier(.2,.8,.2,1) both; }
-    .js-jf-mark { width: min(34vmin, 260px); height: auto; overflow: visible; filter: drop-shadow(0 0 2.4vmin rgba(0,164,220,.35)); }
-    .js-jf-mark .jf-out { fill-opacity: 0; stroke-width: 7; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round;
-      animation: js-jf-draw .8s cubic-bezier(.6,0,.3,1) .1s forwards, js-jf-fill .45s ease .7s forwards; }
-    .js-jf-mark .jf-in { transform-origin: 256px 290px; transform: scale(0); animation: js-jf-pop .55s cubic-bezier(.3,1.6,.5,1) .85s forwards; }
-    .js-jf-word { font: 600 min(9vmin, 64px)/1 "Quicksand", "Nunito", "Avenir Next", "Segoe UI", sans-serif; letter-spacing: .02em; color: #fff;
-      opacity: 0; transform: translateY(1.2vmin); animation: js-jf-word .55s ease 1.05s forwards; }
-    @keyframes js-jf-glow { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); } 45% { opacity: 1; } 100% { opacity: .75; transform: translate(-50%, -50%) scale(1); } }
+    /* Jellyfin, in glass: the screen frosts over, a glass pane floats up over drifting purple and blue light, the
+       logo draws itself on it and lands with a glint, "Jellyfin" rises; then the glass clears onto the home screen */
+    .js-intro-jellyfin { background: transparent !important; }
+    html:not(.js-lite) .js-intro-jellyfin { -webkit-backdrop-filter: blur(34px) saturate(150%); backdrop-filter: blur(34px) saturate(150%);
+      animation: js-jf-frost .45s ease-out both; }
+    .js-intro-jellyfin .js-intro-fx { position: absolute; inset: 0; overflow: hidden; background: rgba(8,8,16,.8); animation: js-jf-tint .45s ease-out both; }
+    html.js-lite .js-intro-jellyfin .js-intro-fx { background: #0b0b14; }
+    .js-jf-blob { position: absolute; width: 75vmax; height: 75vmax; border-radius: 50%; opacity: 0; }
+    .js-jf-blob.a { left: -20vmax; top: -25vmax; background: radial-gradient(closest-side, rgba(170,92,195,.55), transparent); animation: js-jf-blob-a 2.6s cubic-bezier(.2,.8,.2,1) .05s both; }
+    .js-jf-blob.b { right: -25vmax; bottom: -30vmax; background: radial-gradient(closest-side, rgba(0,164,220,.5), transparent); animation: js-jf-blob-b 2.6s cubic-bezier(.2,.8,.2,1) .1s both; }
+    .js-jf-blob.c { left: 50%; top: 50%; width: 55vmax; height: 55vmax; margin: -27.5vmax; background: radial-gradient(closest-side, rgba(120,110,255,.28), transparent); animation: js-jf-blob-c 2.6s ease .2s both; }
+    .js-jf-pane { position: relative; z-index: 2; box-sizing: border-box; width: clamp(230px, 60vmin, 430px); aspect-ratio: 1 / 1.04; border-radius: 15%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7%; overflow: hidden; isolation: isolate;
+      background: linear-gradient(155deg, rgba(255,255,255,.17), rgba(255,255,255,.06) 42%, rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.22);
+      box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(255,255,255,.08);
+      opacity: 0; animation: js-jf-pane .8s cubic-bezier(.2,.9,.25,1) .22s both; }
+    html:not(.js-lite) .js-jf-pane { -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%); }
+    html.js-lite .js-jf-pane { background: rgba(40,40,58,.92); }
+    .js-jf-glow { position: absolute; z-index: -1; left: 50%; top: 42%; width: 90%; height: 90%; transform: translate(-50%, -50%) scale(.3); border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(170,92,195,.5), rgba(0,164,220,.25) 55%, transparent); opacity: 0;
+      animation: js-jf-glow 1.1s cubic-bezier(.2,.8,.2,1) 1.12s both; }
+    .js-jf-mark { width: 50%; height: auto; overflow: visible; margin-top: 4%; }
+    .js-jf-mark .jf-out { fill-opacity: 0; stroke-width: 10; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round; stroke-linecap: round;
+      filter: drop-shadow(0 0 8px rgba(0,164,220,.8)); animation: js-jf-draw .75s cubic-bezier(.6,0,.25,1) .45s forwards, js-jf-fill .3s ease 1.1s forwards; }
+    .js-jf-mark .jf-in { transform-origin: 256px 300px; transform: scale(0) translateY(40px); opacity: 0;
+      animation: js-jf-pop .6s cubic-bezier(.25,1.7,.45,1) 1.16s forwards; }
+    .js-jf-word { display: flex; font-family: inherit; font-weight: 600; font-size: clamp(30px, 8.4vmin, 60px); line-height: 1; letter-spacing: .01em; color: #fff;
+      text-shadow: 0 2px 14px rgba(0,0,0,.35); }
+    .js-jf-word span { display: inline-block; white-space: pre; opacity: 0; transform: translateY(.45em); filter: blur(5px); animation: js-jf-letter .55s cubic-bezier(.2,.9,.25,1) both; }
+    /* the glint across the glass when the logo lands */
+    .js-jf-sheen { position: absolute; inset: -20%; pointer-events: none; transform: translateX(-120%) rotate(18deg);
+      background: linear-gradient(90deg, transparent 38%, rgba(255,255,255,.08) 44%, rgba(255,255,255,.38) 50%, rgba(255,255,255,.08) 56%, transparent 62%);
+      animation: js-jf-sheen 1s cubic-bezier(.45,0,.2,1) 1.2s both; }
+    @keyframes js-jf-frost { from { -webkit-backdrop-filter: blur(0) saturate(100%); backdrop-filter: blur(0) saturate(100%); } }
+    @keyframes js-jf-tint { from { opacity: 0; } }
+    @keyframes js-jf-blob-a { 0% { opacity: 0; transform: translate(-8vmax, -6vmax) scale(.8); } 30% { opacity: 1; } 100% { opacity: 1; transform: translate(6vmax, 5vmax) scale(1); } }
+    @keyframes js-jf-blob-b { 0% { opacity: 0; transform: translate(8vmax, 6vmax) scale(.8); } 30% { opacity: 1; } 100% { opacity: 1; transform: translate(-6vmax, -4vmax) scale(1); } }
+    @keyframes js-jf-blob-c { 0% { opacity: 0; transform: scale(.5); } 50% { opacity: 1; } 100% { opacity: .8; transform: scale(1.1); } }
+    @keyframes js-jf-pane { 0% { opacity: 0; transform: translateY(6vmin) scale(.92); } 100% { opacity: 1; transform: none; } }
+    @keyframes js-jf-glow { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 35% { opacity: 1; } 100% { opacity: .55; transform: translate(-50%, -50%) scale(1); } }
     @keyframes js-jf-draw { to { stroke-dashoffset: 0; } }
     @keyframes js-jf-fill { to { fill-opacity: 1; stroke-width: 0; } }
-    @keyframes js-jf-pop { to { transform: scale(1); } }
-    @keyframes js-jf-word { to { opacity: 1; transform: none; } }
-    @keyframes js-jf-settle { 0% { transform: scale(.94); } 100% { transform: scale(1); } }
-    html.js-lite .js-intro-jellyfin .js-jf-mark { filter: none; }
-    @media (prefers-reduced-motion: reduce) { .js-jf-mark .jf-out, .js-jf-mark .jf-in, .js-jf-word { animation: none !important; fill-opacity: 1; transform: none; opacity: 1; stroke-dashoffset: 0; } }
+    @keyframes js-jf-pop { 0% { opacity: 0; transform: scale(0) translateY(40px); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+    @keyframes js-jf-letter { to { opacity: 1; transform: none; filter: none; } }
+    @keyframes js-jf-sheen { to { transform: translateX(120%) rotate(18deg); } }
+    /* into the home screen: the pane lifts away and the frosted glass clears */
+    .js-intro-jellyfin.out-jf { pointer-events: none; animation: js-jf-clear .8s cubic-bezier(.4,0,.2,1) forwards; }
+    .js-intro-jellyfin.out-jf .js-intro-fx { animation: js-jf-untint .8s cubic-bezier(.4,0,.2,1) forwards; }
+    .js-intro-jellyfin.out-jf .js-jf-pane { animation: js-jf-lift .6s cubic-bezier(.5,0,.2,1) forwards; }
+    .js-intro-jellyfin.out-jf .js-jf-word span { animation: none; opacity: 1; transform: none; filter: none; }
+    @keyframes js-jf-clear { to { -webkit-backdrop-filter: blur(0) saturate(100%); backdrop-filter: blur(0) saturate(100%); } }
+    @keyframes js-jf-untint { to { opacity: 0; } }
+    @keyframes js-jf-lift { 0% { opacity: 1; transform: none; filter: none; } 100% { opacity: 0; transform: translateY(-3vmin) scale(1.12); filter: blur(10px); } }
+    html.js-lite .js-intro-jellyfin .js-jf-mark .jf-out { filter: none; }
+    html.js-lite .js-jf-sheen, html.js-lite .js-jf-blob.c { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .js-intro-jellyfin, .js-intro-jellyfin .js-intro-fx, .js-jf-pane, .js-jf-blob, .js-jf-glow, .js-jf-mark .jf-out, .js-jf-mark .jf-in, .js-jf-word span, .js-jf-sheen { animation: none !important; }
+      .js-jf-pane, .js-jf-blob { opacity: 1; } .js-jf-mark .jf-out { fill-opacity: 1; stroke-dashoffset: 0; stroke-width: 0; }
+      .js-jf-mark .jf-in, .js-jf-word span { opacity: 1; transform: none; filter: none; }
+    }
     .js-switcher svg.js-sw-logo { display: block; }
     .js-intro-generic .js-intro-fx::before {
       content: ""; position: absolute; top: 0; bottom: 0; width: 35%;
@@ -2474,6 +2515,82 @@
   };
 
   // the built-in animation, shown until the page is ready (about two seconds)
+  // Jellyfin intro sounds, made on the spot: a rising whoosh while the logo draws, a deep hit with a
+  // bright chord when it lands, and a falling whoosh as it opens onto the home screen.
+  const jfSound = (part) => {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ac = jfSound.ac || (jfSound.ac = new AC());
+      if (ac.state === 'suspended') ac.resume();
+      const t0 = ac.currentTime + .03;
+      const master = ac.createGain();
+      master.gain.value = .5;
+      master.connect(ac.destination);
+      // a little space: a soft feedback echo
+      const delay = ac.createDelay(1);
+      delay.delayTime.value = .16;
+      const fb = ac.createGain(); fb.gain.value = .32;
+      const wet = ac.createGain(); wet.gain.value = .28;
+      const tone = ac.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 4200;
+      delay.connect(tone); tone.connect(fb); fb.connect(delay); tone.connect(wet); wet.connect(master);
+      const send = (node) => { node.connect(master); node.connect(delay); };
+      const noise = (dur) => {
+        const b = ac.createBuffer(1, Math.ceil(dur * ac.sampleRate), ac.sampleRate);
+        const d = b.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const src = ac.createBufferSource();
+        src.buffer = b;
+        return src;
+      };
+      const env = (g, t, peak, a, r) => {
+        g.gain.setValueAtTime(.0001, t);
+        g.gain.exponentialRampToValueAtTime(peak, t + a);
+        g.gain.exponentialRampToValueAtTime(.0001, t + a + r);
+      };
+      const whoosh = (t, from, to, dur, peak) => {
+        const n = noise(dur + .1);
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4;
+        bp.frequency.setValueAtTime(from, t); bp.frequency.exponentialRampToValueAtTime(to, t + dur);
+        const g = ac.createGain(); env(g, t, peak, dur * .7, dur * .45);
+        n.connect(bp); bp.connect(g); send(g); n.start(t); n.stop(t + dur + .1);
+      };
+      if (part === 'in') {
+        whoosh(t0 + .15, 260, 3400, 1.05, .26); // the glass frosts over, the arch draws
+        const hit = t0 + 1.18;
+        // the landing: a deep sub drop with a soft click on top
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(140, hit); o.frequency.exponentialRampToValueAtTime(42, hit + .55);
+        const og = ac.createGain(); env(og, hit, .85, .015, .95);
+        o.connect(og); og.connect(master); o.start(hit); o.stop(hit + 1.1);
+        const click = noise(.05); const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+        const cg = ac.createGain(); env(cg, hit, .25, .003, .05); click.connect(hp); hp.connect(cg); send(cg); click.start(hit); click.stop(hit + .06);
+        // and a bright, rising major chord (E, G#, B, E) that rings out
+        [659.25, 830.61, 987.77, 1318.51, 1975.53].forEach((f, i) => {
+          const t = hit + .03 + i * .055;
+          const osc = ac.createOscillator(); osc.type = i % 2 ? 'triangle' : 'sine'; osc.frequency.value = f;
+          const det = ac.createOscillator(); det.type = 'sine'; det.frequency.value = f * 1.003;
+          const g = ac.createGain(); env(g, t, .16 / (1 + i * .35), .02, 1.7);
+          osc.connect(g); det.connect(g); send(g);
+          osc.start(t); det.start(t); osc.stop(t + 1.9); det.stop(t + 1.9);
+        });
+        // a little sparkle as the name comes in
+        [2637, 3136, 3520].forEach((f, i) => {
+          const t = hit + .25 + i * .07;
+          const osc = ac.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+          const g = ac.createGain(); env(g, t, .05, .01, .5);
+          osc.connect(g); send(g); osc.start(t); osc.stop(t + .6);
+        });
+      } else {
+        whoosh(t0, 3800, 220, .6, .3); // opening onto the home screen
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(90, t0 + .15); o.frequency.exponentialRampToValueAtTime(38, t0 + .7);
+        const og = ac.createGain(); env(og, t0 + .15, .35, .03, .6);
+        o.connect(og); og.connect(master); o.start(t0 + .15); o.stop(t0 + .9);
+      }
+    } catch { /* no audio: the animation still runs */ }
+  };
+
   const playIntroAnim = (svc) => {
     document.querySelector('.js-intro')?.remove();
     const k = svc.Key === 'jellyfin' ? 'jellyfin' : (brandKeyFor(svc) || 'generic');
@@ -2489,24 +2606,37 @@
       }).join('')
       : '';
     el.innerHTML = k === 'jellyfin'
-      ? `<div class="js-intro-fx"></div><div class="js-jf-stage">${jfSvg('js-jf-mark', false)}<div class="js-jf-word">jellyfin</div></div>`
+      ? `<div class="js-intro-fx"><i class="js-jf-blob a"></i><i class="js-jf-blob b"></i><i class="js-jf-blob c"></i></div>
+         <div class="js-jf-pane"><div class="js-jf-glow"></div>${jfSvg('js-jf-mark', false)}
+         <div class="js-jf-word">${[...'Jellyfin'].map((ch, i) => `<span style="animation-delay:${(1.38 + i * .045).toFixed(3)}s">${ch}</span>`).join('')}</div>
+         <div class="js-jf-sheen"></div></div>`
       : `<div class="js-intro-fx">${feathers}</div>${svc.Logo
       ? `<img class="js-intro-logo" src="${esc(svc.Logo)}" alt="">`
       : `<div class="js-intro-name">${esc(svc.Name)}</div>`}`;
     if (k === 'jellyfin') el.style.setProperty('--js-intro-bg', '#07070d');
     document.body.appendChild(el);
+    if (k === 'jellyfin') jfSound('in');
     const started = performance.now();
     let ended = false;
     const done = () => {
       if (ended) return;
       ended = true;
-      const wait = Math.max(0, (k === 'jellyfin' ? 1950 : 1600) - (performance.now() - started));
+      const wait = Math.max(0, (k === 'jellyfin' ? 2150 : 1600) - (performance.now() - started));
       setTimeout(() => {
+        if (k === 'jellyfin' && !lite()) {
+          // the logo rushes toward you while the screen opens from the middle onto the home screen
+          jfSound('out');
+          el.classList.add('out-jf');
+          homeSections()?.animate?.([{ transform: 'translateY(2.5vh) scale(.99)' }, { transform: 'none' }],
+            { duration: 800, easing: 'cubic-bezier(.2,.8,.2,1)' });
+          setTimeout(() => el.remove(), 860);
+          return;
+        }
         el.classList.add('out');
         setTimeout(() => el.remove(), 400);
       }, wait);
     };
-    setTimeout(done, k === 'jellyfin' ? 2300 : 2200); // about two seconds at most, even if the page is still loading
+    setTimeout(done, k === 'jellyfin' ? 2400 : 2200); // about two seconds at most, even if the page is still loading
     return done;
   };
 
@@ -3035,6 +3165,22 @@
     applyBrand(null);
   };
 
+  // Picking a service (or Jellyfin) starts that home fresh: back at the top, every row at its first card,
+  // and JellyNav forgets where it was in each row.
+  const freshHome = () => {
+    if (!state.fresh) return;
+    state.fresh = false;
+    scrollTo({ top: 0 });
+    document.querySelectorAll('.homeSectionsContainer .emby-scroller, .homeSectionsContainer .scrollX, .homeSectionsContainer [is="emby-scroller"]').forEach((sc) => {
+      try {
+        if (typeof sc.scrollToPosition === 'function') sc.scrollToPosition(0, true);
+        else sc.scrollLeft = 0;
+      } catch { /* not a scroller */ }
+    });
+    nfReset?.();
+    document.dispatchEvent(new CustomEvent('jellynav:reset'));
+  };
+
   const closeService = (sections) => {
     sections?.classList.remove('js-hide-native');
     sections?.querySelector(':scope > .js-view')?.remove();
@@ -3285,6 +3431,7 @@
     if (a.classList.contains('js-back') || a.getAttribute('href') === '#/home') {
       setLast('jellyfin');
       if (!current) return;
+      state.fresh = true;
       // back to Jellyfin is a switch like any other: its intro plays (inside the press, so with sound)
       state.introDone = playIntro(jellyfin());
       state.introKey = 'jellyfin';
@@ -3294,6 +3441,7 @@
     const key = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get(PARAM);
     if (!key || key === current) return;
     setLast(key);
+    state.fresh = true;
     // the intro starts right here, inside the click / remote press, so browsers let it play sound
     const opening = state.cfg?.Services.find((x) => x.Key === key);
     if (opening && state.introKey !== key) {
@@ -3374,6 +3522,7 @@
       if (key) {
         sections.querySelector(':scope > .js-services')?.remove();
         await renderService(sections, key);
+        if (document.querySelector('.js-view .js-rows .verticalSection')) freshHome();
         html.classList.remove('js-pending');
         if (!painted.includes(sections.closest('[data-role="page"], .page, .mainAnimatedPage'))) paintPage(true);
       } else {
@@ -3381,6 +3530,7 @@
         closeService(sections);
         if (state.introKey !== 'jellyfin') state.introKey = null;
         renderHomeRow(sections);
+        freshHome();
         html.classList.remove('js-pending');
         state.introDone?.();
         state.introDone = null;

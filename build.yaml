@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.22.3.0"
+version: "1.22.4.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Jellyfin's logo is drawn the way Jellyfin draws it (iPhones were dropping the inner triangle), and
-  Jellyfin has its own intro animation: a purple-blue glow, the arch drawing itself, the inner
-  triangle popping in and the jellyfin name sliding in underneath.
+  New Jellyfin intro in glass: the screen frosts over, a glass pane floats up over drifting purple and blue light,
+  the logo draws itself and lands with a glint, "Jellyfin" rises, and the glass clears onto the home screen. Sound
+  effects included. Picking a service now opens its home fresh, at the top with every row back at the start.
