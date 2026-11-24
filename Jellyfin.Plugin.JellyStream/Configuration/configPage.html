@@ -562,7 +562,11 @@
             form.append('file', file, file.name);
             var xhr = new XMLHttpRequest();
             xhr.open('POST', api('Admin/Intro/' + encodeURIComponent(key)));
-            xhr.setRequestHeader('X-Emby-Token', ApiClient.accessToken());
+            // Jellyfin's standard auth header (newer servers ignore the old X-Emby-Token header)
+            var q = function (v) { return encodeURIComponent(String(v == null ? '' : v)); };
+            var call = function (name) { try { return typeof ApiClient[name] === 'function' ? ApiClient[name]() : ''; } catch (err) { return ''; } };
+            xhr.setRequestHeader('Authorization', 'MediaBrowser Client="' + q(call('appName') || 'Jellyfin Web') + '", Device="' + q(call('deviceName') || 'Browser')
+                + '", DeviceId="' + q(call('deviceId') || 'jellystream') + '", Version="' + q(call('appVersion') || '1') + '", Token="' + ApiClient.accessToken() + '"');
             xhr.upload.onprogress = function (e) { if (e.lengthComputable) bar.style.width = Math.round(e.loaded / e.total * 100) + '%'; };
             xhr.onload = function () {
                 row.classList.remove('busy');
@@ -570,7 +574,14 @@
                     Dashboard.alert('Intro saved for ' + row.querySelector('b').textContent + '. Reload Jellyfin in your browser to use it.');
                     loadIntros();
                 } else {
-                    small.textContent = 'Upload failed: ' + (xhr.responseText || xhr.status).toString().replace(/^"|"$/g, '').slice(0, 160);
+                    var why = {
+                        401: 'not signed in as an administrator (try reloading this page)',
+                        403: 'this account isn\'t an administrator',
+                        404: 'the server doesn\'t have the upload feature yet; restart Jellyfin after updating',
+                        413: 'the file is too large for the server or a reverse proxy in front of it'
+                    }[xhr.status];
+                    var text = (xhr.responseText || '').replace(/^"|"$/g, '').replace(/<[^>]*>/g, ' ').trim().slice(0, 160);
+                    small.textContent = 'Upload failed (HTTP ' + xhr.status + '): ' + (why || text || 'unknown error');
                 }
             };
             xhr.onerror = function () { row.classList.remove('busy'); small.textContent = 'Upload failed (connection lost).'; };
