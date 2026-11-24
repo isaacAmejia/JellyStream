@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.16.0';
+  const VERSION = '1.17.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -480,6 +480,18 @@
       border-radius: 12px !important; box-shadow: 0 0 0 3px #fff, 0 18px 40px rgba(0,0,0,.6) !important; transform: none !important; }
     ${NF_TV} .js-view .js-lib:not(.js-open):is(:hover) .cardImageContainer { transform: none !important; }
     .js-nf-wide { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+    /* no theme frames: plain artwork like Netflix */
+    ${NF} .js-view .card, ${NF} .js-view .cardBox, ${NF} .js-view .cardScalable { border: 0 !important; outline: 0 !important; box-shadow: none !important; background: transparent !important; }
+    ${NF} .js-view .card:not(.js-open) .cardImageContainer, ${NF} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border: 0 !important; outline: 0 !important; box-shadow: none !important; }
+    ${NF_TV} .js-view .card:not(.js-open) .cardImageContainer, ${NF_TV} .js-view .js-rank-card:not(.js-open) .js-rank-poster { border-radius: 6px !important; }
+    /* movement: nothing scales; the open card only widens while the row slides. The spacer lets the last titles reach the left edge too */
+    ${NF_TV} .js-view .js-lib .cardImageContainer, ${NF_TV} .js-view .js-rank-card .js-rank-poster,
+    ${NF_TV} .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer,
+    ${NF_TV} .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: none !important; }
+    ${NF_TV} .js-view .js-scroller { scroll-behavior: smooth; }
+    ${NF_TV} .js-view .js-scroller > .itemsContainer::after { content: ""; flex: 0 0 62vw; }
+    ${NF_TV}.js-nf-card-open #__jf_library_focus_ring__ { opacity: 0 !important; }
+    ${NF}.js-service-open #__jf_library_focus_ring__ { border-color: #fff !important; box-shadow: 0 0 0 1px rgba(0,0,0,.5) !important; border-radius: 12px !important; }
     .js-nf-info { padding: .1em 3.3% .4em; max-width: min(62%, 900px); min-height: 4.4em; opacity: 0; transition: opacity .2s ease; font-family: "Netflix Sans", "Helvetica Neue", Arial, sans-serif; }
     .js-nf-info.on { opacity: 1; }
     .js-nf-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .1em .5em; font-weight: 700; font-size: .95em; color: #fff; }
@@ -507,7 +519,10 @@
     .js-nf-ico-top b { font-size: 1.7em; line-height: .9; }
 
     /* phone: black, a tall poster billboard with centred logo, genre line and two buttons */
-    ${NF_PH} .js-view { --js-poster-w: 28vw; --js-rank-cw: calc(28vw * 1.62); }
+    ${NF_PH} .js-view { --js-poster-w: 28vw; --js-port-w: 29.4vw; --js-gap: .95vw; --js-rank-cw: 44.3vw; --js-rank-ph: calc(28vw * 1.42); }
+    ${NF_PH} .js-view .emby-scroller.js-scroller { padding-left: 2.6vw !important; padding-right: 2.6vw !important; }
+    ${NF_PH} .js-view .js-rank-num { font-size: calc(var(--js-rank-ph) * .82) !important; }
+    ${NF_PH} .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w) !important; min-width: var(--js-port-w) !important; }
     ${NF_PH} .js-view .sectionTitle { font-size: 1.32em !important; font-weight: 800 !important; }
     ${NF_PH} .js-view .js-lib .cardImageContainer { border-radius: 4px !important; }
     ${NF_PH} .js-rank-num { color: #000 !important; -webkit-text-stroke: 2.5px #fff !important; }
@@ -594,15 +609,15 @@
   // the service's background on everything that could paint over it (themes color .page, body, ...)
   let painted = [];
   const paintPage = (on) => {
-    painted.forEach((el) => { el.style.removeProperty('background'); el.style.removeProperty('background-color'); });
+    painted.forEach((el) => { for (const p of ['background', 'background-color', 'background-attachment']) el.style.removeProperty(p); });
     painted = [];
     if (!on) return;
     const view = document.querySelector('.js-view');
-    const page = view?.closest('[data-role="page"], .page, .mainAnimatedPage');
-    const targets = [document.body, page, page?.querySelector('.tabContent'), view?.closest('.tabContent'),
-      ...document.querySelectorAll('.backgroundContainer, .skinBody')].filter(Boolean);
-    for (const el of new Set(targets)) {
-      if (el === page || el === document.body) {
+    // the service colour goes on the root; everything between it and the rows is cleared, so no theme grey shows through
+    const targets = [document.documentElement, document.body, ...document.querySelectorAll('.backgroundContainer, .skinBody')];
+    for (let el = view?.parentElement; el && el !== document.body && el !== document.documentElement; el = el.parentElement) targets.push(el);
+    for (const el of new Set(targets.filter(Boolean))) {
+      if (el === document.documentElement) {
         el.style.setProperty('background', 'var(--js-bg, #0b0c10)', 'important');
         el.style.setProperty('background-attachment', 'fixed', 'important');
       } else {
@@ -1662,19 +1677,24 @@
     nfCard = null;
     if (!c) return;
     c.classList.remove('js-open');
-    for (const p of ['width', 'min-width', '--js-rank-cw', '--js-rank-pw']) c.style.removeProperty(p);
+    c.__jsClosedAt = performance.now();
+    document.documentElement.classList.remove('js-nf-card-open');
+    // rank cards carry their size inline (from the rank variables), so only the overrides come off
+    const props = c.classList.contains('js-rank-card') ? ['--js-rank-cw', '--js-rank-pw'] : ['width', 'min-width'];
+    for (const p of props) c.style.removeProperty(p);
     c.querySelector('.cardPadder')?.style.removeProperty('padding-bottom');
     const art = c.querySelector('.js-img');
     if (art?.dataset.src && art.style.backgroundImage) art.style.backgroundImage = bgOf(art.dataset.src);
     art?.querySelector('.js-nf-wide')?.remove();
     c.closest('.js-section')?.querySelector(':scope > .js-nf-info')?.remove();
   };
-  const nfReset = () => { nfCard = null; clearTimeout(nfTimer); };
+  const nfReset = () => { nfCard = null; clearTimeout(nfTimer); document.documentElement.classList.remove('js-nf-card-open'); };
   const nfOpen = (card, scroll) => {
     if (!card || card === nfCard || !focusOn() || !card.isConnected) return;
     nfClose();
     nfCard = card;
     card.classList.add('js-open');
+    document.documentElement.classList.add('js-nf-card-open');
     if (card.classList.contains('js-rank-card')) {
       card.style.setProperty('--js-rank-pw', `calc(var(--js-poster-w, 150px) * ${WIDE})`);
       card.style.setProperty('--js-rank-cw', `calc(var(--js-poster-w, 150px) * ${WIDE + 0.62})`);
@@ -1704,17 +1724,46 @@
         info.classList.add('on');
       });
     }
-    if (scroll) {
-      // keep the opened card on screen once it has grown
-      setTimeout(() => {
-        const sc = card.closest('.js-scroller');
-        if (!sc || nfCard !== card) return;
-        const r = card.getBoundingClientRect(), b = sc.getBoundingClientRect();
-        const pad = b.width * 0.04;
-        if (r.right > b.right - pad) sc.scrollBy({ left: r.right - b.right + pad, behavior: 'smooth' });
-        else if (r.left < b.left + pad) sc.scrollBy({ left: r.left - b.left - pad, behavior: 'smooth' });
-      }, 260);
+    if (scroll) pinCard(card);
+  };
+  // Netflix: the selected card always sits at the row's left edge and the row slides under it.
+  // Cards are mid-transition (one shrinking, one widening), so work from the row's resting spacing.
+  const pinCard = (card, prev) => {
+    const sc = card.closest('.js-scroller');
+    if (!sc) return;
+    const cards = [...card.parentElement.children].filter((c) => c.classList.contains('card'));
+    const i = cards.indexOf(card);
+    if (i < 0) return;
+    const still = (c) => c && c !== card && c !== prev && !c.classList.contains('js-open') && !(performance.now() - (c.__jsClosedAt || -1e9) < 600);
+    const x = (c) => c.getBoundingClientRect().left;
+    let pitch = 0;
+    for (let k = 0; k + 1 < cards.length && !pitch; k++) {
+      if (still(cards[k]) && still(cards[k + 1])) pitch = x(cards[k + 1]) - x(cards[k]);
     }
+    if (!pitch) {
+      const ref = cards.find(still) || card;
+      const m = getComputedStyle(ref);
+      pitch = ref.getBoundingClientRect().width + (parseFloat(m.marginLeft) || 0) + (parseFloat(m.marginRight) || 0) + (parseFloat(getComputedStyle(card.parentElement).columnGap) || 0);
+    }
+    const left = Math.max(0, i * pitch);
+    if (Math.abs(sc.scrollLeft - left) > 1) sc.scrollTo({ left, behavior: 'smooth' });
+  };
+  // JellyNav asks before it scrolls a row sideways; on Netflix pages the card opens and pins here instead.
+  const navScroll = (kind, el) => {
+    if (!focusOn() || !el?.closest?.('.js-view')) return false;
+    // changing rows: fold the old row's details away first so JellyNav pins the new row against the final layout
+    if (kind === 'row') {
+      if (nfCard && !el.contains(nfCard)) nfClose();
+      return false;
+    }
+    if (kind !== 'card') return false;
+    const card = el.matches(EXPANDABLE) ? el : null;
+    if (!card) return false;
+    const prev = nfCard;
+    clearTimeout(nfTimer);
+    nfOpen(card, false);
+    pinCard(card, prev);
+    return true;
   };
   // mouse: hovering a title opens it (after a short rest, so sweeping across a row stays calm)
   document.addEventListener('mouseover', (e) => {
@@ -1749,7 +1798,8 @@
         if (hit === undefined) return;
         const card = hit?.closest?.(EXPANDABLE);
         if (card) nfOpen(card, true);
-        else if (nfCard && !hit?.closest?.('.js-open')) nfClose();
+        // only close when the selection has left the rows (banner, tabs); a ring over a rank numeral or gap is still the open card
+        else if (nfCard && !hit?.closest?.('.js-open, .js-section')) nfClose();
       }, 120);
     });
   };
@@ -2685,6 +2735,7 @@
 
   // refresh after settings change in another tab or a sync finishes
   window.JellyStream = {
+    navScroll,
     refresh: () => { state.cfgAt = 0; state.data.clear(); document.querySelectorAll('.js-services, .js-view').forEach((e) => e.remove()); sync(); },
   };
 })();

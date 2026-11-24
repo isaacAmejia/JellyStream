@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.16.0.0"
+version: "1.17.0.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,7 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Netflix page redesigned after the Netflix TV and phone apps: header tabs styled as Netflix's
-  navigation, poster rows whose selected title opens wide with its details below, outlined Top 10,
-  Recently Added / New Episode / Top 10 badges, and the tall poster billboard on phones.
+  Netflix TV movement: the selected row settles at the same height and the selected title stays at
+  the left edge while the row slides (works with JellyNav). The title only widens, nothing scales.
+  Fixed Top 10 cards collapsing after being selected. Netflix colour fills the whole page, theme
+  frames removed, and phone row sizes matched to the Netflix app.
