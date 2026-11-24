@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.23.3';
+  const VERSION = '1.23.4';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1451,16 +1451,13 @@
     .js-jf.go .js-jf-name { animation: js-jf-name calc(1.2s * var(--jf-k, 1)) cubic-bezier(.4,0,.2,1) calc(1.55s * var(--jf-k, 1)) forwards; }
     /* light chatter: specks wander, then pull together into the logo as the voices converge */
     .js-jf-chatter { position: absolute; left: 50%; top: 55%; width: 0; height: 0; pointer-events: none; }
-    .js-jf-chatter b { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotate(var(--a0)); will-change: transform; }
-    /* each speck is a short streak of light trailing behind it as it circles in */
-    .js-jf-chatter i { position: absolute; left: -1.5px; top: -28px; width: 3px; height: 30px; border-radius: 3px; opacity: 0; will-change: transform, opacity;
-      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--c) 55%, transparent) 55%, var(--c) 88%, #fff);
-      transform-origin: 50% 100%; transform: translateX(var(--r)) scaleY(var(--f)); }
-    html.js-lite .js-jf-chatter i { height: 18px; top: -16px; }
-    .js-jf.go .js-jf-chatter b { animation: js-jf-orbit var(--t) cubic-bezier(var(--e1), 0, .8, var(--e2)) var(--d) forwards; }
-    .js-jf.go .js-jf-chatter i { animation: js-jf-inward var(--t) cubic-bezier(.45, 0, var(--e2), .45) var(--d) forwards, js-jf-speck var(--t) linear var(--d) forwards; }
-    @keyframes js-jf-orbit { to { transform: rotate(var(--a1)); } }
-    @keyframes js-jf-inward { to { transform: translateX(0) scaleY(calc(var(--f) * .3)); } }
+    /* each speck is a short streak of light, its tail trailing along its own path */
+    .js-jf-chatter i { position: absolute; left: 0; top: 0; width: 30px; height: 3px; border-radius: 3px; opacity: 0;
+      offset-anchor: 100% 50%; offset-rotate: auto; offset-distance: 0%; will-change: offset-distance, opacity;
+      background: linear-gradient(to right, transparent, color-mix(in srgb, var(--c) 55%, transparent) 50%, var(--c) 85%, #fff); }
+    html.js-lite .js-jf-chatter i { width: 18px; }
+    .js-jf.go .js-jf-chatter i { animation: js-jf-path var(--t) cubic-bezier(var(--e), 0, .75, 1) var(--d) forwards, js-jf-speck var(--t) linear var(--d) forwards; }
+    @keyframes js-jf-path { 0% { offset-distance: 0%; scale: 1; } 100% { offset-distance: 100%; scale: .35; } }
     @keyframes js-jf-speck { 0% { opacity: 0; } 14% { opacity: .95; } 92% { opacity: 1; } 100% { opacity: 0; } }
     /* slow beams of light turning behind the logo once it lands */
     .js-jf-rays { position: absolute; left: 50%; top: 55%; width: 420%; aspect-ratio: 1; transform: translate(-50%, -50%) rotate(0deg) scale(.6); pointer-events: none; opacity: 0;
@@ -2787,19 +2784,21 @@
     const g = `jsjfi${++jfSeq}`;
     const k = lite() ? 1.6 : 1.3; // unhurried, and slower still on small devices like a Raspberry Pi
     const T = { floor: JF_T.floor * k, dive: JF_T.dive * (lite() ? 1.5 : 1.3) };
-    const chatter = Array.from({ length: lite() ? 16 : 26 }, (_, i) => {
-      // every speck takes its own path: its own direction, how far round it swings, distance, speed and arrival
-      const a0 = Math.round(Math.random() * 360);
-      const dir = Math.random() < .5 ? 1 : -1;
-      const turn = dir * (70 + Math.round(Math.random() * 420));
-      const r = (18 + Math.random() * 40).toFixed(1);
+    // light chatter: each speck flies its own curve into the logo, on its own schedule: some set off early and
+    // arrive while the logo is still being traced, others come late, from all directions and both ways round
+    const build = 1.2 * k;
+    const R = Math.min(innerWidth, innerHeight);
+    const chatter = CSS.supports?.('offset-path', "path('M0 0 L1 1')") ? Array.from({ length: lite() ? 16 : 28 }, (_, i) => {
+      const a = Math.random() * Math.PI * 2;
+      const r = R * (.18 + Math.random() * .32);
+      const side = (Math.random() < .5 ? 1 : -1) * (.4 + Math.random() * 1.1);
+      const p = (ang, rad) => `${(Math.cos(ang) * rad).toFixed(0)} ${(Math.sin(ang) * rad).toFixed(0)}`;
+      const path = `M${p(a, r)} C${p(a + side, r * (.7 + Math.random() * .5))} ${p(a + side * (1.2 + Math.random()), r * (.15 + Math.random() * .35))} 0 0`;
+      const dur = build * (.3 + Math.random() * .45);
+      const d = Math.random() * (build - dur);
       const c = ['#c08cff', '#5fd0ff', '#ffffff', '#aa5cc3', '#00a4dc'][i % 5];
-      const dur = .55 + Math.random() * .6; // share of the build it travels for
-      const d = ((1.2 - dur * 1.2) * Math.random() * k).toFixed(2);
-      const e1 = (.2 + Math.random() * .3).toFixed(2);
-      const e2 = (.55 + Math.random() * .4).toFixed(2);
-      return `<b style="--a0:${a0}deg;--a1:${a0 + turn}deg;--d:${d}s;--t:${(dur * 1.2 * k).toFixed(2)}s;--e1:${e1};--e2:${e2}"><i style="--r:${r}vmin;--c:${c};--f:${dir}"></i></b>`;
-    }).join('');
+      return `<i style="offset-path:path('${path}');--c:${c};--d:${d.toFixed(2)}s;--t:${dur.toFixed(2)}s;--e:${(.2 + Math.random() * .5).toFixed(2)}"></i>`;
+    }).join('') : '';
     const el = document.createElement('div');
     el.className = 'js-intro js-jf';
     el.style.setProperty('--jf-k', k);

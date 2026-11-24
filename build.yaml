@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.23.3.0"
+version: "1.23.4.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,5 +14,5 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Jellyfin intro: every speck of light takes its own path in (its own direction, swing, distance, speed and arrival
-  time) instead of all spiralling together.
+  Jellyfin intro: the specks of light are fully independent now. Each flies its own curved path into the logo on its
+  own schedule (some early, some late, from every direction and both ways round), with its trail following its path.
