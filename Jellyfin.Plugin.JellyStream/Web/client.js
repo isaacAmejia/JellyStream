@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.19.0';
+  const VERSION = '1.20.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -245,28 +245,17 @@
         .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 0 34px rgba(43,92,255,.6) !important; }`,
     },
     prime: {
+      // the Prime Video TV app: deep navy, a banner that shows whatever's selected, wide titled art
       rankShape: 'landscape',
-      c1: '#1a98ff', c2: '#0f79af', numA: '#1a98ff', numB: '#8fdcff', num: 'solid',
-      base: '#0f171e', bg: '#0f171e', shape: 'landscape', caption: 'below',
-      nav: 'rail', tabs: ['Home', 'TV Shows', 'Movies'],
-      font: '"Amazon Ember", Arial, "Helvetica Neue", sans-serif',
-      labels: { tagMovie: '✓ Included with Prime', tagTv: '✓ Included with Prime', play: 'Play', info: 'Details', request: 'Request' },
-      css: `
-        .js-bb { height: min(52vh, 540px) !important; margin: 1em 3.3% 1.6em !important; border-radius: 8px; }
-        .js-bb-tag { color: #1a98ff; font-weight: 700; font-size: .9em; }
-        .js-bb-title { font-weight: 700 !important; }
-        .js-bb-btn { border-radius: 6px !important; font-weight: 700 !important; padding: .65em 1.6em !important; }
-        .js-bb-btn.js-primary { background: #1a98ff !important; color: #fff !important; }
-        .js-bb-btn.js-secondary { background: rgba(66,82,99,.8) !important; color: #fff !important; }
-        .js-view .sectionTitle { font-weight: 700 !important; color: #fff !important; }
-        .js-view .js-section .sectionTitle::before {
-          content: "✓" !important; width: 1.15em !important; height: 1.15em !important; border-radius: 50% !important;
-          background: #1a98ff !important; color: #0f171e; font-size: .62em; line-height: 1.15em; text-align: center;
-          vertical-align: .25em !important; box-shadow: none !important; font-weight: 900;
-        }
-        .js-view .js-lib .cardImageContainer { border-radius: 8px !important; }
-        .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer { transform: scale(1.04); }
-        .js-view .card:is(:hover,:focus,:focus-within,.show-focus,.focused) .cardImageContainer { box-shadow: 0 0 0 3px #fff, 0 16px 34px rgba(0,0,0,.6) !important; }`,
+      c1: '#1a98ff', c2: '#0f79af', num: 'solid',
+      base: '#0b1626', bg: 'radial-gradient(110% 60% at 70% 0%, #14305c 0%, transparent 60%), linear-gradient(180deg, #0b1626 0%, #0a1422 60%, #08111d 100%)',
+      basePhone: '#000611', bgPhone: '#000611',
+      shape: 'landscape', shapePhone: 'portrait', caption: 'none',
+      badges: true, heroFollow: true, bleed: true, cwLandscape: true,
+      nav: 'top', tabs: ['Home', 'Movies', 'TV Shows'],
+      font: '"Amazon Ember", "Helvetica Neue", Arial, sans-serif',
+      labels: { tagMovie: 'Included with Prime', tagTv: 'Included with Prime', play: 'Watch now', info: 'More details', request: 'Request' },
+      css: '',
     },
     hulu: {
       rankShape: 'landscape',
@@ -365,7 +354,7 @@
     netflix: '--js-num-fill: #141414; --js-num-stroke: 4px #595959;',
     disney: '--js-num-fill: transparent; --js-num-stroke: 3px rgba(249,249,249,.85);',
     max: '--js-num-fill: #fff; --js-num-stroke: 0 transparent;',
-    prime: '--js-num-fill: #1a98ff; --js-num-stroke: 0 transparent;',
+    prime: '--js-num-fill: #e3e8f3; --js-num-stroke: 0 transparent;',
     hulu: '--js-num-fill: #0b0c0f; --js-num-stroke: 3px #1ce783;',
     apple: '--js-num-fill: rgba(255,255,255,.1); --js-num-stroke: 2px rgba(255,255,255,.65);',
     paramount: '--js-num-fill: #0064ff; --js-num-stroke: 3px #7fb2ff;',
@@ -378,7 +367,7 @@
     netflix: '--js-port-w: clamp(170px, 14.6vw, 300px); --js-poster-w: clamp(160px, 13.6vw, 280px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.62);',
     disney: '--js-port-w: clamp(180px, 15.4vw, 320px); --js-poster-w: clamp(170px, 14.6vw, 300px); --js-wedge: var(--js-poster-w); --js-gap: .5em; --js-rank-cw: calc(var(--js-poster-w) * 1.06); --js-rank-pw: var(--js-poster-w); --js-rank-ph: calc(var(--js-poster-w) * 1.5); --js-land-w: clamp(250px, 19vw, 380px);',
     max: '--js-port-w: clamp(150px, 12vw, 225px); --js-gap: .45em; --js-rank-cw: calc(var(--js-poster-w) * 1.5);',
-    prime: `--js-land-w: clamp(230px, 18vw, 320px); --js-gap: .4em; ${LAND('clamp(230px, 17vw, 310px)', 'calc(var(--js-rank-pw) + var(--js-rank-ph) * .66)')}`,
+    prime: `--js-land-w: clamp(260px, 18.6vw, 370px); --js-gap: .45em; ${LAND('clamp(250px, 17vw, 340px)', 'calc(var(--js-rank-pw) + var(--js-rank-ph) * .78)')}`,
     hulu: `--js-land-w: clamp(260px, 21vw, 370px); --js-gap: .6em; ${LAND('clamp(250px, 20vw, 350px)', 'calc(var(--js-rank-pw) + .9em)')}`,
     apple: `--js-port-w: clamp(140px, 11vw, 205px); --js-gap: .75em; ${LAND('clamp(250px, 20vw, 360px)', 'calc(var(--js-rank-pw) + 1em)')}`,
     paramount: '--js-port-w: clamp(150px, 11.5vw, 210px); --js-gap: .3em; --js-rank-cw: calc(var(--js-poster-w) * 1.6);',
@@ -405,10 +394,12 @@
     max: `
       .js-rank-num { font-weight: 200 !important; letter-spacing: -.07em !important; color: #fff !important; -webkit-text-stroke: 0 !important; bottom: -.08em !important; opacity: .95; }
       .js-rank-poster { border-radius: 6px !important; }`,
-    // Prime Video: wide tiles, big numerals fading from white into Prime blue behind them
+    // Prime Video: wide tiles with a chunky light numeral beside each (outlined on phones)
     prime: `
-      .js-rank-num { font-size: calc(var(--js-rank-ph) * 1.08) !important; bottom: -.12em !important; color: transparent !important; -webkit-text-stroke: 0 !important; background: linear-gradient(180deg, #ffffff 20%, #1a98ff 100%); -webkit-background-clip: text; background-clip: text; font-weight: 800 !important; }
-      .js-rank-poster { border-radius: 8px !important; }`,
+      .js-rank-num { font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif !important; font-size: calc(var(--js-rank-ph) * 1.02) !important; bottom: -.1em !important;
+        font-weight: 800 !important; letter-spacing: -.05em !important; color: #e3e8f3 !important; -webkit-text-stroke: 0 !important; }
+      html.js-phone .js-rank-num { color: transparent !important; -webkit-text-stroke: 2px #fff !important; font-weight: 600 !important; }
+      .js-rank-poster { border-radius: 8px !important; box-shadow: none !important; }`,
     // Hulu: wide tiles, the rank in Hulu green leading the title underneath
     hulu: `
       .js-rank-num { display: none !important; }
@@ -442,9 +433,8 @@
     max: `
       .js-view .js-section .sectionTitle { font-size: 1.3em !important; letter-spacing: -.015em; }`,
     prime: `
-      .js-view .js-lib .cardText-secondary bdi::before { content: "✓ Included with Prime"; color: #1a98ff; font-weight: 700; margin-right: .6em; }
-      .js-view .js-lib .cardText-secondary { color: rgba(255,255,255,.55) !important; }
-      .js-view .js-cap-below .cardText-first { font-weight: 700 !important; }`,
+      .js-tlogo { max-width: 50% !important; max-height: 40% !important; left: 5% !important; bottom: 9% !important; }
+      .js-tshade { background: linear-gradient(90deg, rgba(0,0,0,.45), transparent 60%) !important; }`,
     hulu: `
       .js-view .js-cap-below .cardText-first { font-weight: 700 !important; color: #fff !important; }
       .js-view .js-cap-below .cardText-secondary { color: rgba(255,255,255,.55) !important; text-transform: uppercase; letter-spacing: .1em; font-size: .72em !important; }`,
@@ -473,6 +463,9 @@
   const DS = 'html[data-js-brand="disney"]';
   const DS_TV = `${DS}:not(.js-phone)`;
   const DS_PH = `${DS}.js-phone`;
+  const PR = 'html[data-js-brand="prime"]';
+  const PR_TV = `${PR}:not(.js-phone)`;
+  const PR_PH = `${PR}.js-phone`;
   const NETFLIX_CSS = `
     /* header: Jellyfin's tabs become Netflix's top navigation */
     ${NF}.js-service-open .skinHeader { background: linear-gradient(180deg, rgba(8,10,22,.88) 0%, rgba(8,10,22,.35) 70%, transparent 100%) !important; box-shadow: none !important; }
@@ -661,6 +654,99 @@
     ${DS_PH} .js-cw .overflowBackdropCard { width: 60vw !important; min-width: 60vw !important; }
   `;
 
+  const PRIME_CSS = `
+    /* header: Prime's centered tab bar on TV, dark chips on phones */
+    ${PR}.js-service-open .skinHeader { background: linear-gradient(180deg, rgba(5,10,20,.7) 0%, transparent 100%) !important; box-shadow: none !important; }
+    ${PR}.js-service-open .headerTabs, ${PR}.js-service-open .headerTabs .emby-tabs-slider, ${PR}.js-service-open .sectionTabs { background: none !important; border: 0 !important; box-shadow: none !important; }
+    ${PR}.js-service-open .headerTabs .emby-tab-button::before, ${PR}.js-service-open .headerTabs .emby-tab-button::after { display: none !important; }
+    ${PR_TV}.js-service-open .headerTabs { display: flex !important; justify-content: center !important; }
+    ${PR_TV}.js-service-open .headerTabs .emby-tab-button {
+      font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif !important; font-weight: 500 !important; font-size: 1.05em !important;
+      color: rgba(255,255,255,.86) !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+      border-radius: 8px !important; padding: .42em .95em !important; margin: 0 .1em !important; }
+    ${PR_TV}.js-service-open .headerTabs .emby-tab-button-active,
+    ${PR_TV}.js-service-open .headerTabs .emby-tab-button:is(:hover, :focus-visible) { background: rgba(255,255,255,.22) !important; color: #fff !important; }
+    ${PR_PH}.js-service-open .headerTabs .emby-tab-button {
+      font-weight: 500 !important; color: #fff !important; background: #30343b !important; border: 0 !important; border-radius: 999px !important;
+      box-shadow: none !important; padding: .55em 1.3em !important; margin: 0 .5em 0 0 !important; }
+    ${PR_PH}.js-service-open .headerTabs .emby-tab-button-active { background: #4a5059 !important; }
+
+    /* banner: full width, art on the right fading into navy; Prime's details stack on the left */
+    ${PR_TV} .js-bb { height: 80vh !important; min-height: 440px; margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+    ${PR_TV} .js-bb-art { left: 32% !important; background-position: center 20% !important; }
+    ${PR_TV} .js-bb-shade { background:
+      linear-gradient(90deg, var(--js-base) 0%, var(--js-base) 30%, color-mix(in srgb, var(--js-base) 60%, transparent) 42%, transparent 62%),
+      linear-gradient(0deg, var(--js-base) 0%, color-mix(in srgb, var(--js-base) 55%, transparent) 25%, transparent 50%) !important; }
+    ${PR_TV} .js-bb-content { left: 5% !important; bottom: 30% !important; width: min(40%, 640px) !important; gap: .55em !important; }
+    ${PR_TV} .js-rows { position: relative; z-index: 2; margin-top: -24vh; }
+    ${PR_TV} .js-bb-dots { bottom: 25%; }
+    ${PR_TV} .js-bb .js-hero { top: 5.5em; }
+    ${PR} .js-bb-content::before { content: "prime"; order: 0; font: 800 1.05em/1 "Amazon Ember", Arial, sans-serif; color: #fff; letter-spacing: -.02em; }
+    ${PR} .js-bb-title { order: 1; font-weight: 700 !important; font-size: clamp(1.8em, 3.4vw, 3.4em) !important; }
+    ${PR} .js-bb-logo { max-height: min(20vh, 190px) !important; }
+    ${PR} .js-bb-new { order: 2; align-self: flex-start; padding: .25em .55em; border-radius: 5px; border: 1px solid rgba(255,255,255,.75); color: #fff; font: 600 .78em/1 "Amazon Ember", Arial, sans-serif; text-transform: uppercase; letter-spacing: .03em; }
+    ${PR} .js-bb-rank { order: 2; color: #3fe0a8; font-weight: 700; font-size: 1.05em; }
+    ${PR} .js-bb-rank:empty { display: none; }
+    ${PR} .js-bb-rank::before { content: "↗"; display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; margin-right: .4em; border: 2px solid #3fe0a8; border-radius: 50%; font-size: .75em; }
+    ${PR} .js-bb-meta { order: 3; display: flex !important; align-items: center; gap: 1.2em; font-size: 1.02em; color: #fff; }
+    ${PR} .js-bb-meta:empty { display: none !important; }
+    ${PR} .js-bb-overview { order: 4; -webkit-line-clamp: 2 !important; font-size: 1em !important; }
+    ${PR} .js-bb-tag { order: 5; color: #fff !important; font-size: .88em !important; font-weight: 500; text-transform: none; letter-spacing: 0; }
+    ${PR} .js-bb-tag:not(:empty)::before { content: "✓"; display: inline-flex; align-items: center; justify-content: center; width: 1.15em; height: 1.15em; margin-right: .5em; border-radius: 50%; background: #1a98ff; color: #fff; font-size: .75em; font-weight: 900; }
+    ${PR} .js-bb-actions { order: 6; flex-direction: column; align-items: flex-start; gap: .5em !important; }
+    ${PR} .js-bb-btn { border-radius: 6px !important; height: 2.4em !important; padding: 0 1.5em 0 1em !important; font: 500 .95em/1 "Amazon Ember", Arial, sans-serif !important; min-width: 11em; justify-content: flex-start !important; }
+    ${PR} .js-bb-btn .material-icons { font-size: 1.3em !important; }
+    ${PR} .js-bb-btn.js-primary { background: rgba(235,240,250,.92) !important; color: #0b1626 !important; }
+    ${PR} .js-bb-btn.js-secondary { background: transparent !important; color: #fff !important; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.8) !important; }
+    ${PR} .js-bb-btn:is(:hover, :focus-visible) { transform: none; filter: none; box-shadow: 0 0 0 3px #fff !important; }
+    ${PR} .js-bb-focus .js-bb-actions { display: none !important; }
+    ${PR} .js-bb[data-focus] .js-bb-dots { display: none !important; }
+    ${PR} .js-cert { display: inline-block; padding: .1em .4em; border-radius: 4px; background: rgba(140,160,200,.35); color: #fff; font-weight: 700; font-size: .85em; font-style: normal; }
+    ${PR} .js-bb-slide.js-bb-focus { transition: opacity .35s ease, visibility 0s linear .35s; }
+    ${PR} .js-bb-slide.js-bb-focus.on { transition: opacity .35s ease; }
+
+    /* TV with JellyNav: the banner stays put at the top showing the selection; rows move under it */
+    ${PR_TV}.js-hero-fixed .js-bb { position: fixed !important; top: 0; left: 0; right: 0; height: 70vh !important; z-index: 0; margin: 0 !important; }
+    ${PR_TV}.js-hero-fixed .js-bb-content { bottom: 18% !important; }
+    ${PR_TV}.js-hero-fixed .js-bb-dots { bottom: 12%; }
+    ${PR_TV}.js-hero-fixed .js-rows { margin-top: 60vh; position: relative; z-index: 1; padding-bottom: 45vh; }
+    ${PR_TV}.js-hero-fixed .js-view .js-section { transition: opacity .25s ease; }
+    ${PR_TV}.js-hero-fixed .js-view .js-section.js-above { opacity: 0 !important; pointer-events: none; animation: none !important; }
+
+    /* cards: wide titled art, Prime's white corner labels, a white frame when selected */
+    ${PR} .js-view .sectionTitle { font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif !important; font-weight: 700 !important; font-size: 1.12em !important; color: #fff !important; letter-spacing: 0 !important; }
+    ${PR} .js-view .js-section .sectionTitle::before { display: none !important; }
+    ${PR} .js-view .card, ${PR} .js-view .cardBox, ${PR} .js-view .cardScalable { border: 0 !important; outline: 0 !important; background: transparent !important; box-shadow: none !important; }
+    ${PR} .js-view .js-lib .cardImageContainer, ${PR} .js-view .js-cw .cardImageContainer { border-radius: 8px !important; box-shadow: none !important; transform: none !important; }
+    ${PR} .js-view .js-lib:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer,
+    ${PR} .js-view .js-cw .card:is(:hover,:focus-within,.show-focus,.focused) .cardImageContainer,
+    ${PR} .js-view .js-rank-card:is(:hover,:focus-within,.show-focus,.focused) .js-rank-poster { transform: none !important; box-shadow: 0 0 0 3px #fff, 0 14px 30px rgba(0,0,0,.55) !important; border-radius: 10px !important; }
+    ${PR}.js-service-open #__jf_library_focus_ring__ { border-color: #fff !important; border-radius: 10px !important; box-shadow: 0 0 0 1px rgba(0,0,0,.4) !important; }
+    ${PR} .js-nf-pb { top: 0 !important; bottom: auto !important; left: auto !important; right: 0 !important; transform: none !important; display: block !important;
+      background: #f2f4f8 !important; color: #0b1626 !important; border-radius: 0 8px 0 6px !important; padding: .32em .55em !important;
+      font: 700 .6em/1 "Amazon Ember", Arial, sans-serif !important; text-transform: uppercase; letter-spacing: .03em; }
+    ${PR} .js-nf-pb b, ${PR} .js-nf-top, ${PR} .js-nf-ob { display: none !important; }
+    ${PR} .js-cw .js-prog { display: block; position: absolute; left: 4%; right: 4%; bottom: 5%; height: 3px; border-radius: 2px; background: rgba(255,255,255,.3); z-index: 2; }
+    ${PR} .js-cw .js-prog i { display: block; height: 100%; border-radius: 2px; background: #e6e9ef; }
+    ${PR_TV} .js-cw .cardFooter { display: none !important; }
+
+    /* phones: black, portrait posters, wide Top 10 cards with outlined numerals */
+    ${PR_PH} .js-view { --js-port-w: 31.4vw; --js-gap: 1vw; --js-rank-pw: 66vw; --js-rank-ph: calc(66vw * .5625); --js-rank-cw: calc(66vw + 66vw * .5625 * .62); }
+    ${PR_PH} .js-view .js-lib.overflowPortraitCard { width: var(--js-port-w) !important; min-width: var(--js-port-w) !important; }
+    ${PR_PH} .js-view .emby-scroller.js-scroller { padding-left: 4vw !important; padding-right: 4vw !important; }
+    ${PR_PH} .js-view .sectionTitle { font-weight: 500 !important; font-size: 1.35em !important; color: #c9ced6 !important; }
+    ${PR_PH} .js-bb { height: auto !important; min-height: 0 !important; aspect-ratio: .7; margin: .6em 5% 1.6em !important; border-radius: 12px !important; }
+    ${PR_PH} .js-bb-art { display: none !important; }
+    ${PR_PH} .js-bb-poster { display: block !important; position: absolute; inset: 0; background-size: cover; background-position: center top; }
+    ${PR_PH} .js-bb-shade { background: linear-gradient(0deg, rgba(0,6,17,.95) 0%, rgba(0,6,17,.35) 32%, transparent 55%) !important; }
+    ${PR_PH} .js-bb-content { left: 6% !important; right: 6% !important; width: auto !important; bottom: calc(2.5% + 1.4em) !important; align-items: center; text-align: center; }
+    ${PR_PH} .js-bb-content::before, ${PR_PH} .js-bb-meta, ${PR_PH} .js-bb-overview { display: none !important; }
+    ${PR_PH} .js-bb-new, ${PR_PH} .js-bb-rank { align-self: center; }
+    ${PR_PH} .js-bb-logo { margin: 0 auto; object-position: center bottom; max-width: 78%; }
+    ${PR_PH} .js-bb-actions { flex-direction: row; width: 100%; }
+    ${PR_PH} .js-bb-btn { flex: 1; justify-content: center !important; min-width: 0; }
+  `;
+
   const brandKeyFor = (svc) => {
     const id = `${svc.Key} ${svc.Name}`.toLowerCase();
     return Object.keys(BRANDS).find((k) => id.includes(k)) || (/hbo/.test(id) ? 'max' : /amazon/.test(id) ? 'prime' : null);
@@ -685,7 +771,7 @@
       const rules = (b.css + (RANKS[k] || '') + (ROWS[k] || '')).replace(/(^|})\s*([^{}]+)\{/g, (m, close, sel) =>
         `${close}\n${splitSel(sel).map((x) => `html[data-js-brand="${k}"] ${x}`).join(', ')} {`);
       return `${rules}\nhtml[data-js-brand="${k}"] .js-view { font-family: ${b.font}; ${NUMERALS[k] || ''} ${LAYOUT[k] || ''} }`;
-    }).join('\n') + NETFLIX_CSS + DISNEY_CSS;
+    }).join('\n') + NETFLIX_CSS + DISNEY_CSS + PRIME_CSS;
     return el;
   })();
 
@@ -978,6 +1064,8 @@
     .js-bb-dot { width: .5em; height: .5em; border-radius: 50%; background: rgba(255,255,255,.4); cursor: pointer; transition: background .3s ease, transform .3s ease; }
     .js-bb-dot.on { background: #fff; transform: scale(1.25); }
     .js-bb .js-hero { z-index: 4; }
+    .js-bb-new { display: none; }
+    html[data-js-brand="prime"] .js-bb-new { display: block; }
     html.js-phone .js-bb-dots { bottom: .8em; }
     .js-bb-shade {
       position: absolute; inset: 0;
@@ -1632,7 +1720,8 @@
     return { img: wideUrl(id, { backdrop: tags.BackdropTag, primary: tags.PrimaryTag }), titled: false, logo: tags.LogoTag ? logoUrl(id, tags.LogoTag) : null };
   };
   const libraryCard = (it) => {
-    const l = look();
+    const l0 = look();
+    const l = isPhone() && l0.shapePhone ? { ...l0, shape: l0.shapePhone } : l0;
     const w = l.shape === 'landscape' ? wideArt(it.Id, it) : null;
     return card({
       id: it.Id,
@@ -1911,7 +2000,30 @@
     if (Math.abs(sc.scrollLeft - left) > 1) sc.scrollTo({ left, behavior: 'smooth' });
   };
   // JellyNav asks before it scrolls a row sideways; on Netflix pages the card opens and pins here instead.
+  // Prime on TV: the selected row always sits just under the fixed banner; rows passed fade out
+  const HERO_ROW = 0.6;
+  const heroRow = (section) => {
+    const top = section.getBoundingClientRect().top + scrollY - innerHeight * HERO_ROW;
+    scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    let above = true;
+    for (const s of section.parentElement.children) {
+      if (s === section) above = false;
+      s.classList.toggle('js-above', above);
+    }
+  };
+  addEventListener('scroll', () => {
+    if (scrollY < 4) document.querySelectorAll('.js-view .js-above').forEach((s) => s.classList.remove('js-above'));
+  }, { passive: true });
   const navScroll = (kind, el) => {
+    if (heroOn() && el?.closest?.('.js-view .js-rows')) {
+      document.documentElement.classList.toggle('js-hero-fixed', heroFixed());
+      if (kind === 'card') { heroFollow(el); return false; }
+      if (kind === 'row' && heroFixed()) {
+        const section = el.closest('.js-section');
+        if (section) { heroRow(section); return true; }
+      }
+      return false;
+    }
     if (!focusOn() || !el?.closest?.('.js-view')) return false;
     // changing rows: fold the old row's details away first so JellyNav pins the new row against the final layout
     if (kind === 'row') {
@@ -1929,6 +2041,10 @@
   };
   // mouse: hovering a title opens it (after a short rest, so sweeping across a row stays calm)
   document.addEventListener('mouseover', (e) => {
+    if (heroOn() && !matchMedia('(pointer: coarse)').matches) {
+      const c = e.target.closest?.('.js-view .js-rows .card');
+      if (c) heroFollow(c);
+    }
     if (!focusOn() || matchMedia('(pointer: coarse)').matches) return;
     const card = e.target.closest?.(EXPANDABLE);
     clearTimeout(nfTimer);
@@ -1936,6 +2052,7 @@
   }, { passive: true });
   // keyboard focus
   document.addEventListener('focusin', (e) => {
+    if (heroOn()) { const c = e.target.closest?.('.js-view .js-rows .card'); if (c) heroFollow(c); }
     const card = e.target.closest?.(EXPANDABLE);
     if (card && focusOn()) nfOpen(card, true);
   });
@@ -2536,10 +2653,10 @@
     const big = owned && pick.BackdropTag
       ? `${window.ApiClient.getImageUrl(pick.ItemId, { type: 'Backdrop', fillWidth: 1600, quality: 85, tag: pick.BackdropTag })}|${(pick.Backdrop || '').replace('/w780/', '/w1280/')}`
       : (pick.Backdrop || '').replace('/w780/', '/w1280/');
-    const meta = [lib?.Certification ? `<b class="js-cert">${esc(lib.Certification)}</b>` : '', [pick.Year || lib?.Year, (lib?.Genres || []).slice(0, 2).join(', ')].filter(Boolean).map(esc).join(' • ')].join(' ');
+    const meta = bbMeta({ OfficialRating: lib?.Certification, ProductionYear: pick.Year || lib?.Year, Genres: lib?.Genres || [], Type: pick.Type });
     const href = owned ? detailsHref(pick.ItemId) : '';
     return `
-      <div class="js-bb-slide" data-type="${pick.Type}" data-tmdb="${pick.TmdbId}" data-art="${esc(big)}">
+      <div class="js-bb-slide" data-type="${pick.Type}" data-tmdb="${pick.TmdbId || ''}" ${owned ? `data-id="${esc(pick.ItemId)}"` : ''} data-art="${esc(big)}">
         <div class="js-bb-art"></div>
         <div class="js-bb-poster js-img" data-src="${esc(poster)}"></div>
         <div class="js-bb-shade"></div>
@@ -2549,7 +2666,8 @@
           <h2 class="js-bb-title">${owned && pick.LogoTag
             ? `<img class="js-bb-logo" src="${esc(logoUrl(pick.ItemId, pick.LogoTag))}" alt="${esc(pick.Name)}">`
             : esc(pick.Name)}</h2>
-          <div class="js-bb-rank">#${n} in ${kind === 'tv' ? 'TV Shows' : 'Movies'}${when ? ` ${when}` : ''}</div>
+          <div class="js-bb-rank">${n ? `#${n} in ${kind === 'tv' ? 'TV Shows' : 'Movies'}${when ? ` ${when}` : ''}` : ''}</div>
+          ${(lib && (flagsFor(lib.Id).recent || flagsFor(lib.Id).newEp)) ? `<div class="js-bb-new">${flagsFor(lib.Id).recent ? (isTv ? 'New series' : 'New movie') : 'New episode'}</div>` : ''}
           <div class="js-bb-tags">${esc(isTv ? 'Show' : 'Movie')}</div>
           <div class="js-bb-meta">${meta}</div>
           <p class="js-bb-overview"></p>
@@ -2582,7 +2700,10 @@
     const posterEl = slide.querySelector('.js-bb-poster');
     if (posterEl) posterEl.style.backgroundImage = bgOf(posterEl.dataset.src);
     const isTv = slide.dataset.type === 'tv';
-    getJSON(`Details?type=${slide.dataset.type}&tmdbId=${slide.dataset.tmdb}`).then((d) => {
+    const details = slide.dataset.id
+      ? window.ApiClient.getItem(userId(), slide.dataset.id)
+      : slide.dataset.tmdb ? getJSON(`Details?type=${slide.dataset.type}&tmdbId=${slide.dataset.tmdb}`) : Promise.resolve(null);
+    details.then((d) => {
       const p = slide.querySelector('.js-bb-overview');
       if (p && d?.Overview) p.textContent = d.Overview;
       const tags = slide.querySelector('.js-bb-tags');
@@ -2590,11 +2711,63 @@
         tags.innerHTML = [isTv ? 'Show' : 'Movie', ...d.Genres.slice(0, 3)].map((x, i) => `<span${i ? '' : ' class="js-strong"'}>${esc(x)}</span>`).join('<i>•</i>');
       }
       const meta = slide.querySelector('.js-bb-meta');
-      if (meta && !meta.textContent.trim() && d) {
-        meta.textContent = [d.ProductionYear, (d.Genres || []).slice(0, 2).join(', ')].filter(Boolean).join(' • ');
-      }
+      if (meta && d) meta.innerHTML = bbMeta({ ...d, Type: d.Type || slide.dataset.type });
     }).catch(() => {});
   };
+  // the details line under the banner title, the way each service writes it
+  const bbMeta = (d) => {
+    const tv = /^(series|tv)$/i.test(d.Type || '');
+    const cert = d.OfficialRating ? `<b class="js-cert">${esc(d.OfficialRating)}</b>` : '';
+    if (document.documentElement.dataset.jsBrand === 'prime') {
+      const m = d.RunTimeTicks ? Math.round(d.RunTimeTicks / 6e8) : 0;
+      const len = tv ? (d.ChildCount ? `${d.ChildCount} season${d.ChildCount === 1 ? '' : 's'}` : '') : (m ? `${m} min` : '');
+      return [d.Genres?.[0], len, d.ProductionYear].filter(Boolean).map((x) => `<span>${esc(x)}</span>`).join('') + cert;
+    }
+    return `${cert}${esc([d.ProductionYear, (d.Genres || []).slice(0, 2).join(', ')].filter(Boolean).join(' • '))}`;
+  };
+  // Prime: the banner shows the selected title. Builds a slide for any card on the page.
+  const heroOn = () => !!look().heroFollow && !isPhone();
+  const heroFixed = () => heroOn() && !!document.getElementById('__jf_library_focus_ring__');
+  let heroTimer = 0;
+  const heroPick = (card) => {
+    const id = card.dataset.id;
+    const lib = id ? state.lib?.get(normId(id)) : null;
+    const name = card.querySelector('.cardText-first')?.textContent.trim() || card.querySelector('[aria-label]')?.getAttribute('aria-label') || '';
+    const wide = (card.dataset.wide || '').split('|')[0];
+    const firstImg = (card.querySelector('.js-img')?.dataset.src || '').split('|')[0];
+    const rank = card.classList.contains('js-rank-card') ? [...card.parentElement.children].indexOf(card) + 1 : (id ? state.ranks?.get(normId(id))?.n : null);
+    const kind = card.closest('[data-kind]')?.dataset.kind || (lib?.Type) || (card.dataset.jstype) || 'movie';
+    if (lib) {
+      return { n: rank || null, kind, t: { ItemId: lib.Id, Name: lib.Name, Type: lib.Type, Year: lib.Year, LogoTag: lib.LogoTag, BackdropTag: lib.BackdropTag, PrimaryTag: lib.PrimaryTag, Backdrop: wide || firstImg, Poster: '' } };
+    }
+    if (id) return { n: null, kind, t: { ItemId: id, Name: name, Type: kind, Backdrop: firstImg, Poster: '' } };
+    return { n: rank || null, kind, t: { TmdbId: card.dataset.jstmdb, Name: name, Type: card.dataset.jstype || kind, Backdrop: wide || firstImg, Poster: '' } };
+  };
+  const heroShow = (card) => {
+    const bb = document.querySelector('.js-view .js-bb');
+    if (!bb || !card?.isConnected || card.closest('.js-switcher') || bb.dataset.focusCard === (card.dataset.id || card.dataset.jstmdb)) return;
+    const b = bb.getBoundingClientRect();
+    if (b.bottom < 40) return; // banner scrolled away (mouse users scrolling down the page)
+    const pick = heroPick(card);
+    if (!pick.t.ItemId && !pick.t.TmdbId) return;
+    bb.querySelector('.js-bb-focus')?.remove();
+    const tmp = document.createElement('div');
+    tmp.innerHTML = bbSlide(pick);
+    const slide = tmp.firstElementChild;
+    slide.classList.add('js-bb-focus');
+    const dots = bb.querySelector('.js-bb-dots');
+    if (dots) bb.insertBefore(slide, dots); else bb.insertBefore(slide, bb.querySelector('.js-hero'));
+    bb.dataset.focus = '1';
+    bb.dataset.focusAt = Date.now();
+    bb.dataset.focusCard = card.dataset.id || card.dataset.jstmdb || '';
+    bbShow(bb, [...bb.querySelectorAll('.js-bb-slide')].indexOf(slide));
+  };
+  const heroFollow = (card) => {
+    if (!heroOn()) return;
+    clearTimeout(heroTimer);
+    heroTimer = setTimeout(() => heroShow(card), 160);
+  };
+
   const bbShow = (bb, i) => {
     const slides = [...bb.querySelectorAll('.js-bb-slide')];
     if (!slides.length) return;
@@ -2611,6 +2784,7 @@
   };
   const bbBusy = (bb) => {
     if (document.hidden || document.documentElement.classList.contains('js-intro-on')) return true;
+    if (bb.dataset.focus && (heroFixed() || Date.now() - +bb.dataset.focusAt < 15000)) return true;
     if (bb.matches(':hover') || bb.contains(document.activeElement)) return true;
     const ring = document.getElementById('__jf_library_focus_ring__');
     if (ring && ring.style.display !== 'none' && ring.style.opacity !== '0') {
@@ -2636,7 +2810,12 @@
         + (picks.length > 1 ? `<div class="js-bb-dots" aria-hidden="true">${picks.map((_, i) => `<span class="js-bb-dot" data-i="${i}"></span>`).join('')}</div>` : '');
       bbShow(bb, 0);
       if (picks.length > 1) {
-        const go = (d) => { bbShow(bb, +bb.dataset.slide + d); bb.dataset.due = Date.now() + BB_EVERY; };
+        const go = (d) => {
+          if (bb.dataset.focus) { bb.querySelector('.js-bb-focus')?.remove(); delete bb.dataset.focus; delete bb.dataset.focusCard; }
+          const n = bb.querySelectorAll('.js-bb-slide').length;
+          bbShow(bb, (+bb.dataset.slide || 0) % n + d);
+          bb.dataset.due = Date.now() + BB_EVERY;
+        };
         bb.dataset.due = Date.now() + BB_EVERY;
         const timer = setInterval(() => {
           if (!bb.isConnected) { clearInterval(timer); return; }
@@ -2976,6 +3155,7 @@
   let busy = false;
   const sync = async () => {
     if (busy || !window.ApiClient || !userId()) return;
+    document.documentElement.classList.toggle('js-hero-fixed', heroFixed());
     if (!state.cfg && !state.cfgLoading) {
       state.cfgLoading = true;
       loadConfig().finally(() => { state.cfgLoading = false; diagUi(); });
