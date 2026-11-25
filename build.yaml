@@ -1,6 +1,6 @@
 name: "JellyStream"
 guid: "f7d3a9e1-4c2b-4e8a-9b1f-6a2c8d5e3f70"
-version: "1.24.0.0"
+version: "1.24.1.0"
 targetAbi: "12.4.0.0"
 framework: "net10.0"
 overview: "Browse your library by streaming service, with a Top 10 for each."
@@ -14,6 +14,6 @@ owner: "isaacAmejia"
 artifacts:
 - "Jellyfin.Plugin.JellyStream.dll"
 changelog: >
-  Each service home now has the same sections as your own Jellyfin home, in your order (My Media stays Jellyfin's):
-  Continue Watching with progress bars, Next Up, and Latest from each library, all limited to that service and styled
-  like it, with its themed Top 10s among them and the Browse panel at the end. The library's pinned banner is smaller.
+  Service homes follow the Home Screen Sections plugin when it's installed: its rows, in its order, with its titles,
+  limited to each service and styled like it (its Top 10, My Media and Seerr/Live TV rows are left out; JellyStream's
+  themed Top 10s stay). Without it, Jellyfin's own home sections are used. More light in the Jellyfin intro.

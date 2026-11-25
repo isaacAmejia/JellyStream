@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.24.0';
+  const VERSION = '1.24.1';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -2467,12 +2467,32 @@
       }));
   };
 
-  // the user's own Jellyfin home: which sections, in what order (My Media is left to Jellyfin), plus Next Up and the
-  // latest titles from each movie / show library. Shared by every service for a few minutes.
+  // The user's own home rows, as a list of { title, items, wide, kind }. With the Home Screen Sections plugin
+  // (Modular Home) that's its sections, in its order and with its titles; otherwise Jellyfin's own home
+  // sections. Left out: My Media, HSS's Top 10 (JellyStream has its own), and rows that aren't library titles
+  // (Seerr discover/requests, live TV). Shared by every service for a few minutes.
+  const HSS_SKIP = /^(TopTen|MyMedia|Discover|DiscoverMovies|DiscoverTV|MyJellyseerrRequests|LiveTV)$/i;
+  const HSS_WIDE = /^(ContinueWatching|NextUp|ContinueWatchingNextUp)$/i;
   const loadHomeRows = async () => {
     if (state.homeRows && Date.now() - state.homeRows.at < 3 * 60 * 1000) return state.homeRows;
     const A = window.ApiClient;
     const uid = userId();
+    const lang = (() => { try { return localStorage.getItem(`${uid}-language`) || undefined; } catch { return undefined; } })();
+    // Home Screen Sections
+    const hss = await A.getJSON(A.getUrl('HomeScreen/Sections', { UserId: uid, Language: lang })).then((r) => r?.Items || []).catch(() => []);
+    if (hss.length) {
+      const wanted = [...hss].sort((x, y) => (x.OrderIndex ?? 0) - (y.OrderIndex ?? 0)).filter((x) => x.Section && !HSS_SKIP.test(x.Section)).slice(0, 30);
+      const rows = await Promise.all(wanted.map((x) => {
+        const q = { UserId: uid, AdditionalData: x.AdditionalData || undefined, Language: lang };
+        if (/^NextUp$/i.test(x.Section)) { const d = new Date(); d.setDate(d.getDate() - 365); q.NextUpDateCutoff = d.toISOString(); }
+        return A.getJSON(A.getUrl(`HomeScreen/Section/${encodeURIComponent(x.Section)}`, q))
+          .then((r) => ({ title: x.DisplayText || x.Section, items: r?.Items || [], wide: HSS_WIDE.test(x.Section) || /landscape/i.test(String(x.ViewMode ?? '')), kind: x.Section }))
+          .catch(() => null);
+      }));
+      state.homeRows = { at: Date.now(), source: 'hss', rows: rows.filter(Boolean) };
+      return state.homeRows;
+    }
+    // Jellyfin's own home sections
     const opts = { Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', ImageTypeLimit: 1 };
     const [prefs, user, views] = await Promise.all([
       A.getDisplayPreferences?.('usersettings', uid, 'emby').catch(() => null),
@@ -2481,19 +2501,25 @@
     ]);
     const cp = prefs?.CustomPrefs || {};
     const defaults = ['smalllibrarytiles', 'resume', 'resumeaudio', 'resumebook', 'livetv', 'nextup', 'latestmedia', 'none', 'none', 'none'];
-    const order = [...new Set(defaults.map((d, i) => cp[`homesection${i}`] || d))].filter((x) => ['resume', 'nextup', 'latestmedia'].includes(x));
+    let order = [...new Set(defaults.map((d, i) => cp[`homesection${i}`] || d))].filter((x) => ['resume', 'nextup', 'latestmedia'].includes(x));
+    if (!order.length) order = ['resume', 'nextup', 'latestmedia'];
     const excluded = user?.Configuration?.LatestItemsExcludes || [];
     const libs = (views || []).filter((v) => ['movies', 'tvshows'].includes(v.CollectionType) && !excluded.includes(v.Id));
-    const [nextup, latest] = await Promise.all([
-      order.includes('nextup') && A.getNextUpEpisodes
-        ? A.getNextUpEpisodes({ UserId: uid, Limit: 60, ...opts }).then((r) => r?.Items || []).catch(() => [])
-        : [],
+    const [resume, nextup, latest] = await Promise.all([
+      order.includes('resume') ? A.getResumableItems(uid, { Limit: 40, Recursive: true, MediaTypes: 'Video', ...opts }).then((r) => r?.Items || []).catch(() => []) : [],
+      order.includes('nextup') && A.getNextUpEpisodes ? A.getNextUpEpisodes({ UserId: uid, Limit: 60, ...opts }).then((r) => r?.Items || []).catch(() => []) : [],
       order.includes('latestmedia') && A.getLatestItems
         ? Promise.all(libs.map((v) => A.getLatestItems({ UserId: uid, ParentId: v.Id, Limit: 60, GroupItems: true, ...opts })
-          .then((items) => ({ name: v.Name, items: items || [] })).catch(() => ({ name: v.Name, items: [] }))))
+          .then((items) => ({ title: `Latest ${v.Name}`, items: items || [], wide: false, kind: 'latest' })).catch(() => null)))
         : [],
     ]);
-    state.homeRows = { at: Date.now(), order: order.length ? order : ['resume', 'nextup', 'latestmedia'], nextup, latest };
+    const rows = [];
+    for (const k of order) {
+      if (k === 'resume') rows.push({ title: 'Continue Watching', items: resume, wide: true, kind: 'resume' });
+      if (k === 'nextup') rows.push({ title: 'Next Up', items: nextup, wide: true, kind: 'nextup' });
+      if (k === 'latestmedia') rows.push(...latest.filter(Boolean));
+    }
+    state.homeRows = { at: Date.now(), source: 'jellyfin', rows };
     return state.homeRows;
   };
 
@@ -2512,7 +2538,7 @@
       cfg.ShowContinueWatching
         ? safe(window.ApiClient.getResumableItems(userId(), { Limit: 40, Recursive: true, Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', MediaTypes: 'Video' }).then((r) => r.Items || []))
         : [],
-      loadHomeRows().catch(() => ({ order: ['resume', 'nextup', 'latestmedia'], nextup: [], latest: [] })),
+      loadHomeRows().catch(() => ({ rows: [] })),
     ]);
     const data = { at: Date.now(), topMovies, topShows, library, missMovies, missShows, resume, home };
     state.data.set(svc.Key, data);
@@ -2826,7 +2852,7 @@
     // arrive while the logo is still being traced, others come late, from all directions and both ways round
     const build = 1.2 * k;
     const R = Math.min(innerWidth, innerHeight);
-    const chatter = CSS.supports?.('offset-path', "path('M0 0 L1 1')") ? Array.from({ length: lite() ? 16 : 28 }, (_, i) => {
+    const chatter = CSS.supports?.('offset-path', "path('M0 0 L1 1')") ? Array.from({ length: lite() ? 30 : 64 }, (_, i) => {
       const a = Math.random() * Math.PI * 2;
       const r = R * (.18 + Math.random() * .32);
       const side = (Math.random() < .5 ? 1 : -1) * (.4 + Math.random() * 1.1);
@@ -3338,28 +3364,27 @@
     });
     const se = (it) => (it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'}` : '');
     const mine = [];
-    const home = data.home || { order: ['resume', 'nextup', 'latestmedia'], nextup: [], latest: [] };
-    for (const kind of home.order) {
-      if (kind === 'resume' && cfg.ShowContinueWatching) {
-        const list = data.resume.filter(onSvc);
-        if (list.length) mine.push(section({ title: 'Continue Watching', cls: 'js-cw', cards: list.map((it) => epCard(it, [se(it), left(it)].filter(Boolean).join(' · '))) }));
-      } else if (kind === 'nextup') {
-        const list = (home.nextup || []).filter(onSvc);
-        if (list.length) mine.push(section({ title: 'Next Up', cls: 'js-cw', cards: list.map((it) => epCard(it, [se(it), it.Name].filter(Boolean).join(' · '))) }));
-      } else if (kind === 'latestmedia') {
-        for (const lib of home.latest || []) {
-          const seen = new Set();
-          const cards = [];
-          for (const it of lib.items) {
-            const key = norm(it.SeriesId || it.Id);
-            if (seen.has(key) || !onService.has(key)) continue;
-            seen.add(key);
-            const own = state.lib.get(normId(it.SeriesId || it.Id));
-            cards.push(own ? libraryCard(own).replace('</a>', `${bar(it)}</a>`) : epCard(it, it.ProductionYear || ''));
-          }
-          if (cards.length) mine.push(section({ title: `Latest ${lib.name}`, cards }));
+    for (const row of data.home?.rows || []) {
+      if (row.kind === 'resume' && !cfg.ShowContinueWatching) continue;
+      const seen = new Set();
+      const cards = [];
+      for (const it of row.items || []) {
+        if (!onSvc(it)) continue;
+        if (row.wide) {
+          if (seen.has(it.Id)) continue;
+          seen.add(it.Id);
+          const sub = row.kind === 'resume' || /ContinueWatching/i.test(row.kind) ? [se(it), left(it)] : [se(it), it.Type === 'Episode' ? it.Name : ''];
+          cards.push(epCard(it, sub.filter(Boolean).join(' · ')));
+        } else {
+          // one card per title, in the service's own style, with a bar when it's part-watched
+          const key = norm(it.SeriesId || it.Id);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const own = state.lib.get(normId(it.SeriesId || it.Id));
+          cards.push(own ? libraryCard(own).replace('</a>', `${bar(it)}</a>`) : epCard(it, it.ProductionYear || ''));
         }
       }
+      if (cards.length) mine.push(section({ title: row.title, cls: row.wide ? 'js-cw' : '', cards }));
     }
     // the service's themed Top 10s sit among them: shows after the first section, movies a couple further down
     rows.push(...mine.slice(0, 1), topShows, ...mine.slice(1, 3), topMovies, ...mine.slice(3));
