@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.24.1';
+  const VERSION = '1.24.2';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -1470,11 +1470,6 @@
     .js-jf.go .js-jf-rays { animation: js-jf-rays calc(4.2s * var(--jf-k, 1)) cubic-bezier(.2,.7,.3,1) calc(1.15s * var(--jf-k, 1)) forwards; }
     @keyframes js-jf-rays { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(.6); } 25% { opacity: 1; } 100% { opacity: .85; transform: translate(-50%, -50%) rotate(14deg) scale(1); } }
     .js-jf.flying .js-jf-rays, .js-jf.diving .js-jf-rays { opacity: 0 !important; transition: opacity .3s ease; }
-    /* the flare when it all lands */
-    .js-jf-flare { position: absolute; left: 50%; top: 55%; width: 260%; height: 260%; transform: translate(-50%, -50%) scale(.2); border-radius: 50%; pointer-events: none; opacity: 0;
-      background: radial-gradient(closest-side, rgba(255,255,255,.55), rgba(170,140,255,.28) 25%, rgba(0,164,220,.1) 55%, transparent 72%); }
-    .js-jf.go .js-jf-flare { animation: js-jf-flare calc(1.3s * var(--jf-k, 1)) cubic-bezier(.1,.7,.2,1) calc(1.18s * var(--jf-k, 1)) forwards; }
-    @keyframes js-jf-flare { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); } 12% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); } }
     @keyframes js-jf-bloom { 0% { opacity: 0; transform: scale(.7); } 100% { opacity: 1; transform: scale(1); } }
     .js-jf.diving .js-jf-name, .js-jf.diving .js-jf-bloom { opacity: 0 !important; transition: opacity .2s ease; }
     .js-jf.diving .jf-core { opacity: 0 !important; transition: opacity .3s ease; }
@@ -2867,7 +2862,7 @@
     el.className = 'js-intro js-jf';
     el.style.setProperty('--jf-k', k);
     el.innerHTML = `<div class="js-jf-black"></div><div class="js-jf-bloom"></div>
-      <div class="js-jf-logo"><div class="js-jf-chatter">${chatter}</div><div class="js-jf-rays"></div><div class="js-jf-flare"></div><div class="js-jf-push">
+      <div class="js-jf-logo"><div class="js-jf-chatter">${chatter}</div><div class="js-jf-rays"></div><div class="js-jf-push">
         <svg class="js-jf-svg" viewBox="0 0 512 512" aria-hidden="true"><defs>
           <linearGradient id="${g}" x1="110.25" y1="213.3" x2="496.14" y2="436.09" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/></linearGradient>
           <linearGradient id="${g}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
