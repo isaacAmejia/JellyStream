@@ -89,7 +89,15 @@
         #JellyStreamConfigPage .js-intro-slot.busy .js-bar { display: block; }
         #JellyStreamConfigPage .js-intro-preview { width: 100%; max-height: 260px; border-radius: 10px; background: #000; margin: -.2em 0 .8em; }
         #JellyStreamConfigPage .js-intro-preview.phone { max-height: 420px; }
-    </style>
+        .js-rowlist { display: flex; flex-direction: column; gap: 6px; }
+    .js-rowitem { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+    .js-rowitem.off { opacity: .55; }
+    .js-rowitem label { flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0; }
+    .js-rowitem input[type=checkbox] { width: 18px; height: 18px; accent-color: #00a4dc; }
+    .js-rowitem small { display: block; opacity: .6; font-size: .82em; }
+    .js-rowitem button { background: rgba(255,255,255,.08); color: inherit; border: 0; border-radius: 6px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
+    .js-rowitem button:disabled { opacity: .25; cursor: default; }
+</style>
 
     <div data-role="content">
         <div class="content-primary">
@@ -224,13 +232,17 @@
                             <input is="emby-input" id="jsGenreRows" type="number" min="0" max="20" />
                         </div>
                     </div>
-                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowContinue" /><span>Continue Watching row</span></label></div>
-                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowRecent" /><span>Recently Added row</span></label></div>
                     <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowMissing" /><span>Include titles I don't have (shown as missing)</span></label></div>
-                    <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsShowPopularMissing" /><span>"Popular to request" row</span></label></div>
                     <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAllowRequests" /><span>Selecting a missing title requests it in Seerr (default settings)</span></label></div>
                     <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsConfirm" /><span>Ask to press again to confirm a request</span></label></div>
                     <div class="checkboxContainer"><label class="emby-checkbox-label"><input is="emby-checkbox" type="checkbox" id="jsAsUser" /><span>Request as the matching Seerr user (their permissions and limits apply)</span></label></div>
+                </div>
+
+                <!-- Service page rows -->
+                <div class="js-card">
+                    <h2>Service page rows</h2>
+                    <p class="js-sub">The rows on every streaming service's page (Netflix, Disney+ and the rest; Jellyfin's own home isn't changed). Turn rows on or off and use the arrows to set their order. Each row only shows titles on that service, and a row with nothing in it is skipped.</p>
+                    <div id="jsRows" class="js-rowlist"></div>
                 </div>
 
                 <!-- Top 10 status -->
@@ -490,6 +502,54 @@
         }
 
         // ---------- load / save ----------
+        // ---- service page rows: on/off and order
+        var ROWS = [
+            ['resume', 'Continue Watching', 'What you are partway through, with progress bars'],
+            ['nextup', 'Next Up', 'The next episode of shows you are watching'],
+            ['topTv', 'Top 10 Shows', 'The service\'s Top 10 shows, in its own style'],
+            ['topMovie', 'Top 10 Movies', 'The service\'s Top 10 movies, in its own style'],
+            ['new', 'New on the service', 'Recently added to your library'],
+            ['myList', 'My List', 'Your favorites'],
+            ['because', 'Because You Watched', 'Titles like the last one you watched there'],
+            ['watchAgain', 'Watch Again', 'Things you have finished'],
+            ['genres', 'Genre rows', 'One row per popular genre (how many: "Genre rows" above)'],
+            ['requestMovie', 'Popular Movies to Request', 'Needs Seerr and "Include titles I don\'t have"'],
+            ['requestTv', 'Popular Shows to Request', 'Needs Seerr and "Include titles I don\'t have"'],
+            ['allTv', 'All Shows (A–Z)', ''],
+            ['allMovie', 'All Movies (A–Z)', ''],
+            ['browse', 'Browse everything', 'The panel at the end that opens the full library']
+        ];
+        var DEFAULT_ROWS = 'resume:1,topTv:1,nextup:1,new:1,topMovie:1,myList:1,because:1,genres:1,watchAgain:1,requestMovie:1,requestTv:1,allTv:0,allMovie:0,browse:1';
+        var rowState = [];
+        function parseRows(str) {
+            var seen = {};
+            var out = [];
+            String(str || DEFAULT_ROWS).split(',').forEach(function (p) {
+                var kv = p.split(':');
+                var def = ROWS.filter(function (r) { return r[0] === kv[0]; })[0];
+                if (def && !seen[kv[0]]) { seen[kv[0]] = 1; out.push({ k: kv[0], on: kv[1] !== '0' }); }
+            });
+            ROWS.forEach(function (r) { if (!seen[r[0]]) out.push({ k: r[0], on: false }); }); // rows added in later versions
+            return out;
+        }
+        function drawRows() {
+            if (!rowState.length) rowState = parseRows(config.ServiceRows);
+            var box = $('jsRows');
+            box.innerHTML = '';
+            rowState.forEach(function (r, i) {
+                var def = ROWS.filter(function (x) { return x[0] === r.k; })[0];
+                var el = document.createElement('div');
+                el.className = 'js-rowitem' + (r.on ? '' : ' off');
+                el.innerHTML = '<label><input type="checkbox"' + (r.on ? ' checked' : '') + '><span>' + def[1] + (def[2] ? '<small>' + def[2] + '</small>' : '') + '</span></label>'
+                    + '<button type="button" class="up" title="Move up"' + (i === 0 ? ' disabled' : '') + '>▲</button>'
+                    + '<button type="button" class="down" title="Move down"' + (i === rowState.length - 1 ? ' disabled' : '') + '>▼</button>';
+                el.querySelector('input').addEventListener('change', function (e) { r.on = e.target.checked; el.classList.toggle('off', !r.on); });
+                el.querySelector('.up').addEventListener('click', function () { rowState.splice(i - 1, 0, rowState.splice(i, 1)[0]); drawRows(); });
+                el.querySelector('.down').addEventListener('click', function () { rowState.splice(i + 1, 0, rowState.splice(i, 1)[0]); drawRows(); });
+                box.appendChild(el);
+            });
+        }
+
         function fill() {
             $('jsSeerrUrl').value = config.SeerrUrl || '';
             $('jsSeerrKey').value = config.SeerrApiKey || '';
@@ -510,10 +570,9 @@
             $('jsOfficialNetflix').checked = config.OfficialNetflixTop10 !== false;
             $('jsTrendingPages').value = config.TrendingPages || 10;
             $('jsGenreRows').value = config.GenreRows;
-            $('jsShowContinue').checked = config.ShowContinueWatching;
-            $('jsShowRecent').checked = config.ShowRecentlyAdded;
             $('jsShowMissing').checked = config.ShowMissing;
-            $('jsShowPopularMissing').checked = config.ShowPopularMissing;
+            rowState = parseRows(config.ServiceRows);
+            drawRows();
             $('jsAllowRequests').checked = config.AllowRequests;
             $('jsConfirm').checked = config.ConfirmRequests;
             $('jsAsUser').checked = config.RequestAsUser;
@@ -543,10 +602,8 @@
             config.OfficialNetflixTop10 = $('jsOfficialNetflix').checked;
             config.TrendingPages = num('jsTrendingPages', 10, 1, 25);
             config.GenreRows = num('jsGenreRows', 6, 0, 20);
-            config.ShowContinueWatching = $('jsShowContinue').checked;
-            config.ShowRecentlyAdded = $('jsShowRecent').checked;
             config.ShowMissing = $('jsShowMissing').checked;
-            config.ShowPopularMissing = $('jsShowPopularMissing').checked;
+            config.ServiceRows = rowState.map(function (r) { return r.k + ':' + (r.on ? 1 : 0); }).join(',');
             config.AllowRequests = $('jsAllowRequests').checked;
             config.ConfirmRequests = $('jsConfirm').checked;
             config.RequestAsUser = $('jsAsUser').checked;

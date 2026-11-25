@@ -33,6 +33,7 @@ public record ClientService(string Key, string Name, string? Logo, string Accent
 /// <param name="JellyfinIntroVersion">Version of the Jellyfin intro video (TV / desktop), when one is uploaded.</param>
 /// <param name="JellyfinMobileIntroVersion">Version of the Jellyfin phone intro video, when one is uploaded.</param>
 /// <param name="PluginVersion">The plugin's version, so pages still running an older script can refresh.</param>
+/// <param name="ServiceRows">The rows on every service page, in order, each on or off ("key:1,key:0,...").</param>
 public record ClientConfig(
     List<ClientService> Services,
     bool ShowHomeRow,
@@ -50,7 +51,8 @@ public record ClientConfig(
     bool Diagnostics = false,
     string? JellyfinIntroVersion = null,
     string? JellyfinMobileIntroVersion = null,
-    string? PluginVersion = null);
+    string? PluginVersion = null,
+    string? ServiceRows = null);
 
 /// <summary>A popular title (in the library or not).</summary>
 /// <param name="TmdbId">TMDB id.</param>

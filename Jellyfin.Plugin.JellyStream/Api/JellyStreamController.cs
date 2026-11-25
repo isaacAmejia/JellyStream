@@ -163,11 +163,12 @@ public class JellyStreamController : ControllerBase
             config.GenreRows,
             config.ShowContinueWatching,
             config.ShowRecentlyAdded,
-            config.ShowPopularMissing && config.ShowMissing && SeerrClient.IsConfigured,
+            config.ShowMissing && SeerrClient.IsConfigured,
             config.Diagnostics,
             _intros.VersionOf("jellyfin"),
             _intros.VersionOf("jellyfin", "mobile"),
-            typeof(JellyStreamController).Assembly.GetName().Version?.ToString());
+            typeof(JellyStreamController).Assembly.GetName().Version?.ToString(),
+            string.IsNullOrWhiteSpace(config.ServiceRows) ? PluginConfiguration.DefaultServiceRows : config.ServiceRows);
     }
 
     /// <summary>The most popular titles on a service, marked with what you have.</summary>

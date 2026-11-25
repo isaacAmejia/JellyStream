@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.24.2';
+  const VERSION = '1.25.0';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -2462,60 +2462,25 @@
       }));
   };
 
-  // The user's own home rows, as a list of { title, items, wide, kind }. With the Home Screen Sections plugin
-  // (Modular Home) that's its sections, in its order and with its titles; otherwise Jellyfin's own home
-  // sections. Left out: My Media, HSS's Top 10 (JellyStream has its own), and rows that aren't library titles
-  // (Seerr discover/requests, live TV). Shared by every service for a few minutes.
-  const HSS_SKIP = /^(TopTen|MyMedia|Discover|DiscoverMovies|DiscoverTV|MyJellyseerrRequests|LiveTV)$/i;
-  const HSS_WIDE = /^(ContinueWatching|NextUp|ContinueWatchingNextUp)$/i;
-  const loadHomeRows = async () => {
-    if (state.homeRows && Date.now() - state.homeRows.at < 3 * 60 * 1000) return state.homeRows;
+  // The rows on every service page, in the order set in the dashboard (JellyStream settings → Service page rows)
+  const SERVICE_ROWS = 'resume:1,topTv:1,nextup:1,new:1,topMovie:1,myList:1,because:1,genres:1,watchAgain:1,requestMovie:1,requestTv:1,allTv:0,allMovie:0,browse:1';
+  const serviceRows = () => String(state.cfg?.ServiceRows || SERVICE_ROWS).split(',')
+    .map((p) => p.split(':')).filter(([, on]) => on !== '0').map(([k]) => k);
+  // what those rows need from you (shared by every service for a few minutes): Next Up, favorites, what you've watched
+  const loadUserRows = async (want) => {
+    const key = [...want].sort().join(',');
+    if (state.userRows?.key === key && Date.now() - state.userRows.at < 3 * 60 * 1000) return state.userRows;
     const A = window.ApiClient;
     const uid = userId();
-    const lang = (() => { try { return localStorage.getItem(`${uid}-language`) || undefined; } catch { return undefined; } })();
-    // Home Screen Sections
-    const hss = await A.getJSON(A.getUrl('HomeScreen/Sections', { UserId: uid, Language: lang })).then((r) => r?.Items || []).catch(() => []);
-    if (hss.length) {
-      const wanted = [...hss].sort((x, y) => (x.OrderIndex ?? 0) - (y.OrderIndex ?? 0)).filter((x) => x.Section && !HSS_SKIP.test(x.Section)).slice(0, 30);
-      const rows = await Promise.all(wanted.map((x) => {
-        const q = { UserId: uid, AdditionalData: x.AdditionalData || undefined, Language: lang };
-        if (/^NextUp$/i.test(x.Section)) { const d = new Date(); d.setDate(d.getDate() - 365); q.NextUpDateCutoff = d.toISOString(); }
-        return A.getJSON(A.getUrl(`HomeScreen/Section/${encodeURIComponent(x.Section)}`, q))
-          .then((r) => ({ title: x.DisplayText || x.Section, items: r?.Items || [], wide: HSS_WIDE.test(x.Section) || /landscape/i.test(String(x.ViewMode ?? '')), kind: x.Section }))
-          .catch(() => null);
-      }));
-      state.homeRows = { at: Date.now(), source: 'hss', rows: rows.filter(Boolean) };
-      return state.homeRows;
-    }
-    // Jellyfin's own home sections
     const opts = { Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', ImageTypeLimit: 1 };
-    const [prefs, user, views] = await Promise.all([
-      A.getDisplayPreferences?.('usersettings', uid, 'emby').catch(() => null),
-      A.getCurrentUser?.().catch(() => null),
-      A.getUserViews?.({}, uid).then((r) => r?.Items || []).catch(() => []) || [],
+    const items = (q) => (A.getItems ? A.getItems(uid, { Recursive: true, ...opts, ...q }).then((r) => r?.Items || []).catch(() => []) : Promise.resolve([]));
+    const [nextup, favs, played] = await Promise.all([
+      want.has('nextup') && A.getNextUpEpisodes ? A.getNextUpEpisodes({ UserId: uid, Limit: 80, ...opts }).then((r) => r?.Items || []).catch(() => []) : [],
+      want.has('myList') ? items({ Filters: 'IsFavorite', IncludeItemTypes: 'Movie,Series', SortBy: 'DateCreated', SortOrder: 'Descending', Limit: 300 }) : [],
+      want.has('because') || want.has('watchAgain') ? items({ Filters: 'IsPlayed', IncludeItemTypes: 'Movie,Episode', SortBy: 'DatePlayed', SortOrder: 'Descending', Limit: 300 }) : [],
     ]);
-    const cp = prefs?.CustomPrefs || {};
-    const defaults = ['smalllibrarytiles', 'resume', 'resumeaudio', 'resumebook', 'livetv', 'nextup', 'latestmedia', 'none', 'none', 'none'];
-    let order = [...new Set(defaults.map((d, i) => cp[`homesection${i}`] || d))].filter((x) => ['resume', 'nextup', 'latestmedia'].includes(x));
-    if (!order.length) order = ['resume', 'nextup', 'latestmedia'];
-    const excluded = user?.Configuration?.LatestItemsExcludes || [];
-    const libs = (views || []).filter((v) => ['movies', 'tvshows'].includes(v.CollectionType) && !excluded.includes(v.Id));
-    const [resume, nextup, latest] = await Promise.all([
-      order.includes('resume') ? A.getResumableItems(uid, { Limit: 40, Recursive: true, MediaTypes: 'Video', ...opts }).then((r) => r?.Items || []).catch(() => []) : [],
-      order.includes('nextup') && A.getNextUpEpisodes ? A.getNextUpEpisodes({ UserId: uid, Limit: 60, ...opts }).then((r) => r?.Items || []).catch(() => []) : [],
-      order.includes('latestmedia') && A.getLatestItems
-        ? Promise.all(libs.map((v) => A.getLatestItems({ UserId: uid, ParentId: v.Id, Limit: 60, GroupItems: true, ...opts })
-          .then((items) => ({ title: `Latest ${v.Name}`, items: items || [], wide: false, kind: 'latest' })).catch(() => null)))
-        : [],
-    ]);
-    const rows = [];
-    for (const k of order) {
-      if (k === 'resume') rows.push({ title: 'Continue Watching', items: resume, wide: true, kind: 'resume' });
-      if (k === 'nextup') rows.push({ title: 'Next Up', items: nextup, wide: true, kind: 'nextup' });
-      if (k === 'latestmedia') rows.push(...latest.filter(Boolean));
-    }
-    state.homeRows = { at: Date.now(), source: 'jellyfin', rows };
-    return state.homeRows;
+    state.userRows = { key, at: Date.now(), nextup, favs, played };
+    return state.userRows;
   };
 
   const loadService = async (svc) => {
@@ -2524,18 +2489,33 @@
     if (cached && Date.now() - cached.at < 5 * 60 * 1000) return cached;
 
     const safe = (p) => p.catch(() => []);
-    const [topMovies, topShows, library, missMovies, missShows, resume, home] = await Promise.all([
+    const want = new Set(serviceRows());
+    const asks = cfg.ShowPopularMissing; // Seerr is set up and missing titles are shown
+    const [topMovies, topShows, library, missMovies, missShows, resume, user] = await Promise.all([
       safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Top?type=movie`)),
       safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Top?type=tv`)),
       safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Library?type=all`)),
-      cfg.ShowPopularMissing ? safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Missing?type=movie&limit=20`)) : [],
-      cfg.ShowPopularMissing ? safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Missing?type=tv&limit=20`)) : [],
-      cfg.ShowContinueWatching
+      asks && want.has('requestMovie') ? safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Missing?type=movie&limit=20`)) : [],
+      asks && want.has('requestTv') ? safe(getJSON(`Services/${encodeURIComponent(svc.Key)}/Missing?type=tv&limit=20`)) : [],
+      want.has('resume')
         ? safe(window.ApiClient.getResumableItems(userId(), { Limit: 40, Recursive: true, Fields: 'PrimaryImageAspectRatio', EnableImageTypes: 'Primary,Backdrop,Thumb', MediaTypes: 'Video' }).then((r) => r.Items || []))
         : [],
-      loadHomeRows().catch(() => ({ rows: [] })),
+      loadUserRows(want).catch(() => ({ nextup: [], favs: [], played: [] })),
     ]);
-    const data = { at: Date.now(), topMovies, topShows, library, missMovies, missShows, resume, home };
+    // Because You Watched: the last thing you watched on this service, and titles like it that are on it too
+    let because = null;
+    if (want.has('because')) {
+      const on = new Set(library.map((i) => normId(i.Id)));
+      const seed = (user.played || []).find((it) => on.has(normId(it.SeriesId || it.Id)));
+      if (seed) {
+        const id = seed.SeriesId || seed.Id;
+        const similar = await (window.ApiClient.getSimilarItems
+          ? window.ApiClient.getSimilarItems(id, { userId: userId(), limit: 60, fields: 'PrimaryImageAspectRatio' }).then((r) => r?.Items || []).catch(() => [])
+          : Promise.resolve([]));
+        because = { name: seed.SeriesName || seed.Name, items: similar };
+      }
+    }
+    const data = { at: Date.now(), topMovies, topShows, library, missMovies, missShows, resume, user, because };
     state.data.set(svc.Key, data);
     return data;
   };
@@ -3358,32 +3338,50 @@
       extra: bar(it),
     });
     const se = (it) => (it.SeriesName ? `S${it.ParentIndexNumber ?? '?'}:E${it.IndexNumber ?? '?'}` : '');
-    const mine = [];
-    for (const row of data.home?.rows || []) {
-      if (row.kind === 'resume' && !cfg.ShowContinueWatching) continue;
+    // the rows, in the order set in the dashboard; a row with nothing on this service is skipped
+    const own = (it) => state.lib.get(normId(it.SeriesId || it.Id));
+    const titleRow = (title, list, attrs = '') => {
       const seen = new Set();
       const cards = [];
-      for (const it of row.items || []) {
-        if (!onSvc(it)) continue;
-        if (row.wide) {
-          if (seen.has(it.Id)) continue;
-          seen.add(it.Id);
-          const sub = row.kind === 'resume' || /ContinueWatching/i.test(row.kind) ? [se(it), left(it)] : [se(it), it.Type === 'Episode' ? it.Name : ''];
-          cards.push(epCard(it, sub.filter(Boolean).join(' · ')));
-        } else {
-          // one card per title, in the service's own style, with a bar when it's part-watched
-          const key = norm(it.SeriesId || it.Id);
-          if (seen.has(key)) continue;
-          seen.add(key);
-          const own = state.lib.get(normId(it.SeriesId || it.Id));
-          cards.push(own ? libraryCard(own).replace('</a>', `${bar(it)}</a>`) : epCard(it, it.ProductionYear || ''));
-        }
+      for (const it of list || []) {
+        const mine = own(it);
+        if (!mine || seen.has(mine.Id)) continue;
+        seen.add(mine.Id);
+        cards.push(libraryCard(mine).replace('</a>', `${bar(it)}</a>`));
       }
-      if (cards.length) mine.push(section({ title: row.title, cls: row.wide ? 'js-cw' : '', cards }));
-    }
-    // the service's themed Top 10s sit among them: shows after the first section, movies a couple further down
-    rows.push(...mine.slice(0, 1), topShows, ...mine.slice(1, 3), topMovies, ...mine.slice(3));
-    if (data.library.length) rows.push(browsePanel(svc, data, movies, shows));
+      return cards.length ? section({ title, cards, attrs }) : '';
+    };
+    const wideRow = (title, list, sub) => {
+      const cards = (list || []).filter(onSvc).map((it) => epCard(it, sub(it)));
+      return cards.length ? section({ title, cls: 'js-cw', cards }) : '';
+    };
+    const az = (list) => [...list].sort((x, y) => x.Name.localeCompare(y.Name)).slice(0, 120).map(libraryCard);
+    const build = {
+      resume: () => wideRow('Continue Watching', data.resume, (it) => [se(it), left(it)].filter(Boolean).join(' · ')),
+      nextup: () => wideRow('Next Up', data.user?.nextup, (it) => [se(it), it.Name].filter(Boolean).join(' · ')),
+      topTv: () => (data.topShows.length ? topShows : ''),
+      topMovie: () => (data.topMovies.length ? topMovies : ''),
+      new: () => (data.library.length ? section({ title: `New on ${svc.Name}`, cards: data.library.slice(0, 24).map(libraryCard) }) : ''),
+      myList: () => titleRow('My List', data.user?.favs),
+      because: () => (data.because ? titleRow(`Because You Watched ${data.because.name}`, data.because.items) : ''),
+      watchAgain: () => titleRow('Watch Again', data.user?.played),
+      genres: () => {
+        const gm = groupByGenre(movies, cfg.GenreRows);
+        const gs = groupByGenre(shows, cfg.GenreRows);
+        const out = [];
+        for (let i = 0; i < Math.max(gm.length, gs.length); i++) {
+          if (gs[i]) out.push(section({ title: `${gs[i].genre} Shows`, cards: gs[i].items.map(libraryCard), attrs: 'data-kind="tv"' }));
+          if (gm[i]) out.push(section({ title: `${gm[i].genre} Movies`, cards: gm[i].items.map(libraryCard), attrs: 'data-kind="movie"' }));
+        }
+        return out;
+      },
+      requestMovie: () => (data.missMovies.length ? section({ title: 'Popular Movies to Request', cards: data.missMovies.map((t) => titleCard(t, true)), attrs: 'data-kind="movie"' }) : ''),
+      requestTv: () => (data.missShows.length ? section({ title: 'Popular Shows to Request', cards: data.missShows.map((t) => titleCard(t, true)), attrs: 'data-kind="tv"' }) : ''),
+      allTv: () => (shows.length ? section({ title: `All Shows (${shows.length})`, cards: az(shows), attrs: 'data-kind="tv" data-seeall="tv"' }) : ''),
+      allMovie: () => (movies.length ? section({ title: `All Movies (${movies.length})`, cards: az(movies), attrs: 'data-kind="movie" data-seeall="movie"' }) : ''),
+      browse: () => (data.library.length ? browsePanel(svc, data, movies, shows) : ''),
+    };
+    for (const k of serviceRows()) rows.push(...[].concat(build[k]?.() || []).filter(Boolean));
 
     const html = rows.join('');
     renderBillboard(view, svc, data);

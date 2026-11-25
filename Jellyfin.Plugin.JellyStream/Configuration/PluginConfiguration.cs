@@ -106,6 +106,12 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether the service page shows a "Popular to request" row.</summary>
     public bool ShowPopularMissing { get; set; } = true;
 
+    /// <summary>The rows every service page shows by default, in order ("key:1" on, "key:0" off).</summary>
+    public const string DefaultServiceRows = "resume:1,topTv:1,nextup:1,new:1,topMovie:1,myList:1,because:1,genres:1,watchAgain:1,requestMovie:1,requestTv:1,allTv:0,allMovie:0,browse:1";
+
+    /// <summary>Gets or sets the rows on every service page, in order, each on or off ("key:1,key:0,...").</summary>
+    public string ServiceRows { get; set; } = DefaultServiceRows;
+
     // ---- Home screen ----
 
     /// <summary>Gets or sets a value indicating whether the services row is added to the home screen.</summary>
