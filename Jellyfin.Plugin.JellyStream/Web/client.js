@@ -9,7 +9,7 @@
   window.__jellyStream = true;
 
   const PARAM = 'jellystream';
-  const VERSION = '1.25.0';
+  const VERSION = '1.25.1';
 
   // ---------------------------------------------------------------- diagnostics
   // Records route changes, Jellyfin's page events, its router/view logs, errors from any script, and
@@ -2883,9 +2883,15 @@
       pill.classList.add('js-jf-waiting');
       el.classList.add('flying');
       pillsArrive(false, D * .55 + 160); // the others wait out of sight, then rise in after the Jellyfin pill pops
-      const out = { duration: D * .6, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' };
-      el.querySelector('.js-jf-logo').animate([{ transform: 'none', opacity: 1, filter: 'blur(0)' }, { transform: 'scale(1.08)', opacity: 0, filter: 'blur(6px)' }], out);
-      el.querySelector('.js-jf-name').animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(.3em)' }], out);
+      // the big logo pops: a little squeeze, a burst outward, gone; the name pops just after it
+      const pop = (node, delay) => node.animate([
+        { transform: 'scale(1)', opacity: 1, filter: 'blur(0)', offset: 0 },
+        { transform: 'scale(.9)', opacity: 1, filter: 'blur(0)', offset: .22, easing: 'cubic-bezier(.2,.9,.3,1.4)' },
+        { transform: 'scale(1.28)', opacity: 1, filter: 'blur(0)', offset: .55, easing: 'cubic-bezier(.4,0,1,1)' },
+        { transform: 'scale(1.7)', opacity: 0, filter: 'blur(5px)', offset: 1 },
+      ], { duration: D * .62, delay, fill: 'forwards' });
+      pop(el.querySelector('.js-jf-logo'), 0);
+      pop(el.querySelector('.js-jf-name'), 60);
       el.querySelector('.js-jf-black').animate([{ opacity: 1 }, { opacity: 0 }], { duration: D * .75, delay: D * .1, easing: 'ease-in-out', fill: 'forwards' });
       el.querySelector('.js-jf-bloom').animate([{ opacity: 1 }, { opacity: 0 }], { duration: D * .4, fill: 'forwards' });
       setTimeout(() => {
